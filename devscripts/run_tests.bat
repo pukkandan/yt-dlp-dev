@@ -1,4 +1,6 @@
 @echo off
+cd "%~dp0.."
+echo.%cd%
 
 rem Keep this list in sync with the `offlinetest` target in Makefile
 set DOWNLOAD_TESTS="age_restriction^|download^|iqiyi_sdk_interpreter^|socks^|subtitles^|write_annotations^|youtube_lists^|youtube_signature^|post_hooks"
