@@ -59,7 +59,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./completion-bash
+        asset_path: ./completions/bash/yt-dlp
         asset_name: completion-bash
         asset_content_type: application/octet-stream
     - name: Upload completion-fish
@@ -68,7 +68,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./completion-fish
+        asset_path: ./completions/fish/yt-dlp.fish
         asset_name: completion-fish
         asset_content_type: application/octet-stream
     - name: Upload completion-zsh
@@ -77,7 +77,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./completion-zsh
+        asset_path: ./completions/zsh/_yt-dlp
         asset_name: completion-zsh
         asset_content_type: application/octet-stream
     - name: Get SHA2-256SUMS for yt-dlp
