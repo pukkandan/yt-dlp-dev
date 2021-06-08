@@ -53,6 +53,36 @@ jobs:
         asset_path: ./yt-dlp
         asset_name: yt-dlp
         asset_content_type: application/octet-stream
+    - name: Upload completion-bash
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./completion-bash
+        asset_name: completion-bash
+        asset_content_type: application/octet-stream
+    - name: Upload completion-fish
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./completion-fish
+        asset_name: completion-fish
+        asset_content_type: application/octet-stream
+    - name: Upload completion-zsh
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./completion-zsh
+        asset_name: completion-zsh
+        asset_content_type: application/octet-stream
     - name: Get SHA2-256SUMS for yt-dlp
       id: sha256_file
       run: echo "::set-output name=sha256_unix::$(sha256sum yt-dlp | awk '{print $1}')"
