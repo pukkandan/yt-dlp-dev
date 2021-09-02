@@ -32,7 +32,14 @@ jobs:
     - name: make issuetemplates
       run: make issuetemplates
     - name: commit version update
-      run: git config --global user.email "none@example.com" && git config --global user.name "yt-dlp"  && git add -u && git commit -m "[version] update :ci skip all"
+      run: |
+        git config --global user.email "none@example.com"
+        git config --global user.name "yt-dlp"
+        git add -u
+        git commit -m "[version] update :ci skip all"
+        git checkout master
+        git merge release
+        git push origin master
     - name: get changelog
       id: get_changelog
       run: |
@@ -50,8 +57,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.bump_version.outputs.ytdlp_version }}_8
-        release_name: yt-dlp ${{ steps.bump_version.outputs.ytdlp_version }} 8
+        tag_name: ${{ steps.bump_version.outputs.ytdlp_version }}_9
+        release_name: yt-dlp ${{ steps.bump_version.outputs.ytdlp_version }} 9
         body: |
           Changelog:
           ${{ env.changelog }}
