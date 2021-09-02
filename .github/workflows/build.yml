@@ -35,10 +35,10 @@ jobs:
       run: |
         git config --global user.email "none@example.com"
         git config --global user.name "yt-dlp"
-        git add -u
-        git commit -m "[version] update :ci skip all"
         git pull
         git checkout release
+        git add -u
+        git commit -m "[version] update :ci skip all"
         git checkout master
         git merge release
         git push origin master
