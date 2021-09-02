@@ -59,8 +59,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.bump_version.outputs.ytdlp_version }}_9
-        release_name: yt-dlp ${{ steps.bump_version.outputs.ytdlp_version }} 9
+        tag_name: ${{ steps.bump_version.outputs.ytdlp_version }}_10
+        release_name: yt-dlp ${{ steps.bump_version.outputs.ytdlp_version }} 10
         body: |
           Changelog:
           ${{ env.changelog }}
