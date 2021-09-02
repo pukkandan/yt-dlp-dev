@@ -35,7 +35,7 @@ jobs:
       id: get_date
       run: echo ::set-output name=change_date::$(echo '{{ github.event.head_commit.message }}' | cut -d' ' -f2)
     - name: commit version update
-      run: git config --global user.email "none@example.com" && --global user.name "yt-dlp"  && git add -u && git commit -m "[version] update :ci skip all"
+      run: git config --global user.email "none@example.com" && git config --global user.name "yt-dlp"  && git add -u && git commit -m "[version] update :ci skip all"
     - name: get changelog
       id: get_changelog
       run: |
