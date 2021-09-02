@@ -37,6 +37,7 @@ jobs:
         git config --global user.name "yt-dlp"
         git add -u
         git commit -m "[version] update :ci skip all"
+        git pull
         git checkout master
         git merge release
         git push origin master
