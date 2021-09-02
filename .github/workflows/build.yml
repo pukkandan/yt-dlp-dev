@@ -28,6 +28,7 @@ jobs:
       run: python devscripts/update-version.py
     - name: Print version
       run: echo "${{ steps.bump_version.outputs.ytdlp_version }}"
+      id: version
     - name: make issuetemplates
       run: make issuetemplates
     - name: get date
@@ -39,7 +40,6 @@ jobs:
       id: get_changelog
       run: |
         echo "::set-output name=changelog::$(cat Changelog.md | grep -oPz "(?s)### {{ steps.get_date.outputs.change_date }}.*?\n\n\n""
-      id: version
     - name: Run Make
       run: make all tar
     - name: Create Release
