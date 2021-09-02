@@ -37,6 +37,8 @@ jobs:
       id: get_changelog
       run: |
         echo "::set-output name=changelog::$(cat Changelog.md | grep -oPz '(?s)### ${{ steps.bump_version.outputs.ytdlp_version }}.*?\n\n\n')"
+    - name: print changelog
+      run: echo "${{ steps.get_changelog.outputs.changelog }}"
     - name: Run Make
       run: make all tar
     - name: Create Release
