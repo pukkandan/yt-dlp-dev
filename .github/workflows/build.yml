@@ -39,7 +39,7 @@ jobs:
     - name: get changelog
       id: get_changelog
       run: |
-        echo "::set-output name=changelog::$(cat Changelog.md | grep -oPz "(?s)### {{ steps.get_date.outputs.change_date }}.*?\n\n\n""
+        echo "::set-output name=changelog::$(cat Changelog.md | grep -oPz '(?s)### {{ steps.get_date.outputs.change_date }}.*?\n\n\n')
     - name: Run Make
       run: make all tar
     - name: Create Release
