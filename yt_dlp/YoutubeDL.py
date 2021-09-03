@@ -315,7 +315,7 @@ class YoutubeDL(object):
     encoding:          Use this encoding instead of the system-specified.
     extract_flat:      Do not resolve URLs, return the immediate result.
                        Pass in 'in_playlist' to only show this behavior for
-                       playlist items.
+                       playlist items or 'forced' to not perform any extraction
     postprocessors:    A list of dictionaries, each with an entry
                        * key:  The name of the postprocessor. See
                                yt_dlp/postprocessor/__init__.py for a list.
@@ -1204,6 +1204,15 @@ class YoutubeDL(object):
                 self.to_screen("[%s] %s: has already been recorded in archive" % (
                                ie_key, temp_id))
                 break
+
+            if self.params.get('extract_flat', False) == 'forced':
+                info_dict = {'id': temp_id}
+                self.add_default_extra_info(info_dict, ie, url)
+                self.add_extra_info(info_dict, extra_info)
+                self.__forced_printings(info_dict, self.prepare_filename(info_dict), incomplete=True)
+                if self.params.get('force_write_download_archive', False):
+                    self.record_download_archive(info_dict)
+                return info_dict
             return self.__extract_info(url, self.get_info_extractor(ie_key), download, extra_info, process)
         else:
             self.report_error('no suitable InfoExtractor for URL %s' % url)
@@ -1285,7 +1294,7 @@ class YoutubeDL(object):
 
             extract_flat = self.params.get('extract_flat', False)
             if ((extract_flat == 'in_playlist' and 'playlist' in extra_info)
-                    or extract_flat is True):
+                    or extract_flat in (True, 'forced')):
                 info_copy = ie_result.copy()
                 ie = try_get(ie_result.get('ie_key'), self.get_info_extractor)
                 if not ie_result.get('id'):

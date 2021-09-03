@@ -250,6 +250,10 @@ def parseOpts(overrideArguments=None):
         action='store_const', dest='extract_flat', const='in_playlist', default=False,
         help='Do not extract the videos of a playlist, only list them')
     general.add_option(
+        '--flat-extract',
+        action='store_const', dest='extract_flat', const='forced',
+        help='Do not perform actual extraction. Only return fields that can be determined from the URL itself')
+    general.add_option(
         '--no-flat-playlist',
         action='store_false', dest='extract_flat',
         help='Extract the videos of a playlist')
