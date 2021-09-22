@@ -997,6 +997,14 @@ def _ssl_load_windows_store_certs(ssl_context, storename):
 def make_HTTPS_handler(params, **kwargs):
     opts_check_certificate = not params.get('nocheckcertificate')
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.set_ciphers(':'.join((
+        'ECDHE-RSA-AES256-GCM-SHA384
+        'ECDHE-ECDSA-AES256-GCM-SHA384',
+        'ECDHE-RSA-AES256-SHA384',
+        'ECDHE-ECDSA-AES256-SHA384',
+        'ECDHE-RSA-AES128-GCM-SHA256',
+        'ECDHE-RSA-AES128-SHA256',
+        'AES256-SHA')))
     context.check_hostname = opts_check_certificate
     if params.get('legacyserverconnect'):
         context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
