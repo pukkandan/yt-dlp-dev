@@ -18,7 +18,7 @@ old_rev = old_version_list[3] if len(old_version_list) > 3 else ''
 ver = datetime.utcnow().strftime("%Y.%m.%d")
 rev = str(int(old_rev or 0) + 1) if old_ver == ver else ''
 
-VERSION = '.'.join((ver, rev)) if rev else ver
+VERSION = '.'.join((old_ver, old_rev)) if old_rev else old_ver
 # VERSION_LIST = [(int(v) for v in ver.split(".") + [rev or 0])]
 
 print('::set-output name=ytdlp_version::' + VERSION)
