@@ -202,8 +202,8 @@ def run_update(ydl):
         except OSError:
             report_unable('delete the old version')
 
-    elif variant in ('zip', 'mac_bin'):
-        pack_type = ('mac', '64') if variant == 'mac_bin' else ('zip', '3')
+    elif variant in ('zip', 'mac_exe'):
+        pack_type = ('mac', '64') if variant == 'mac_exe' else ('zip', '3')
         try:
             url = get_bin_info(*pack_type).get('browser_download_url')
             if not url:
@@ -226,7 +226,10 @@ def run_update(ydl):
         except (IOError, OSError):
             return report_unable('overwrite current version')
 
-    ydl.to_screen('Updated yt-dlp to version %s; Restart yt-dlp to use the new version' % version_id)
+        ydl.to_screen('Updated yt-dlp to version %s; Restart yt-dlp to use the new version' % version_id)
+        return
+
+    assert False
 
 
 '''  # UNUSED
