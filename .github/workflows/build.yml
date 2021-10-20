@@ -267,7 +267,7 @@ jobs:
 
   build_windows32:
     runs-on: windows-latest
-    needs: [build_unix, build_windows]
+    needs: build_unix
 
     outputs:
       sha256_win32: ${{ steps.sha256_win32.outputs.sha256_win32 }}
