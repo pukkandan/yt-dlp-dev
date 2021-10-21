@@ -12,6 +12,8 @@ if OS_NAME == 'Windows':
         VarStruct, VarFileInfo, StringStruct, StringTable,
         StringFileInfo, FixedFileInfo, VSVersionInfo, SetVersion,
     )
+elif OS_NAME == 'Darwin':
+    pass
 else:
     raise Exception('{OS_NAME} is not supported')
 
@@ -22,7 +24,7 @@ def main():
     opts = parse_options()
     version = read_version()
 
-    suffix = '_x86' if ARCH == '32' else ''
+    suffix = '_x86' if ARCH == '32' else '_macos' if OS_NAME == 'Darwin' else ''
     final_file = 'dist/%syt-dlp%s%s' % (
         'yt-dlp/' if '--onedir' in opts else '', suffix, '.exe' if OS_NAME == 'Windows' else '')
 

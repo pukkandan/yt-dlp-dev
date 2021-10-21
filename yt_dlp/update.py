@@ -195,7 +195,7 @@ def run_update(ydl):
         try:
             # Continues to run in the background
             Popen(
-                'ping 127.0.0.1 -n 5 -w 1000 & del /F "%s.old"' % exe,
+                'ping 127.0.0.1 -n 5 -w 1000 & del /F "%s.old"' % filename,
                 shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             ydl.to_screen('Updated yt-dlp to version %s' % version_id)
             return True  # Exit app
