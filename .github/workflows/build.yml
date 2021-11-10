@@ -146,6 +146,7 @@ jobs:
   build_macos:
     runs-on: macos-11
     needs: build_unix
+    if: False
     outputs:
       sha256_macos: ${{ steps.sha256_macos.outputs.sha256_macos }}
       sha512_macos: ${{ steps.sha512_macos.outputs.sha512_macos }}
@@ -344,7 +345,7 @@ jobs:
 
   finish:
     runs-on: ubuntu-latest
-    needs: [build_unix, build_windows, build_windows32, build_macos]
+    needs: [build_unix, build_windows, build_windows32]
 
     steps:
     - name: Make SHA2-256SUMS file
