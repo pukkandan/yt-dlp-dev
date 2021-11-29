@@ -2,10 +2,13 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+import sys
 # import urllib.request
 
 # response = urllib.request.urlopen('https://blackjack4494.github.io/youtube-dlc/update/LATEST_VERSION')
 # old_version = response.read().decode('utf-8')
+
+rev = (sys.argv[1:] or [''])[0]
 
 exec(compile(open('yt_dlp/version.py').read(), 'yt_dlp/version.py', 'exec'))
 old_version = locals()['__version__']
@@ -16,7 +19,8 @@ old_ver = '.'.join(old_version_list[:3])
 old_rev = old_version_list[3] if len(old_version_list) > 3 else ''
 
 ver = datetime.utcnow().strftime("%Y.%m.%d")
-rev = str(int(old_rev or 0) + 1) if old_ver == ver else ''
+if not rev:
+    rev = str(int(old_rev or 0) + 1) if old_ver == ver else ''
 
 VERSION = '.'.join((ver, rev)) if rev else ver
 # VERSION_LIST = [(int(v) for v in ver.split(".") + [rev or 0])]

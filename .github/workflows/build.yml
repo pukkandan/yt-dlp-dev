@@ -1,9 +1,5 @@
 name: Build
-
-on:
-  push:
-    branches:
-      - release
+on: workflow_dispatch
 
 jobs:
   build_unix:
@@ -26,23 +22,34 @@ jobs:
           python-version: '3.8'
     - name: Install packages
       run: sudo apt-get -y install zip pandoc man
+    - name: Set version suffix
+      id: version_suffix
+      env:
+        PUSH_VERSION_COMMIT: ${{ secrets.PUSH_VERSION_COMMIT }}
+      if: "env.PUSH_VERSION_COMMIT == ''"
+      run: echo ::set-output name=version_suffix::$(git rev-parse --short HEAD)-$(date +"%H%M%S")
     - name: Bump version
       id: bump_version
       run: |
-        python devscripts/update-version.py
+        python devscripts/update-version.py ${{ steps.version_suffix.outputs.version_suffix }}
         make issuetemplates
     - name: Print version
       run: echo "${{ steps.bump_version.outputs.ytdlp_version }}"
-    - name: Update master
-      id: push_update
+    - name: Push to release
+      id: push_release
       run: |
-        git config --global user.email "${{ github.event.pusher.email }}"
-        git config --global user.name "${{ github.event.pusher.name }}"
+        git config --global user.name github-actions
+        git config --global user.email github-actions@example.com
         git add -u
-        git commit -m "[version] update" -m ":ci skip all"
-        git pull --rebase origin ${{ github.event.repository.master_branch }}
-        git push origin ${{ github.event.ref }}:${{ github.event.repository.master_branch }}
+        git commit -m "[version] update" -m "Created by: ${{ github.event.sender.login }}" -m ":ci skip all"
+        git push origin --force ${{ github.event.ref }}:release
         echo ::set-output name=head_sha::$(git rev-parse HEAD)
+    - name: Update master
+      id: push_master
+      env:
+        PUSH_VERSION_COMMIT: ${{ secrets.PUSH_VERSION_COMMIT }}
+      if: "env.PUSH_VERSION_COMMIT != ''"
+      run: git push origin ${{ github.event.ref }}
     - name: Get Changelog
       id: get_changelog
       run: |
@@ -155,10 +162,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     # In order to create a universal2 application, the version of python3 in /usr/bin has to be used
+    # Pyinstaller is pinned to 4.5.1 because the builds are failing in 4.6, 4.7
     - name: Install Requirements
       run: |
           brew install coreutils
-          /usr/bin/python3 -m pip install -U --user pip Pyinstaller mutagen pycryptodomex websockets
+          /usr/bin/python3 -m pip install -U --user pip Pyinstaller==4.5.1 mutagen pycryptodomex websockets
     - name: Bump version
       id: bump_version
       run: /usr/bin/python3 devscripts/update-version.py
