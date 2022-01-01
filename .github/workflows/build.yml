@@ -14,7 +14,7 @@ jobs:
       sha512_tar: ${{ steps.sha512_tar.outputs.sha512_tar }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: yt-dlp/checkout@v2
       with:
         fetch-depth: 0
     - name: Set up Python
@@ -159,7 +159,7 @@ jobs:
       sha512_macos_zip: ${{ steps.sha512_macos_zip.outputs.sha512_macos_zip }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: yt-dlp/checkout@v2
     # In order to create a universal2 application, the version of python3 in /usr/bin has to be used
     # Pyinstaller is pinned to 4.5.1 because the builds are failing in 4.6, 4.7
     - name: Install Requirements
@@ -226,7 +226,7 @@ jobs:
       sha512_win_zip: ${{ steps.sha512_win_zip.outputs.sha512_win_zip }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: yt-dlp/checkout@v2
     # 3.8 is used for Win7 support
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
@@ -315,7 +315,7 @@ jobs:
       sha512_win32: ${{ steps.sha512_win32.outputs.sha512_win32 }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: yt-dlp/checkout@v2
     # 3.7 is used for Vista support. See https://github.com/yt-dlp/yt-dlp/issues/390
     - name: Set up Python 3.7 32-Bit
       uses: actions/setup-python@v2
