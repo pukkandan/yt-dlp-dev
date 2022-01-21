@@ -3139,6 +3139,54 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         return live_broadcast_details, is_live, streaming_data, formats
 
+    def _get_all_subtitles(self, pctr):
+        if not pctr:
+            return {}
+
+        def get_lang_code(track):
+            return remove_start(track.get('vssId') or '', '.').replace('.', '-') or track.get('languageCode')
+
+        # Converted into dicts to remove duplicates
+        captions = {
+            get_lang_code(sub): sub
+            for sub in traverse_obj(pctr, (..., 'captionTracks', ...), default=[])}
+        translation_languages = {
+            lang['languageCode']: self._get_text(lang.get('languageName'), max_runs=1)
+            for lang in traverse_obj(pctr, (..., 'translationLanguages', ...), default=[])
+            if lang.get('languageCode')}
+
+        def process_language(container, base_url, lang_code, sub_name, query):
+            lang_subs = container.setdefault(lang_code, [])
+            for fmt in self._SUBTITLE_FORMATS:
+                query.update({
+                    'fmt': fmt,
+                })
+                lang_subs.append({
+                    'ext': fmt,
+                    'url': update_url_query(base_url, query),
+                    'name': sub_name,
+                })
+
+        subtitles, automatic_captions = {}, {}
+        for lang_code, caption_track in captions.items():
+            base_url = caption_track.get('baseUrl')
+            if not base_url:
+                continue
+            lang_name = self._get_text(caption_track, 'name', max_runs=1)
+            if caption_track.get('kind') != 'asr':
+                if not lang_code:
+                    continue
+                process_language(subtitles, base_url, lang_code, lang_name, {})
+                if not caption_track.get('isTranslatable'):
+                    continue
+            for trans_code, trans_name in translation_languages.items():
+                if caption_track.get('kind') != 'asr':
+                    trans_code += f'-{lang_code}'
+                    trans_name += format_field(lang_name, template=' from %s')
+                process_language(automatic_captions, base_url, trans_code, trans_name, {'tlang': trans_code})
+
+        return {'subtitles': subtitles, 'automatic_captions': automatic_captions}
+
     def _real_extract(self, url):
         url, smuggled_data = unsmuggle_url(url, {})
         video_id = self._match_id(url)
@@ -3353,55 +3401,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             'release_timestamp': live_start_time,
         }
 
-        pctr = traverse_obj(player_responses, (..., 'captions', 'playerCaptionsTracklistRenderer'), expected_type=dict)
-        if pctr:
-            def get_lang_code(track):
-                return (remove_start(track.get('vssId') or '', '.').replace('.', '-')
-                        or track.get('languageCode'))
-
-            # Converted into dicts to remove duplicates
-            captions = {
-                get_lang_code(sub): sub
-                for sub in traverse_obj(pctr, (..., 'captionTracks', ...), default=[])}
-            translation_languages = {
-                lang.get('languageCode'): self._get_text(lang.get('languageName'), max_runs=1)
-                for lang in traverse_obj(pctr, (..., 'translationLanguages', ...), default=[])}
-
-            def process_language(container, base_url, lang_code, sub_name, query):
-                lang_subs = container.setdefault(lang_code, [])
-                for fmt in self._SUBTITLE_FORMATS:
-                    query.update({
-                        'fmt': fmt,
-                    })
-                    lang_subs.append({
-                        'ext': fmt,
-                        'url': update_url_query(base_url, query),
-                        'name': sub_name,
-                    })
-
-            subtitles, automatic_captions = {}, {}
-            for lang_code, caption_track in captions.items():
-                base_url = caption_track.get('baseUrl')
-                if not base_url:
-                    continue
-                lang_name = self._get_text(caption_track, 'name', max_runs=1)
-                if caption_track.get('kind') != 'asr':
-                    if not lang_code:
-                        continue
-                    process_language(
-                        subtitles, base_url, lang_code, lang_name, {})
-                    if not caption_track.get('isTranslatable'):
-                        continue
-                for trans_code, trans_name in translation_languages.items():
-                    if not trans_code:
-                        continue
-                    if caption_track.get('kind') != 'asr':
-                        trans_code += f'-{lang_code}'
-                        trans_name += format_field(lang_name, template=' from %s')
-                    process_language(
-                        automatic_captions, base_url, trans_code, trans_name, {'tlang': trans_code})
-            info['automatic_captions'] = automatic_captions
-            info['subtitles'] = subtitles
+        info.update(self.extract_all_subtitles(
+            traverse_obj(player_responses, (..., 'captions', 'playerCaptionsTracklistRenderer'), expected_type=dict)))
 
         parsed_url = compat_urllib_parse_urlparse(url)
         for component in [parsed_url.fragment, parsed_url.query]:

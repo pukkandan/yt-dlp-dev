@@ -3592,6 +3592,16 @@ class InfoExtractor(object):
             any_restricted = any_restricted or is_restricted
         return not any_restricted
 
+    def extract_all_subtitles(self, *args, **kwargs):
+        if (self.get_param('listsubtitles')
+                or self.get_param('writesubtitles')
+                or self.get_param('writeautomaticsub')):
+            return self._get_all_subtitles(*args, **kwargs)
+        return {}
+
+    def _get_all_subtitles(self, *args, **kwargs):
+        raise NotImplementedError('This method must be implemented by subclasses')
+
     def extract_subtitles(self, *args, **kwargs):
         if (self.get_param('writesubtitles', False)
                 or self.get_param('listsubtitles')):
@@ -3599,6 +3609,15 @@ class InfoExtractor(object):
         return {}
 
     def _get_subtitles(self, *args, **kwargs):
+        raise NotImplementedError('This method must be implemented by subclasses')
+
+    def extract_automatic_captions(self, *args, **kwargs):
+        if (self.get_param('writeautomaticsub', False)
+                or self.get_param('listsubtitles')):
+            return self._get_automatic_captions(*args, **kwargs)
+        return {}
+
+    def _get_automatic_captions(self, *args, **kwargs):
         raise NotImplementedError('This method must be implemented by subclasses')
 
     def extract_comments(self, *args, **kwargs):
@@ -3649,15 +3668,6 @@ class InfoExtractor(object):
             for lang, subs in d.items():
                 target[lang] = cls._merge_subtitle_items(target.get(lang, []), subs)
         return target
-
-    def extract_automatic_captions(self, *args, **kwargs):
-        if (self.get_param('writeautomaticsub', False)
-                or self.get_param('listsubtitles')):
-            return self._get_automatic_captions(*args, **kwargs)
-        return {}
-
-    def _get_automatic_captions(self, *args, **kwargs):
-        raise NotImplementedError('This method must be implemented by subclasses')
 
     def mark_watched(self, *args, **kwargs):
         if not self.get_param('mark_watched', False):

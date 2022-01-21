@@ -47,13 +47,6 @@ class MicrosoftStreamIE(InfoExtractor):
             'automatic_captions': automatic_captions
         }
 
-    def extract_all_subtitles(self, *args, **kwargs):
-        if (self.get_param('writesubtitles', False)
-                or self.get_param('writeautomaticsub', False)
-                or self.get_param('listsubtitles')):
-            return self._get_all_subtitles(*args, **kwargs)
-        return {}
-
     def _real_extract(self, url):
         video_id = self._match_id(url)
         webpage = self._download_webpage(url, video_id)
