@@ -7,6 +7,7 @@ import sys
 import time
 
 from .fragment import FragmentFD
+from ..postprocessor.ffmpeg import FFmpegProgressTracker
 from ..compat import (
     compat_setenv,
     compat_str,
@@ -481,13 +482,16 @@ class FFmpegFD(ExternalFD):
 
         args = [encodeArgument(opt) for opt in args]
         args.append(encodeFilename(ffpp._ffmpeg_filename_argument(tmpfilename), True))
+        args.extend(['-progress', 'pipe:1', '-stats_period', '0.1'])
         self._debug_cmd(args)
 
-        proc = Popen(args, stdin=subprocess.PIPE, env=env)
+        proc = Popen(args, env=env, universal_newlines=True, encoding='utf8',
+                     stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         if url in ('-', 'pipe:'):
             self.on_process_started(proc, proc.stdin)
         try:
-            retval = proc.wait()
+            ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, args, proc, self._hook_progress, 'downloading', 'downloaded_bytes')
+            return ffmpeg_progress_tracker.ffmpeg_progress()
         except BaseException as e:
             # subprocces.run would send the SIGKILL signal to ffmpeg and the
             # mp4 file couldn't be played, but if we ask ffmpeg to quit it
@@ -500,7 +504,6 @@ class FFmpegFD(ExternalFD):
                 proc.kill()
                 proc.wait()
             raise
-        return retval
 
 
 class AVconvFD(FFmpegFD):
