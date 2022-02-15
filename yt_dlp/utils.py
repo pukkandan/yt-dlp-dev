@@ -997,14 +997,26 @@ def _ssl_load_windows_store_certs(ssl_context, storename):
 def make_HTTPS_handler(params, **kwargs):
     opts_check_certificate = not params.get('nocheckcertificate')
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    # Fingerprint from https://github.com/mikf/gallery-dl/blob/f5b2a9fcc633f52a6d8eb2b25790ea5f0d1af856/gallery_dl/extractor/common.py#L744-L761
+    context.set_ecdh_curve('prime256v1')
     context.set_ciphers(':'.join((
-        'ECDHE-RSA-AES256-GCM-SHA384
-        'ECDHE-ECDSA-AES256-GCM-SHA384',
-        'ECDHE-RSA-AES256-SHA384',
-        'ECDHE-ECDSA-AES256-SHA384',
+        'TLS_AES_128_GCM_SHA256',
+        'TLS_AES_256_GCM_SHA384',
+        'TLS_CHACHA20_POLY1305_SHA256',
+        'ECDHE-ECDSA-AES128-GCM-SHA256',
         'ECDHE-RSA-AES128-GCM-SHA256',
-        'ECDHE-RSA-AES128-SHA256',
-        'AES256-SHA')))
+        'ECDHE-ECDSA-AES256-GCM-SHA384',
+        'ECDHE-RSA-AES256-GCM-SHA384',
+        'ECDHE-ECDSA-CHACHA20-POLY1305',
+        'ECDHE-RSA-CHACHA20-POLY1305',
+        'ECDHE-RSA-AES128-SHA',
+        'ECDHE-RSA-AES256-SHA',
+        'AES128-GCM-SHA256',
+        'AES256-GCM-SHA384',
+        'AES128-SHA',
+        'AES256-SHA',
+        'DES-CBC3-SH',
+    )))
     context.check_hostname = opts_check_certificate
     if params.get('legacyserverconnect'):
         context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
