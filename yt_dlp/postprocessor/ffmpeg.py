@@ -293,9 +293,7 @@ class FFmpegPostProcessor(PostProcessor):
         return abs(d1 - d2) > 2
 
     def run_ffmpeg_multiple_files(self, input_paths, out_path, opts, **kwargs):
-        return self.real_run_ffmpeg(
-            [(path, []) for path in input_paths],
-            [(out_path, opts)], **kwargs)
+        return self.real_run_ffmpeg([(path, []) for path in input_paths], [(out_path, opts)], **kwargs)
 
     def real_run_ffmpeg(self, input_path_opts, output_path_opts, *, expected_retcodes=(0,)):
         self.check_version()
@@ -317,34 +315,38 @@ class FFmpegPostProcessor(PostProcessor):
             args += self._configuration_args(self.basename, keys)
             if name == 'i':
                 args.append('-i')
-            return (
-                [encodeArgument(arg) for arg in args]
-                + [encodeFilename(self._ffmpeg_filename_argument(file), True)])
-        file_path = ''
+            return [encodeArgument(arg) for arg in args] + [encodeFilename(self._ffmpeg_filename_argument(file), True)]
+
         for arg_type, path_opts in (('i', input_path_opts), ('o', output_path_opts)):
-            cmd += itertools.chain.from_iterable(
-                make_args(path, list(opts), arg_type, i + 1)
-                for i, (path, opts) in enumerate(path_opts) if path)
+            for i, (path, opts) in enumerate(path_opts):
+                if path:
+                    cmd += make_args(path, list(opts), arg_type, i + 1)
 
         # Needed to track ffmpeg progress
         cmd.extend(['-progress', 'pipe:1', '-stats_period', '0.1'])
 
+        if type(input_path_opts) == list:
+            file_path, _ = input_path_opts[0]
+        elif type(input_path_opts) == tuple:
+            file_path, _ = input_path_opts
+        else:
+            raise ValueError(f"input_path_opts should either be a tuple or a list but it is a '{type(input_path_opts)}'")
         self.write_debug('ffmpeg command line: %s' % shell_quote(cmd))
-        p = Popen(cmd, env=None, universal_newlines=True, encoding='utf8',
-                  stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, stderr = p.communicate_or_kill()
-        file_infos = self.get_metadata_object(path)
-        filename = os.path.basename(path)
-        info_dict = {'_filename': '', 'duration': file_infos.get('duration'), 'filesize': file_infos.get('filesize')}
-        FFmpegProgressTracker(info_dict, cmd, p, self._hook_progress, 'processing', 'processed_bytes')
-        if p.returncode not in variadic(expected_retcodes):
-            stderr = stderr.decode('utf-8', 'replace').strip()
+        file_infos = self.get_metadata_object(file_path)
+        filename = os.path.basename(file_path)
+        info_dict = {'_filename': filename, 'duration': file_infos.get('duration'), 'filesize': file_infos.get('filesize')}
+        p = Popen(cmd, universal_newlines=True, encoding='utf8', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # stdout, stderr = p.communicate_or_kill()
+        ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, cmd, p, self._hook_progress, 'processing', 'processed_bytes')
+        stdout, stderr, return_code = ffmpeg_progress_tracker.ffmpeg_track_progress()
+        if return_code not in variadic(expected_retcodes):
+            stderr = stderr.strip()
             self.write_debug(stderr)
             raise FFmpegPostProcessorError(stderr.split('\n')[-1])
         for out_path, _ in output_path_opts:
             if out_path:
                 self.try_utime(out_path, oldest_mtime, oldest_mtime)
-        return stderr.decode('utf-8', 'replace')
+        return stderr
 
     def run_ffmpeg(self, path, out_path, opts, **kwargs):
         return self.run_ffmpeg_multiple_files([path], out_path, opts, **kwargs)
@@ -1191,7 +1193,7 @@ class FFmpegProgressTracker:
         self.running_status_value = running_status_value
         self.action_bytes_key = action_bytes_key
 
-    def ffmpeg_progress(self):
+    def ffmpeg_track_progress(self):
         # Get ffmpeg progress by capturing and parsing the output with the '-progress' option
         duration_to_track, duration = self.compute_duration_to_track()
         total_filesize = self.compute_total_filesize(duration_to_track, duration)
@@ -1202,12 +1204,18 @@ class FFmpegProgressTracker:
             'total_bytes': total_filesize,
             'elapsed': time.time() - started
         }
+        # Parse ffmpeg_output
         progress_pattern = re.compile(
             r'(frame=\s*(?P<frame>\S+)\nfps=\s*(?P<fps>\S+)\nstream_0_0_q=\s*(?P<stream_0_0_q>\S+)\n)?bitrate=\s*(?P<bitrate>\S+)\ntotal_size=\s*(?P<total_size>\S+)\nout_time_us=\s*(?P<out_time_us>\S+)\nout_time_ms=\s*(?P<out_time_ms>\S+)\nout_time=\s*(?P<out_time>\S+)\ndup_frames=\s*(?P<dup_frames>\S+)\ndrop_frames=\s*(?P<drop_frames>\S+)\nspeed=\s*(?P<speed>\S+)\nprogress=\s*(?P<progress>\S+)')
         retval = self.ffmpeg_proc.poll()
         ffmpeg_stdout_buffer = ''
+        ffmpeg_stderr_buffer = ''
         while retval is None:
             ffmpeg_stdout = self.ffmpeg_proc.stdout.readline() if self.ffmpeg_proc.stdout else ''
+            ffmpeg_stderr_buffer = self.ffmpeg_proc.stderr.readline() if self.ffmpeg_proc.stderr else ''
+            if ffmpeg_stderr_buffer != '':
+                sys.stderr.write(ffmpeg_stderr_buffer)
+                ffmpeg_stderr_buffer = ''
             if ffmpeg_stdout == '':
                 continue
             ffmpeg_stdout_buffer += ffmpeg_stdout
@@ -1232,7 +1240,7 @@ class FFmpegProgressTracker:
             ffmpeg_stdout_buffer = ''
             status.update({'elapsed': time.time() - started})
             retval = self.ffmpeg_proc.poll()
-            # Prevents proc from hanging
+            # Prevents ffmpeg_proc from hanging
             if ffmpeg_prog_infos.group('progress') == 'end':
                 status.update({
                     'status': 'finished',
@@ -1240,14 +1248,14 @@ class FFmpegProgressTracker:
                 })
                 self.hook_progress(status, self.info_dict)
                 self.ffmpeg_proc.kill()
-                return 0
+                return ffmpeg_stdout_buffer, ffmpeg_stderr_buffer, 0
 
         status.update({
             'status': 'finished',
             self.action_bytes_key: total_filesize
         })
         self.hook_progress(status, self.info_dict)
-        return retval
+        return ffmpeg_stdout_buffer, ffmpeg_stderr_buffer, retval
 
     def compute_total_filesize(self, duration_to_track, duration):
         if not duration:
