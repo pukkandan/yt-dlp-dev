@@ -4,11 +4,15 @@ import collections
 import io
 import itertools
 import os
-import subprocess
 import sys
 import time
 import re
 import json
+import subprocess
+
+from threading import Thread
+from queue import Queue
+from os import environ
 
 from .common import AudioConversionError, PostProcessor
 
@@ -295,7 +299,7 @@ class FFmpegPostProcessor(PostProcessor):
     def run_ffmpeg_multiple_files(self, input_paths, out_path, opts, **kwargs):
         return self.real_run_ffmpeg([(path, []) for path in input_paths], [(out_path, opts)], **kwargs)
 
-    def real_run_ffmpeg(self, input_path_opts, output_path_opts, *, expected_retcodes=(0,)):
+    def real_run_ffmpeg(self, input_path_opts, output_path_opts, *, expected_retcodes=(0,), information=None):
         self.check_version()
 
         oldest_mtime = min(
@@ -318,27 +322,14 @@ class FFmpegPostProcessor(PostProcessor):
             return [encodeArgument(arg) for arg in args] + [encodeFilename(self._ffmpeg_filename_argument(file), True)]
 
         for arg_type, path_opts in (('i', input_path_opts), ('o', output_path_opts)):
-            for i, (path, opts) in enumerate(path_opts):
-                if path:
-                    cmd += make_args(path, list(opts), arg_type, i + 1)
+            cmd += itertools.chain.from_iterable(
+                make_args(path, list(opts), arg_type, i + 1)
+                for i, (path, opts) in enumerate(path_opts) if path)
 
-        # Needed to track ffmpeg progress
-        cmd.extend(['-progress', 'pipe:1', '-stats_period', '0.1'])
-
-        if type(input_path_opts) == list:
-            file_path, _ = input_path_opts[0]
-        elif type(input_path_opts) == tuple:
-            file_path, _ = input_path_opts
-        else:
-            raise ValueError(f"input_path_opts should either be a tuple or a list but it is a '{type(input_path_opts)}'")
         self.write_debug('ffmpeg command line: %s' % shell_quote(cmd))
-        file_infos = self.get_metadata_object(file_path)
-        filename = os.path.basename(file_path)
-        info_dict = {'_filename': filename, 'duration': file_infos.get('duration'), 'filesize': file_infos.get('filesize')}
-        p = Popen(cmd, universal_newlines=True, encoding='utf8', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # stdout, stderr = p.communicate_or_kill()
-        ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, cmd, p, self._hook_progress, 'processing', 'processed_bytes')
-        stdout, stderr, return_code = ffmpeg_progress_tracker.ffmpeg_track_progress()
+
+        ffmpeg_progress_tracker = FFmpegProgressTracker(information, cmd, self._ffmpeg_hook, self._downloader)
+        stdout, stderr, return_code = ffmpeg_progress_tracker.run_ffmpeg_subprocess()
         if return_code not in variadic(expected_retcodes):
             stderr = stderr.strip()
             self.write_debug(stderr)
@@ -348,7 +339,7 @@ class FFmpegPostProcessor(PostProcessor):
                 self.try_utime(out_path, oldest_mtime, oldest_mtime)
         return stderr
 
-    def run_ffmpeg(self, path, out_path, opts, **kwargs):
+    def run_ffmpeg(self, path, out_path, opts, informations=None, **kwargs):
         return self.run_ffmpeg_multiple_files([path], out_path, opts, **kwargs)
 
     @staticmethod
@@ -413,6 +404,12 @@ class FFmpegPostProcessor(PostProcessor):
                 if directive in opts:
                     yield f'{directive} {opts[directive]}\n'
 
+    def _ffmpeg_hook(self, status, info_dict):
+        status['processed_bytes'] = status.get('outputted', 0)
+        if status.get('status') == 'ffmpeg_running':
+            status['status'] = 'processing'
+        self._hook_progress(status, info_dict)
+
 
 class FFmpegExtractAudioPP(FFmpegPostProcessor):
     COMMON_AUDIO_EXTS = ('wav', 'flac', 'm4a', 'aiff', 'mp3', 'ogg', 'mka', 'opus', 'wma')
@@ -446,14 +443,14 @@ class FFmpegExtractAudioPP(FFmpegPostProcessor):
             return ['-vbr', f'{int(q)}']
         return ['-q:a', f'{q}']
 
-    def run_ffmpeg(self, path, out_path, codec, more_opts):
+    def run_ffmpeg(self, path, out_path, codec, more_opts, informations=None):
         if codec is None:
             acodec_opts = []
         else:
             acodec_opts = ['-acodec', codec]
         opts = ['-vn'] + acodec_opts + more_opts
         try:
-            FFmpegPostProcessor.run_ffmpeg(self, path, out_path, opts)
+            FFmpegPostProcessor.run_ffmpeg(self, path, out_path, informations, opts)
         except FFmpegPostProcessorError as err:
             raise AudioConversionError(err.msg)
 
@@ -527,7 +524,7 @@ class FFmpegExtractAudioPP(FFmpegPostProcessor):
 
         try:
             self.to_screen(f'Destination: {new_path}')
-            self.run_ffmpeg(path, temp_path, acodec, more_opts)
+            self.run_ffmpeg(path, temp_path, acodec, more_opts, information)
         except AudioConversionError as e:
             raise PostProcessingError(
                 'audio conversion failed: ' + e.msg)
@@ -583,7 +580,7 @@ class FFmpegVideoConvertorPP(FFmpegPostProcessor):
 
         outpath = replace_extension(filename, target_ext, source_ext)
         self.to_screen(f'{self._ACTION.title()} video from {source_ext} to {target_ext}; Destination: {outpath}')
-        self.run_ffmpeg(filename, outpath, self._options(target_ext))
+        self.run_ffmpeg(filename, outpath, self._options(target_ext), info)
 
         info['filepath'] = outpath
         info['format'] = info['ext'] = target_ext
@@ -1005,7 +1002,7 @@ class FFmpegSubtitlesConvertorPP(FFmpegPostProcessor):
                 else:
                     sub_filenames.append(srt_file)
 
-            self.run_ffmpeg(old_file, new_file, ['-f', new_format])
+            self.run_ffmpeg(old_file, new_file, ['-f', new_format], info)
 
             with io.open(new_file, 'rt', encoding='utf-8') as f:
                 subs[lang] = {
@@ -1185,97 +1182,161 @@ class FFmpegConcatPP(FFmpegPostProcessor):
 
 class FFmpegProgressTracker:
 
-    def __init__(self, info_dict, ffmpeg_args, ffmpeg_proc, hook_progress, running_status_value, action_bytes_key):
-        self.info_dict = info_dict
-        self.ffmpeg_args = ffmpeg_args
-        self.ffmpeg_proc = ffmpeg_proc
-        self.hook_progress = hook_progress
-        self.running_status_value = running_status_value
-        self.action_bytes_key = action_bytes_key
+    def __init__(self, info_dict, ffmpeg_args, hook_progress, ydl=None):
+        self.ffmpeg_proc = Popen(ffmpeg_args, env=environ.copy())
+        self.ydl = ydl
+        self._info_dict = info_dict
+        self._ffmpeg_args = ffmpeg_args
+        self._hook_progress = hook_progress
+        self._out_queue = Queue()
+        self._err_queue = Queue()
+        self._stdout_buffer = ''
+        self._stderr_buffer = ''
+        self._progress_pattern = re.compile(
+            r'(frame=\s*(?P<frame>\S+)\n'
+            r'fps=\s*(?P<fps>\S+)\n'
+            r'stream_\d+_\d+_q=\s*(?P<stream_d_d_q>\S+)\n)?'
+            r'bitrate=\s*(?P<bitrate>\S+)\n'
+            r'total_size=\s*(?P<total_size>\S+)\n'
+            r'out_time_us=\s*(?P<out_time_us>\S+)\n'
+            r'out_time_ms=\s*(?P<out_time_ms>\S+)\n'
+            r'out_time=\s*(?P<out_time>\S+)\n'
+            r'dup_frames=\s*(?P<dup_frames>\S+)\n'
+            r'drop_frames=\s*(?P<drop_frames>\S+)\n'
+            r'speed=\s*(?P<speed>\S+)\n'
+            r'progress=\s*(?P<progress>\S+)'
+        )
 
-    def ffmpeg_track_progress(self):
-        # Get ffmpeg progress by capturing and parsing the output with the '-progress' option
-        duration_to_track, duration = self.compute_duration_to_track()
-        total_filesize = self.compute_total_filesize(duration_to_track, duration)
-        started = time.time()
-        status = {
-            'filename': self.info_dict.get('_filename'),
-            'status': self.running_status_value,
-            'total_bytes': total_filesize,
-            'elapsed': time.time() - started
+    def run_ffmpeg_subprocess(self):
+        if self._info_dict:
+            return self._track_ffmpeg_progress()
+        return self._run_ffmpeg_without_progress_tracking()
+
+    def _run_ffmpeg_without_progress_tracking(self):
+        """Simply run ffmpeg and only care about the last stderr, stdout and the retcode"""
+        stdout, stderr = self.ffmpeg_proc.communicate_or_kill()
+        retcode = self.ffmpeg_proc.returncode
+        return stdout, stderr, retcode
+
+    def _track_ffmpeg_progress(self):
+        """ Track ffmpeg progress in a non blocking way using queues"""
+        self._start_time = time.time()
+        # args needed to track ffmpeg progress from stdout
+        self._ffmpeg_args.extend(['-progress', 'pipe:1'])
+        self._duration_to_track, self._total_duration = self._compute_duration_to_track()
+        self._total_filesize = self._compute_total_filesize(self._duration_to_track, self._total_duration)
+        self._status = {
+            'filename': self._info_dict.get('_filename'),
+            'status': 'ffmpeg_running',
+            'total_bytes': self._total_filesize,
+            'elapsed': 0,
+            'outputted': 0
         }
-        # Parse ffmpeg_output
-        progress_pattern = re.compile(
-            r'(frame=\s*(?P<frame>\S+)\nfps=\s*(?P<fps>\S+)\nstream_0_0_q=\s*(?P<stream_0_0_q>\S+)\n)?bitrate=\s*(?P<bitrate>\S+)\ntotal_size=\s*(?P<total_size>\S+)\nout_time_us=\s*(?P<out_time_us>\S+)\nout_time_ms=\s*(?P<out_time_ms>\S+)\nout_time=\s*(?P<out_time>\S+)\ndup_frames=\s*(?P<dup_frames>\S+)\ndrop_frames=\s*(?P<drop_frames>\S+)\nspeed=\s*(?P<speed>\S+)\nprogress=\s*(?P<progress>\S+)')
-        retval = self.ffmpeg_proc.poll()
-        ffmpeg_stdout_buffer = ''
-        ffmpeg_stderr_buffer = ''
-        while retval is None:
-            ffmpeg_stdout = self.ffmpeg_proc.stdout.readline() if self.ffmpeg_proc.stdout else ''
-            ffmpeg_stderr_buffer = self.ffmpeg_proc.stderr.readline() if self.ffmpeg_proc.stderr else ''
-            if ffmpeg_stderr_buffer != '':
-                sys.stderr.write(ffmpeg_stderr_buffer)
-                ffmpeg_stderr_buffer = ''
-            if ffmpeg_stdout == '':
-                continue
-            ffmpeg_stdout_buffer += ffmpeg_stdout
-            ffmpeg_prog_infos = re.match(progress_pattern, ffmpeg_stdout_buffer)
-            if not ffmpeg_prog_infos:
-                continue
-            sys.stdout.write(ffmpeg_stdout_buffer)
-            eta_seconds = self.compute_eta(ffmpeg_prog_infos, duration_to_track)
-            bitrate_int = self.compute_bitrate(ffmpeg_prog_infos.group('bitrate'))
-            # Not using ffmpeg 'total_size' value as it's imprecise and give progress percentage over 100
-            out_time_second = int_or_none(ffmpeg_prog_infos.group('out_time_us')) // 1_000_000
-            try:
-                dl_bytes_int = int_or_none(out_time_second / duration_to_track * total_filesize)
-            except ZeroDivisionError:
-                dl_bytes_int = 0
-            status.update({
-                self.action_bytes_key: dl_bytes_int,
-                'speed': bitrate_int,
-                'eta': eta_seconds
-            })
-            self.hook_progress(status, self.info_dict)
-            ffmpeg_stdout_buffer = ''
-            status.update({'elapsed': time.time() - started})
-            retval = self.ffmpeg_proc.poll()
-            # Prevents ffmpeg_proc from hanging
-            if ffmpeg_prog_infos.group('progress') == 'end':
-                status.update({
-                    'status': 'finished',
-                    self.action_bytes_key: total_filesize
-                })
-                self.hook_progress(status, self.info_dict)
-                self.ffmpeg_proc.kill()
-                return ffmpeg_stdout_buffer, ffmpeg_stderr_buffer, 0
 
-        status.update({
+        self.ffmpeg_proc = Popen(
+            self._ffmpeg_args,
+            env=environ.copy(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            encoding='utf8',
+        )
+
+        out_listener = Thread(
+            target=self._enqueue_lines,
+            args=(self.ffmpeg_proc.stdout, self._out_queue),
+            daemon=True,
+        )
+        err_listener = Thread(
+            target=self._enqueue_lines,
+            args=(self.ffmpeg_proc.stderr, self._err_queue),
+            daemon=True,
+        )
+        out_listener.start()
+        err_listener.start()
+
+        retcode = self._wait_for_ffmpeg()
+
+        self._status.update({
             'status': 'finished',
-            self.action_bytes_key: total_filesize
+            'outputted': self._total_filesize
         })
-        self.hook_progress(status, self.info_dict)
-        return ffmpeg_stdout_buffer, ffmpeg_stderr_buffer, retval
+        self._hook_progress(self._status, self._info_dict)
+        # Needed if ffmpeg didn't released the file in time for yt-dlp to change its name
+        time.sleep(.5)
+        return self._stdout_buffer, self._stderr_buffer, retcode
 
-    def compute_total_filesize(self, duration_to_track, duration):
-        if not duration:
+    @staticmethod
+    def _enqueue_lines(out, queue):
+        for line in iter(out.readline, ''):
+            queue.put(line.rstrip())
+        out.close()
+
+    def _handle_lines(self):
+        if not self._out_queue.empty():
+            stdout_line = self._out_queue.get_nowait()
+            self._stdout_buffer += stdout_line + '\n'
+            self._parse_ffmpeg_output()
+
+        if not self._err_queue.empty():
+            stderr_line = self._err_queue.get_nowait()
+            self._stderr_buffer += stderr_line
+
+    def _wait_for_ffmpeg(self):
+        retcode = self.ffmpeg_proc.poll()
+        while retcode is None:
+            time.sleep(.01)
+            self._handle_lines()
+            self._status.update({
+                'elapsed': time.time() - self._start_time
+            })
+            self._hook_progress(self._status, self._info_dict)
+            retcode = self.ffmpeg_proc.poll()
+        return retcode
+
+    def _parse_ffmpeg_output(self):
+        ffmpeg_prog_infos = re.match(self._progress_pattern, self._stdout_buffer)
+        if not ffmpeg_prog_infos:
+            return
+        eta_seconds = self._compute_eta(ffmpeg_prog_infos, self._duration_to_track)
+        bitrate_int = self._compute_bitrate(ffmpeg_prog_infos.group('bitrate'))
+        # Not using ffmpeg 'total_size' value as it's imprecise and gives progress percentage over 100
+        out_time_second = int_or_none(ffmpeg_prog_infos.group('out_time_us')) // 1_000_000
+        try:
+            outputted_bytes_int = int_or_none(out_time_second / self._duration_to_track * self._total_filesize)
+        except ZeroDivisionError:
+            outputted_bytes_int = 0
+        self._status.update({
+            'outputted': outputted_bytes_int,
+            'speed': bitrate_int,
+            'eta': eta_seconds,
+        })
+        self._hook_progress(self._status, self._info_dict)
+        self._stderr_buffer = re.sub(r'=\s+', '=', self._stderr_buffer)
+        print(self._stdout_buffer, file=sys.stdout, end='')
+        print(self._stderr_buffer, file=sys.stderr)
+        self._stdout_buffer = ''
+        self._stderr_buffer = ''
+
+    def _compute_total_filesize(self, duration_to_track, total_duration):
+        if not total_duration:
             return 0
-        filesize = self.info_dict.get('filesize')
+        filesize = self._info_dict.get('filesize')
         if not filesize:
-            filesize = self.info_dict.get('filesize_approx', 0)
-        total_filesize = filesize * duration_to_track // duration
+            filesize = self._info_dict.get('filesize_approx', 0)
+        total_filesize = filesize * duration_to_track // total_duration
         return total_filesize
 
-    def compute_duration_to_track(self):
-        duration = self.info_dict.get('duration')
+    def _compute_duration_to_track(self):
+        duration = self._info_dict.get('duration')
         if not duration:
             return 0, 0
 
         start_time, end_time = 0, duration
-        for i, arg in enumerate(self.ffmpeg_args):
+        for i, arg in enumerate(self._ffmpeg_args):
             arg_timestamp = re.match(r'(?P<at>(-ss|-sseof|-to))', arg)
-            if arg_timestamp and i + 1 < len(self.ffmpeg_args):
-                timestamp_seconds = self.ffmpeg_time_string_to_seconds(self.ffmpeg_args[i + 1])
+            if arg_timestamp and i + 1 < len(self._ffmpeg_args):
+                timestamp_seconds = self.ffmpeg_time_string_to_seconds(self._ffmpeg_args[i + 1])
                 if arg_timestamp.group('at') == '-ss':
                     start_time = timestamp_seconds
                 elif arg_timestamp.group('at') == '-sseof':
@@ -1286,11 +1347,10 @@ class FFmpegProgressTracker:
         duration_to_track = end_time - start_time
         if duration_to_track >= 0:
             return duration_to_track, duration
-        else:
-            return 0, duration
+        return 0, duration
 
     @staticmethod
-    def compute_eta(ffmpeg_prog_infos, duration_to_track):
+    def _compute_eta(ffmpeg_prog_infos, duration_to_track):
         try:
             speed = float_or_none(ffmpeg_prog_infos.group('speed')[:-1])
             out_time_second = int_or_none(ffmpeg_prog_infos.group('out_time_us')) // 1_000_000
@@ -1302,39 +1362,42 @@ class FFmpegProgressTracker:
     @staticmethod
     def ffmpeg_time_string_to_seconds(time_string):
         ffmpeg_time_seconds = 0
-        hms_parsed = re.match(r"((?P<H>\d\d?):)?((?P<M>\d\d?):)?(?P<S>\d\d?)(\.(?P<f>\d{1,3}))?", time_string)
-        smu_parsed = re.match(r"(?P<T>\d+)(?P<U>s|ms|us)", time_string)
+        hms_parsed = re.match(r"((?P<Hour>\d+):)?((?P<Minute>\d+):)?(?P<Second>\d+)(\.(?P<float>\d+))?", time_string)
+        smu_parse = re.match(r"(?P<Time>\d+)(?P<Unit>[mu]?s)", time_string)
         if hms_parsed:
-            if hms_parsed.group('H') is not None:
-                ffmpeg_time_seconds += 3600 * int_or_none(hms_parsed.group('H'))
-            if hms_parsed.group('M') is not None:
-                ffmpeg_time_seconds += 60 * int_or_none(hms_parsed.group('M'))
-            ffmpeg_time_seconds += int_or_none(hms_parsed.group('S'))
-            if hms_parsed.group('f') is not None:
-                ffmpeg_time_seconds += int_or_none(hms_parsed.group('f')) / 1_000
-        elif smu_parsed:
-            ffmpeg_time_seconds = int_or_none(smu_parsed.group('T'))
-            if smu_parsed.group('U') == 'ms':
+            if hms_parsed.group('Hour'):
+                ffmpeg_time_seconds += 3600 * int_or_none(hms_parsed.group('Hour'))
+            if hms_parsed.group('Minute'):
+                ffmpeg_time_seconds += 60 * int_or_none(hms_parsed.group('Minute'))
+            ffmpeg_time_seconds += int_or_none(hms_parsed.group('Second'))
+            if hms_parsed.group('float'):
+                float_part = hms_parsed.group('float')
+                ffmpeg_time_seconds += int_or_none(float_part) / (10 ** len(float_part))
+        elif smu_parse:
+            ffmpeg_time_seconds = int_or_none(smu_parse.group('Time'))
+            prefix_and_unit = smu_parse.group('Unit')
+            if prefix_and_unit == 'ms':
                 ffmpeg_time_seconds /= 1_000
-            elif smu_parsed.group('U') == 'us':
+            elif prefix_and_unit == 'us':
                 ffmpeg_time_seconds /= 1_000_000
         return ffmpeg_time_seconds
 
     @staticmethod
-    def compute_bitrate(bitrate):
-        bitrate_str = re.match(r"(?P<E>\d+)(\.(?P<f>\d+))?(?P<U>[gmk])?bits/s", bitrate)
+    def _compute_bitrate(bitrate):
+        bitrate_str = re.match(r"(?P<Integer>\d+)(\.(?P<float>\d+))?(?P<Prefix>[gmk])?bits/s", bitrate)
         try:
-            no_prefix_int = int_or_none(bitrate_str.group('E'))
-            if bitrate_str.group('f') is not None:
-                no_prefix_int += int_or_none(bitrate_str.group('f'))
-            if bitrate_str.group('U') is not None:
-                if bitrate_str.group('U') == 'g':
-                    no_prefix_int *= 1_000_000_000
-                elif bitrate_str.group('U') == 'm':
-                    no_prefix_int *= 1_000_000
-                elif bitrate_str.group('U') == 'k':
-                    no_prefix_int *= 1_000
-            bitrate_int = no_prefix_int
+            no_prefix_bitrate = int_or_none(bitrate_str.group('Integer'))
+            if bitrate_str.group('float'):
+                float_part = bitrate_str.group('float')
+                no_prefix_bitrate += int_or_none(float_part) / (10 ** len(float_part))
+            if bitrate_str.group('Prefix'):
+                unit_prefix = bitrate_str.group('Prefix')
+                if unit_prefix == 'g':
+                    no_prefix_bitrate *= 1_000_000_000
+                elif unit_prefix == 'm':
+                    no_prefix_bitrate *= 1_000_000
+                elif unit_prefix == 'k':
+                    no_prefix_bitrate *= 1_000
         except (TypeError, AttributeError):
-            bitrate_int = None
-        return bitrate_int
+            return 0
+        return no_prefix_bitrate

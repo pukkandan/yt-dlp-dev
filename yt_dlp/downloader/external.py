@@ -482,15 +482,14 @@ class FFmpegFD(ExternalFD):
 
         args = [encodeArgument(opt) for opt in args]
         args.append(encodeFilename(ffpp._ffmpeg_filename_argument(tmpfilename), True))
-        args.extend(['-progress', 'pipe:1', '-stats_period', '0.1'])
-        self._debug_cmd(args)
 
-        proc = Popen(args, env=env, universal_newlines=True, encoding='utf8', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self._debug_cmd(args)
+        ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, args, self._ffmpeg_hook)
+        proc = ffmpeg_progress_tracker.ffmpeg_proc
         if url in ('-', 'pipe:'):
             self.on_process_started(proc, proc.stdin)
         try:
-            ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, args, proc, self._hook_progress, 'downloading', 'downloaded_bytes')
-            _, _, return_code = ffmpeg_progress_tracker.ffmpeg_track_progress()
+            _, _, return_code = ffmpeg_progress_tracker.run_ffmpeg_subprocess()
             return return_code
         except BaseException as e:
             # subprocces.run would send the SIGKILL signal to ffmpeg and the
@@ -504,6 +503,12 @@ class FFmpegFD(ExternalFD):
                 proc.kill()
                 proc.wait()
             raise
+
+    def _ffmpeg_hook(self, status, info_dict):
+        status['downloaded_bytes'] = status.get('outputted', 0)
+        if status.get('status') == 'ffmpeg_running':
+            status['status'] = 'downloading'
+        self._hook_progress(status, info_dict)
 
 
 class AVconvFD(FFmpegFD):
