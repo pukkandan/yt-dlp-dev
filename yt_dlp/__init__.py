@@ -30,6 +30,7 @@ from .utils import (
     NO_DEFAULT,
     POSTPROCESS_WHEN,
     DateRange,
+    SafeEval,
     DownloadCancelled,
     DownloadError,
     GeoUtils,
@@ -241,26 +242,15 @@ def validate_options(opts):
     opts.file_access_retries = parse_retries('file access', opts.file_access_retries)
 
     # Retry sleep function
-    def parse_sleep_func(expr):
-        NUMBER_RE = r'\d+(?:\.\d+)?'
-        op, start, limit, step, *_ = tuple(re.fullmatch(
-            rf'(?:(linear|exp)=)?({NUMBER_RE})(?::({NUMBER_RE})?)?(?::({NUMBER_RE}))?',
-            expr.strip()).groups()) + (None, None)
-
-        if op == 'exp':
-            return lambda n: min(float(start) * (float(step or 2) ** n), float(limit or 'inf'))
-        else:
-            default_step = start if op or limit else 0
-            return lambda n: min(float(start) + float(step or default_step) * n, float(limit or 'inf'))
-
+    calculator = SafeEval((int, float), SafeEval.FUNC_NODES | SafeEval.MATH_NODES, {**SafeEval.MATH_FUNCS, 'n': 0})
     for key, expr in opts.retry_sleep.items():
         if not expr:
             del opts.retry_sleep[key]
             continue
         try:
-            opts.retry_sleep[key] = parse_sleep_func(expr)
-        except AttributeError:
-            raise ValueError(f'invalid {key} retry sleep expression {expr!r}')
+            opts.retry_sleep[key] = calculator.to_func(expr)
+        except ValueError as e:
+            raise ValueError(f'invalid {key} retry sleep expression {expr!r}: {e}')
 
     # Bytes
     def parse_bytes(name, value):

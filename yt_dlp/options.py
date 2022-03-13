@@ -837,9 +837,7 @@ def create_parser():
         }, help=(
             'An expression for the time to sleep between retries in seconds (optionally) prefixed '
             'by the type of retry (file_access, fragment, http (default)) to apply the sleep to. '
-            'EXPR can be a number, linear=START[:END[:STEP=1]] or exp=START[:END[:BASE=2]]. '
-            'This option can be used multiple times to set the sleep for the different retry types. '
-            'Eg: --retry-sleep linear=1::2 --retry-sleep fragment:exp=1:20'))
+            'TODO'))
     downloader.add_option(
         '--skip-unavailable-fragments', '--no-abort-on-unavailable-fragment',
         action='store_true', dest='skip_unavailable_fragments', default=True,
