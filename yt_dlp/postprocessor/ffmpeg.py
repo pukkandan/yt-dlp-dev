@@ -392,6 +392,7 @@ class FFmpegPostProcessor(PostProcessor):
                     yield f'{directive} {opts[directive]}\n'
 
     def _ffmpeg_hook(self, status, info_dict):
+        # Finalize PP hook API
         status['processed_bytes'] = status.get('outputted', 0)
         if status.get('status') == 'ffmpeg_running':
             status['status'] = 'processing'
@@ -1210,6 +1211,7 @@ class FFmpegProgressTracker:
         self.ydl.write_debug(f'ffmpeg command line: {shell_quote(self._ffmpeg_args)}')
         self.ffmpeg_proc = Popen(self._ffmpeg_args, env=self._env, universal_newlines=True,
                                  encoding='utf8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # there should be a hook at start
         self._start_time = time.time()
 
     def trigger_progress_hook(self, dct):
@@ -1221,9 +1223,12 @@ class FFmpegProgressTracker:
             return self._track_ffmpeg_progress()
         return self._run_ffmpeg_without_progress_tracking()
 
+    # This shouldn't be needed
     def _run_ffmpeg_without_progress_tracking(self):
         """Simply run ffmpeg and only care about the last stderr, stdout and the retcode"""
+        # The stdout/err are being captured, but we don't print any progress either
         stdout, stderr = self.ffmpeg_proc.communicate_or_kill()
+        # finished hook should trigger here
         retcode = self.ffmpeg_proc.returncode
         return stdout, stderr, retcode
 
@@ -1233,6 +1238,9 @@ class FFmpegProgressTracker:
         self._duration_to_track, self._total_duration = self._compute_duration_to_track()
         self._total_filesize = self._compute_total_filesize(self._duration_to_track, self._total_duration)
         self._status = {
+            # 1. The file being modified need not the video file. This should be infered from args
+            # 1. For postprocessor hook, the API is not currently defined.
+            #       To account for multiple files being modified, 'filenames': [...] may be more appropriate
             'filename': self._info_dict.get('_filename'),
             'status': 'ffmpeg_running',
             'total_bytes': self._total_filesize,
@@ -1266,6 +1274,8 @@ class FFmpegProgressTracker:
             return
         self._streams[to_stderr] += lines
 
+        # 1. should all this go to debug?
+        # 1. How to print this alongside progress correctly?
         self.ydl.to_stdout('\r', skip_eol=True)
         for msg in lines.splitlines():
             if msg.strip():
@@ -1322,11 +1332,14 @@ class FFmpegProgressTracker:
     def _compute_total_filesize(self, duration_to_track, total_duration):
         if not total_duration:
             return 0
+        # This is incorrect since the operation is not necessarily being performed on the video
+        # Example: Convert subtitles, convert thumbnails, split chapters, concat video
         filesize = traverse_obj(self._info_dict, 'filesize', 'filesize_approx', default=0)
         total_filesize = filesize * duration_to_track // total_duration
         return total_filesize
 
     def _compute_duration_to_track(self):
+        # Same issues as filesize
         duration = self._info_dict.get('duration')
         if not duration:
             return 0, 0
@@ -1336,6 +1349,7 @@ class FFmpegProgressTracker:
             arg_timestamp = re.match(r'(?P<at>(-ss|-sseof|-to))', arg)
             if not arg_timestamp:
                 continue
+            # The args can be like -ss=10
             timestamp_seconds = self.ffmpeg_time_string_to_seconds(self._ffmpeg_args[i + 1])
             if arg_timestamp.group('at') == '-ss':
                 start_time = timestamp_seconds

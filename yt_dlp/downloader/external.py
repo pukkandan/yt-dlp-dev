@@ -362,6 +362,7 @@ class FFmpegFD(ExternalFD):
 
         args = [ffpp.executable, '-y']
 
+        # Should these be removed now?
         for log_level in ('quiet', 'verbose'):
             if self.params.get(log_level, False):
                 args += ['-loglevel', log_level]
@@ -511,6 +512,7 @@ class FFmpegFD(ExternalFD):
             raise
 
     def _ffmpeg_hook(self, status, info_dict):
+        # Construct a new status object acording to the API specs
         status['downloaded_bytes'] = status.get('outputted', 0)
         if status.get('status') == 'ffmpeg_running':
             status['status'] = 'downloading'
