@@ -450,7 +450,7 @@ class FFmpegExtractAudioPP(FFmpegPostProcessor):
             acodec_opts = ['-acodec', codec]
         opts = ['-vn'] + acodec_opts + more_opts
         try:
-            FFmpegPostProcessor.run_ffmpeg(self, path, out_path, informations, opts)
+            FFmpegPostProcessor.run_ffmpeg(self, path, out_path, opts, informations)
         except FFmpegPostProcessorError as err:
             raise AudioConversionError(err.msg)
 
@@ -1183,10 +1183,9 @@ class FFmpegConcatPP(FFmpegPostProcessor):
 class FFmpegProgressTracker:
 
     def __init__(self, info_dict, ffmpeg_args, hook_progress, ydl=None):
-        self.ffmpeg_proc = Popen(ffmpeg_args, env=environ.copy())
         self.ydl = ydl
         self._info_dict = info_dict
-        self._ffmpeg_args = ffmpeg_args
+        self._ffmpeg_args = ffmpeg_args + ['-progress', 'pipe:1']
         self._hook_progress = hook_progress
         self._out_queue = Queue()
         self._err_queue = Queue()
@@ -1206,6 +1205,14 @@ class FFmpegProgressTracker:
             r'speed=\s*(?P<speed>\S+)\n'
             r'progress=\s*(?P<progress>\S+)'
         )
+        self.ffmpeg_proc = Popen(
+            self._ffmpeg_args,
+            env=environ.copy(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            encoding='utf8',
+        )
 
     def run_ffmpeg_subprocess(self):
         if self._info_dict:
@@ -1222,7 +1229,6 @@ class FFmpegProgressTracker:
         """ Track ffmpeg progress in a non blocking way using queues"""
         self._start_time = time.time()
         # args needed to track ffmpeg progress from stdout
-        self._ffmpeg_args.extend(['-progress', 'pipe:1'])
         self._duration_to_track, self._total_duration = self._compute_duration_to_track()
         self._total_filesize = self._compute_total_filesize(self._duration_to_track, self._total_duration)
         self._status = {
@@ -1232,15 +1238,6 @@ class FFmpegProgressTracker:
             'elapsed': 0,
             'outputted': 0
         }
-
-        self.ffmpeg_proc = Popen(
-            self._ffmpeg_args,
-            env=environ.copy(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-            encoding='utf8',
-        )
 
         out_listener = Thread(
             target=self._enqueue_lines,
