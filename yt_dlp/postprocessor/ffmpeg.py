@@ -1184,9 +1184,10 @@ class FFmpegProgressTracker:
 
     def __init__(self, info_dict, ffmpeg_args, hook_progress, ydl=None):
         self.ydl = ydl
-        self._info_dict = info_dict
+        self._info_dict = info_dict or {}
         self._ffmpeg_args = ffmpeg_args + ['-progress', 'pipe:1']
         self._hook_progress = hook_progress
+        self._status = {}
         self._out_queue = Queue()
         self._err_queue = Queue()
         self._stdout_buffer = ''
@@ -1215,6 +1216,7 @@ class FFmpegProgressTracker:
         )
 
     def run_ffmpeg_subprocess(self):
+        self._hook_progress(self._status, self._info_dict)
         if self._info_dict:
             return self._track_ffmpeg_progress()
         return self._run_ffmpeg_without_progress_tracking()
@@ -1238,7 +1240,7 @@ class FFmpegProgressTracker:
             'elapsed': 0,
             'outputted': 0
         }
-
+        self._hook_progress(self._status, self._info_dict)
         out_listener = Thread(
             target=self._enqueue_lines,
             args=(self.ffmpeg_proc.stdout, self._out_queue),
