@@ -8,7 +8,6 @@ import os
 import queue
 import re
 import subprocess
-import sys
 import threading
 import time
 
@@ -1205,19 +1204,13 @@ class FFmpegProgressTracker:
         self._info_dict = info_dict
         self._ffmpeg_args = ffmpeg_args + ['-progress', 'pipe:1']
         self._hook_progress = hook_progress
-        self._stdout_queue, self._stdout, self._buffer = queue.Queue(), '', ''
-        self._stderr_queue, self._stderr = queue.Queue(), ''
+        self._stdout_queue, self._stderr_queue = queue.Queue(), queue.Queue()
+        self._streams, self._buffer = ['', ''], ''
 
         self.ydl.write_debug(f'ffmpeg command line: {shell_quote(self._ffmpeg_args)}')
         self.ffmpeg_proc = Popen(self._ffmpeg_args, env=self._env, universal_newlines=True,
                                  encoding='utf8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._start_time = time.time()
-
-    def write_debug(self, message, *args, **kwargs):
-        self.ydl.to_stdout('\r', skip_eol=True)
-        for msg in message.splitlines():
-            if msg.strip():
-                self.ydl.write_debug(f'ffmpeg: {msg}', *args, **kwargs)
 
     def trigger_progress_hook(self, dct):
         self._status.update(dct)
@@ -1253,12 +1246,14 @@ class FFmpegProgressTracker:
                          args=(self.ffmpeg_proc.stderr, self._stderr_queue)).start()
 
         retcode = self._wait_for_ffmpeg()
+        self._save_stream(self._buffer)
+        self._buffer = ''
         self.trigger_progress_hook({
             'status': 'finished',
             'outputted': self._total_filesize
         })
         time.sleep(.5)  # Needed if ffmpeg didn't release the file in time for yt-dlp to change its name
-        return self._stdout, self._stderr, retcode
+        return (*self._streams, retcode)
 
     @staticmethod
     def _enqueue_lines(out, q):
@@ -1266,17 +1261,22 @@ class FFmpegProgressTracker:
             q.put(line.rstrip())
         out.close()
 
+    def _save_stream(self, lines, to_stderr=False):
+        if not lines:
+            return
+        self._streams[to_stderr] += lines
+
+        self.ydl.to_stdout('\r', skip_eol=True)
+        for msg in lines.splitlines():
+            if msg.strip():
+                self.ydl.write_debug(f'ffmpeg: {msg}')
+
     def _handle_lines(self):
         if not self._stdout_queue.empty():
-            stdout = self._parse_ffmpeg_output(self._stdout_queue.get_nowait())
-            if stdout:
-                self._stdout += stdout
-                self.write_debug(stdout)
+            self._save_stream(self._parse_ffmpeg_output(self._stdout_queue.get_nowait()))
 
         if not self._stderr_queue.empty():
-            stderr = self._stderr_queue.get_nowait()
-            self._stderr += stderr
-            self.write_debug(stderr)
+            self._save_stream(self._stderr_queue.get_nowait(), True)
 
     def _wait_for_ffmpeg(self):
         while True:
@@ -1288,7 +1288,6 @@ class FFmpegProgressTracker:
             self.trigger_progress_hook({
                 'elapsed': time.time() - self._start_time
             })
-        self._stdout += self._buffer
 
     def _parse_ffmpeg_output(self, stdout):
         """@returns remaining output after parsing"""
