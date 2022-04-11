@@ -490,8 +490,7 @@ class FFmpegFD(ExternalFD):
         args = [encodeArgument(opt) for opt in args]
         args.append(encodeFilename(ffpp._ffmpeg_filename_argument(tmpfilename), True))
 
-        self._debug_cmd(args)
-        ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, args, self._ffmpeg_hook)
+        ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, args, self._ffmpeg_hook, self.ydl, env=env)
         proc = ffmpeg_progress_tracker.ffmpeg_proc
         if url in ('-', 'pipe:'):
             self.on_process_started(proc, proc.stdin)
