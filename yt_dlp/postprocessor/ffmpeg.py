@@ -318,14 +318,10 @@ class FFmpegPostProcessor(PostProcessor):
                 make_args(path, list(opts), arg_type, i + 1)
                 for i, (path, opts) in enumerate(path_opts) if path)
 
-        self.write_debug('ffmpeg command line: %s' % shell_quote(cmd))
-
         ffmpeg_progress_tracker = FFmpegProgressTracker(info_dict, cmd, self._ffmpeg_hook, self._downloader)
-        stdout, stderr, return_code = ffmpeg_progress_tracker.run_ffmpeg_subprocess()
+        _, stderr, return_code = ffmpeg_progress_tracker.run_ffmpeg_subprocess()
         if return_code not in variadic(expected_retcodes):
-            stderr = stderr.strip()
-            self.write_debug(stderr)
-            raise FFmpegPostProcessorError(stderr.split('\n')[-1])
+            raise FFmpegPostProcessorError(stderr.strip().split('\n')[-1])
         for out_path, _ in output_path_opts:
             if out_path:
                 self.try_utime(out_path, oldest_mtime, oldest_mtime)
@@ -1185,37 +1181,43 @@ class FFmpegConcatPP(FFmpegPostProcessor):
 
 
 class FFmpegProgressTracker:
+
+    PROGRESS_PATTERN = re.compile(r'''(?x)
+        (?:
+            frame=\s*(?P<frame>\S+)\n
+            fps=\s*(?P<fps>\S+)\n
+            stream_\d+_\d+_q=\s*(?P<stream_d_d_q>\S+)\n
+        )?
+        bitrate=\s*(?P<bitrate>\S+)\n
+        total_size=\s*(?P<total_size>\S+)\n
+        out_time_us=\s*(?P<out_time_us>\S+)\n
+        out_time_ms=\s*(?P<out_time_ms>\S+)\n
+        out_time=\s*(?P<out_time>\S+)\n
+        dup_frames=\s*(?P<dup_frames>\S+)\n
+        drop_frames=\s*(?P<drop_frames>\S+)\n
+        speed=\s*(?P<speed>\S+)\n
+        progress=\s*(?P<progress>\S+)
+    ''')
+
     def __init__(self, info_dict, ffmpeg_args, hook_progress, ydl, env=None):
         self._env = env
         self.ydl = ydl
         self._info_dict = info_dict
         self._ffmpeg_args = ffmpeg_args + ['-progress', 'pipe:1']
         self._hook_progress = hook_progress
-        self._stdout_queue, self._stdout_buffer = queue.Queue(), ''
-        self._stderr_queue, self._stderr_buffer = queue.Queue(), ''
-        self._progress_pattern = re.compile(r'''(?x)
-            (?:
-                frame=\s*(?P<frame>\S+)\n
-                fps=\s*(?P<fps>\S+)\n
-                stream_\d+_\d+_q=\s*(?P<stream_d_d_q>\S+)\n
-            )?
-            bitrate=\s*(?P<bitrate>\S+)\n
-            total_size=\s*(?P<total_size>\S+)\n
-            out_time_us=\s*(?P<out_time_us>\S+)\n
-            out_time_ms=\s*(?P<out_time_ms>\S+)\n
-            out_time=\s*(?P<out_time>\S+)\n
-            dup_frames=\s*(?P<dup_frames>\S+)\n
-            drop_frames=\s*(?P<drop_frames>\S+)\n
-            speed=\s*(?P<speed>\S+)\n
-            progress=\s*(?P<progress>\S+)
-        ''')
-        self._debug_cmd()
+        self._stdout_queue, self._stdout, self._buffer = queue.Queue(), '', ''
+        self._stderr_queue, self._stderr = queue.Queue(), ''
+
+        self.ydl.write_debug(f'ffmpeg command line: {shell_quote(self._ffmpeg_args)}')
         self.ffmpeg_proc = Popen(self._ffmpeg_args, env=self._env, universal_newlines=True,
                                  encoding='utf8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._start_time = time.time()
 
-    def _debug_cmd(self):
-        self.ydl.write_debug(f'ffmpeg command line: {shell_quote(self._ffmpeg_args)}')
+    def write_debug(self, message, *args, **kwargs):
+        self.ydl.to_stdout('\r', skip_eol=True)
+        for msg in message.splitlines():
+            if msg.strip():
+                self.ydl.write_debug(f'ffmpeg: {msg}', *args, **kwargs)
 
     def trigger_progress_hook(self, dct):
         self._status.update(dct)
@@ -1256,7 +1258,7 @@ class FFmpegProgressTracker:
             'outputted': self._total_filesize
         })
         time.sleep(.5)  # Needed if ffmpeg didn't release the file in time for yt-dlp to change its name
-        return self._stdout_buffer, self._stderr_buffer, retcode
+        return self._stdout, self._stderr, retcode
 
     @staticmethod
     def _enqueue_lines(out, q):
@@ -1266,13 +1268,15 @@ class FFmpegProgressTracker:
 
     def _handle_lines(self):
         if not self._stdout_queue.empty():
-            stdout_line = self._stdout_queue.get_nowait()
-            self._stdout_buffer += f'{stdout_line}\n'
-            self._parse_ffmpeg_output()
+            stdout = self._parse_ffmpeg_output(self._stdout_queue.get_nowait())
+            if stdout:
+                self._stdout += stdout
+                self.write_debug(stdout)
 
         if not self._stderr_queue.empty():
-            stderr_line = self._stderr_queue.get_nowait()
-            self._stderr_buffer += stderr_line
+            stderr = self._stderr_queue.get_nowait()
+            self._stderr += stderr
+            self.write_debug(stderr)
 
     def _wait_for_ffmpeg(self):
         while True:
@@ -1284,9 +1288,20 @@ class FFmpegProgressTracker:
             self.trigger_progress_hook({
                 'elapsed': time.time() - self._start_time
             })
+        self._stdout += self._buffer
 
-    def _parse_ffmpeg_output(self):
-        ffmpeg_prog_infos = re.match(self._progress_pattern, self._stdout_buffer)
+    def _parse_ffmpeg_output(self, stdout):
+        """@returns remaining output after parsing"""
+
+        ffmpeg_prog_infos = None
+
+        def capture_progress(mobj):
+            nonlocal ffmpeg_prog_infos
+            ffmpeg_prog_infos = mobj
+            return ''
+
+        self._buffer += f'{stdout}\n'
+        stdout = self.PROGRESS_PATTERN.sub(capture_progress, self._buffer)
         if not ffmpeg_prog_infos:
             return
         eta_seconds = self._compute_eta(ffmpeg_prog_infos, self._duration_to_track)
@@ -1302,11 +1317,8 @@ class FFmpegProgressTracker:
             'speed': bitrate_int,
             'eta': eta_seconds,
         })
-        self._stderr_buffer = re.sub(r'=\s+', '=', self._stderr_buffer)
-        print(self._stdout_buffer, file=sys.stdout, end='')
-        print(self._stderr_buffer, file=sys.stderr)
-        self._stdout_buffer = ''
-        self._stderr_buffer = ''
+        self._buffer = ''
+        return stdout.strip()
 
     def _compute_total_filesize(self, duration_to_track, total_duration):
         if not total_duration:
