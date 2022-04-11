@@ -24,6 +24,7 @@ cookies
 
 *.3gp
 *.ape
+*.ass
 *.avi
 *.desktop
 *.flac
@@ -106,6 +107,7 @@ yt-dlp.zip
 *.iml
 .vscode
 *.sublime-*
+*.code-workspace
 
 # Lazy extractors
 */extractor/lazy_extractors.py
@@ -114,3 +116,6 @@ yt-dlp.zip
 ytdlp_plugins/extractor/*
 !ytdlp_plugins/extractor/__init__.py
 !ytdlp_plugins/extractor/sample.py
+ytdlp_plugins/postprocessor/*
+!ytdlp_plugins/postprocessor/__init__.py
+!ytdlp_plugins/postprocessor/sample.py

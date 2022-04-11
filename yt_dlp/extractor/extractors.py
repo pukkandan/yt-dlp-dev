@@ -44,6 +44,7 @@ from .aenetworks import (
 from .afreecatv import (
     AfreecaTVIE,
     AfreecaTVLiveIE,
+    AfreecaTVUserIE,
 )
 from .airmozilla import AirMozillaIE
 from .aljazeera import AlJazeeraIE
@@ -68,6 +69,10 @@ from .anvato import AnvatoIE
 from .aol import AolIE
 from .allocine import AllocineIE
 from .aliexpress import AliExpressLiveIE
+from .alsace20tv import (
+    Alsace20TVIE,
+    Alsace20TVEmbedIE,
+)
 from .apa import APAIE
 from .aparat import AparatIE
 from .appleconnect import AppleConnectIE
@@ -91,6 +96,7 @@ from .arte import (
     ArteTVIE,
     ArteTVEmbedIE,
     ArteTVPlaylistIE,
+    ArteTVCategoryIE,
 )
 from .arnes import ArnesIE
 from .asiancrush import (
@@ -117,6 +123,10 @@ from .awaan import (
 )
 from .azmedien import AZMedienIE
 from .baidu import BaiduVideoIE
+from .banbye import (
+    BanByeIE,
+    BanByeChannelIE,
+)
 from .bandaichannel import BandaiChannelIE
 from .bandcamp import (
     BandcampIE,
@@ -306,9 +316,14 @@ from .commonprotocols import (
 from .condenast import CondeNastIE
 from .contv import CONtvIE
 from .corus import CorusIE
+from .cpac import (
+    CPACIE,
+    CPACPlaylistIE,
+)
 from .cozytv import CozyTVIE
 from .cracked import CrackedIE
 from .crackle import CrackleIE
+from .craftsy import CraftsyIE
 from .crooksandliars import CrooksAndLiarsIE
 from .crowdbunker import (
     CrowdBunkerIE,
@@ -331,6 +346,10 @@ from .curiositystream import (
     CuriosityStreamSeriesIE,
 )
 from .cwtv import CWTVIE
+from .cybrary import (
+    CybraryIE,
+    CybraryCourseIE
+)
 from .daftsex import DaftsexIE
 from .dailymail import DailyMailIE
 from .dailymotion import (
@@ -511,6 +530,7 @@ from .foxnews import (
     FoxNewsArticleIE,
 )
 from .foxsports import FoxSportsIE
+from .fptplay import FptplayIE
 from .franceculture import FranceCultureIE
 from .franceinter import FranceInterIE
 from .francetv import (
@@ -612,6 +632,7 @@ from .hse import (
     HSEProductIE,
 )
 from .huajiao import HuajiaoIE
+from .huya import HuyaLiveIE
 from .huffpost import HuffPostIE
 from .hungama import (
     HungamaIE,
@@ -663,6 +684,12 @@ from .iqiyi import (
     IqIE,
     IqAlbumIE
 )
+
+from .itprotv import (
+    ITProTVIE,
+    ITProTVCourseIE
+)
+
 from .itv import (
     ITVIE,
     ITVBTCCIE,
@@ -674,6 +701,10 @@ from .ivi import (
 from .ivideon import IvideonIE
 from .iwara import IwaraIE
 from .izlesene import IzleseneIE
+from .jable import (
+    JableIE,
+    JablePlaylistIE,
+)
 from .jamendo import (
     JamendoIE,
     JamendoAlbumIE,
@@ -719,6 +750,11 @@ from .laola1tv import (
     Laola1TvIE,
     EHFTVIE,
     ITTFIE,
+)
+from .lastfm import (
+    LastFMIE,
+    LastFMPlaylistIE,
+    LastFMUserIE,
 )
 from .lbry import (
     LBRYIE,
@@ -839,6 +875,7 @@ from .microsoftvirtualacademy import (
 from .mildom import (
     MildomIE,
     MildomVodIE,
+    MildomClipIE,
     MildomUserVodIE,
 )
 from .minds import (
@@ -883,6 +920,7 @@ from .motherless import (
 )
 from .motorsport import MotorsportIE
 from .movieclips import MovieClipsIE
+from .moviepilot import MoviepilotIE
 from .moviezine import MoviezineIE
 from .movingimage import MovingImageIE
 from .msn import MSNIE
@@ -1141,6 +1179,11 @@ from .palcomp3 import (
     PalcoMP3VideoIE,
 )
 from .pandoratv import PandoraTVIE
+from .panopto import (
+    PanoptoIE,
+    PanoptoListIE,
+    PanoptoPlaylistIE
+)
 from .paramountplus import (
     ParamountPlusIE,
     ParamountPlusSeriesIE,
@@ -1209,6 +1252,7 @@ from .podomatic import PodomaticIE
 from .pokemon import (
     PokemonIE,
     PokemonWatchIE,
+    PokemonSoundLibraryIE,
 )
 from .pokergo import (
     PokerGoIE,
@@ -1391,6 +1435,11 @@ from .glomex import (
 from .megatvcom import (
     MegaTVComIE,
     MegaTVComEmbedIE,
+)
+from .ant1newsgr import (
+    Ant1NewsGrWatchIE,
+    Ant1NewsGrArticleIE,
+    Ant1NewsGrEmbedIE,
 )
 from .rutv import RUTVIE
 from .ruutu import RuutuIE
@@ -1835,6 +1884,10 @@ from .vice import (
 from .vidbit import VidbitIE
 from .viddler import ViddlerIE
 from .videa import VideaIE
+from .videocampus_sachsen import (
+    VideocampusSachsenIE,
+    VideocampusSachsenEmbedIE,
+)
 from .videodetective import VideoDetectiveIE
 from .videofyme import VideofyMeIE
 from .videomore import (
@@ -1935,6 +1988,11 @@ from .washingtonpost import (
     WashingtonPostIE,
     WashingtonPostArticleIE,
 )
+from .wasdtv import (
+    WASDTVStreamIE,
+    WASDTVRecordIE,
+    WASDTVClipIE,
+)
 from .wat import WatIE
 from .watchbox import WatchBoxIE
 from .watchindianporn import WatchIndianPornIE
@@ -1992,6 +2050,7 @@ from .ximalaya import (
     XimalayaIE,
     XimalayaAlbumIE
 )
+from .xinpianchang import XinpianchangIE
 from .xminus import XMinusIE
 from .xnxx import XNXXIE
 from .xstream import XstreamIE
@@ -2041,6 +2100,7 @@ from .youtube import (
     YoutubeIE,
     YoutubeClipIE,
     YoutubeFavouritesIE,
+    YoutubeNotificationsIE,
     YoutubeHistoryIE,
     YoutubeTabIE,
     YoutubeLivestreamEmbedIE,
@@ -2064,18 +2124,17 @@ from .zattoo import (
     EWETVIE,
     GlattvisionTVIE,
     MNetTVIE,
-    MyVisionTVIE,
     NetPlusIE,
     OsnatelTVIE,
     QuantumTVIE,
-    QuicklineIE,
-    QuicklineLiveIE,
     SaltTVIE,
     SAKTVIE,
     VTXTVIE,
     WalyTVIE,
     ZattooIE,
     ZattooLiveIE,
+    ZattooMoviesIE,
+    ZattooRecordingsIE,
 )
 from .zdf import ZDFIE, ZDFChannelIE
 from .zee5 import (

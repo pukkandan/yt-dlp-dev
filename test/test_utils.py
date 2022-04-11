@@ -56,6 +56,7 @@ from yt_dlp.utils import (
     is_html,
     js_to_json,
     limit_length,
+    locked_file,
     merge_dicts,
     mimetype2ext,
     month_by_name,
@@ -160,10 +161,12 @@ class TestUtil(unittest.TestCase):
             sanitize_filename('New World record at 0:12:34'),
             'New World record at 0_12_34')
 
-        self.assertEqual(sanitize_filename('--gasdgf'), '_-gasdgf')
+        self.assertEqual(sanitize_filename('--gasdgf'), '--gasdgf')
         self.assertEqual(sanitize_filename('--gasdgf', is_id=True), '--gasdgf')
-        self.assertEqual(sanitize_filename('.gasdgf'), 'gasdgf')
+        self.assertEqual(sanitize_filename('--gasdgf', is_id=False), '_-gasdgf')
+        self.assertEqual(sanitize_filename('.gasdgf'), '.gasdgf')
         self.assertEqual(sanitize_filename('.gasdgf', is_id=True), '.gasdgf')
+        self.assertEqual(sanitize_filename('.gasdgf', is_id=False), 'gasdgf')
 
         forbidden = '"\0\\/'
         for fc in forbidden:
@@ -625,6 +628,8 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(parse_duration('3h 11m 53s'), 11513)
         self.assertEqual(parse_duration('3 hours 11 minutes 53 seconds'), 11513)
         self.assertEqual(parse_duration('3 hours 11 mins 53 secs'), 11513)
+        self.assertEqual(parse_duration('3 hours, 11 minutes, 53 seconds'), 11513)
+        self.assertEqual(parse_duration('3 hours, 11 mins, 53 secs'), 11513)
         self.assertEqual(parse_duration('62m45s'), 3765)
         self.assertEqual(parse_duration('6m59s'), 419)
         self.assertEqual(parse_duration('49s'), 49)
@@ -1780,6 +1785,7 @@ Line 1
         self.assertEqual(format_bytes(1024**6), '1.00EiB')
         self.assertEqual(format_bytes(1024**7), '1.00ZiB')
         self.assertEqual(format_bytes(1024**8), '1.00YiB')
+        self.assertEqual(format_bytes(1024**9), '1024.00YiB')
 
     def test_hide_login_info(self):
         self.assertEqual(Config.hide_login_info(['-u', 'foo', '-p', 'bar']),
@@ -1789,6 +1795,36 @@ Line 1
                          ['-u', 'PRIVATE', '-u', 'PRIVATE'])
         self.assertEqual(Config.hide_login_info(['--username=foo']),
                          ['--username=PRIVATE'])
+
+    def test_locked_file(self):
+        TEXT = 'test_locked_file\n'
+        FILE = 'test_locked_file.ytdl'
+        MODES = 'war'  # Order is important
+
+        try:
+            for lock_mode in MODES:
+                with locked_file(FILE, lock_mode, False) as f:
+                    if lock_mode == 'r':
+                        self.assertEqual(f.read(), TEXT * 2, 'Wrong file content')
+                    else:
+                        f.write(TEXT)
+                    for test_mode in MODES:
+                        testing_write = test_mode != 'r'
+                        try:
+                            with locked_file(FILE, test_mode, False):
+                                pass
+                        except (BlockingIOError, PermissionError):
+                            if not testing_write:  # FIXME
+                                print(f'Known issue: Exclusive lock ({lock_mode}) blocks read access ({test_mode})')
+                                continue
+                            self.assertTrue(testing_write, f'{test_mode} is blocked by {lock_mode}')
+                        else:
+                            self.assertFalse(testing_write, f'{test_mode} is not blocked by {lock_mode}')
+        finally:
+            try:
+                os.remove(FILE)
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':

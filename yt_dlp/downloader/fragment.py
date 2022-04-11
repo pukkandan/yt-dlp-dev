@@ -133,19 +133,19 @@ class FragmentFD(FileDownloader):
         }
         success = ctx['dl'].download(fragment_filename, fragment_info_dict)
         if not success:
-            return False, None
+            return False
         if fragment_info_dict.get('filetime'):
             ctx['fragment_filetime'] = fragment_info_dict.get('filetime')
         ctx['fragment_filename_sanitized'] = fragment_filename
-        try:
-            return True, self._read_fragment(ctx)
-        except FileNotFoundError:
-            if not info_dict.get('is_live'):
-                raise
-            return False, None
+        return True
 
     def _read_fragment(self, ctx):
-        down, frag_sanitized = self.sanitize_open(ctx['fragment_filename_sanitized'], 'rb')
+        try:
+            down, frag_sanitized = self.sanitize_open(ctx['fragment_filename_sanitized'], 'rb')
+        except FileNotFoundError:
+            if ctx.get('live'):
+                return None
+            raise
         ctx['fragment_filename_sanitized'] = frag_sanitized
         frag_content = down.read()
         down.close()
@@ -403,7 +403,7 @@ class FragmentFD(FileDownloader):
                 pass
 
         if compat_os_name == 'nt':
-            def bindoj_result(future):
+            def future_result(future):
                 while True:
                     try:
                         return future.result(0.1)
@@ -412,7 +412,7 @@ class FragmentFD(FileDownloader):
                     except concurrent.futures.TimeoutError:
                         continue
         else:
-            def bindoj_result(future):
+            def future_result(future):
                 return future.result()
 
         def interrupt_trigger_iter(fg):
@@ -430,7 +430,7 @@ class FragmentFD(FileDownloader):
         result = True
         for tpe, job in spins:
             try:
-                result = result and bindoj_result(job)
+                result = result and future_result(job)
             except KeyboardInterrupt:
                 interrupt_trigger[0] = False
             finally:
@@ -457,7 +457,7 @@ class FragmentFD(FileDownloader):
 
         def download_fragment(fragment, ctx):
             if not interrupt_trigger[0]:
-                return False, fragment['frag_index']
+                return
 
             frag_index = ctx['fragment_index'] = fragment['frag_index']
             ctx['last_error'] = None
@@ -467,14 +467,12 @@ class FragmentFD(FileDownloader):
                 headers['Range'] = 'bytes=%d-%d' % (byte_range['start'], byte_range['end'] - 1)
 
             # Never skip the first fragment
-            fatal = is_fatal(fragment.get('index') or (frag_index - 1))
-            count, frag_content = 0, None
+            fatal, count = is_fatal(fragment.get('index') or (frag_index - 1)), 0
             while count <= fragment_retries:
                 try:
-                    success, frag_content = self._download_fragment(ctx, fragment['url'], info_dict, headers)
-                    if not success:
-                        return False, frag_index
-                    break
+                    if self._download_fragment(ctx, fragment['url'], info_dict, headers):
+                        break
+                    return
                 except (compat_urllib_error.HTTPError, http.client.IncompleteRead) as err:
                     # Unavailable (possibly temporary) fragments may be served.
                     # First we try to retry then either skip or abort.
@@ -491,25 +489,19 @@ class FragmentFD(FileDownloader):
                         break
                     raise
 
-            if count > fragment_retries:
-                if not fatal:
-                    return False, frag_index
+            if count > fragment_retries and fatal:
                 ctx['dest_stream'].close()
                 self.report_error('Giving up after %s fragment retries' % fragment_retries)
-                return False, frag_index
-            return frag_content, frag_index
 
         def append_fragment(frag_content, frag_index, ctx):
-            if not frag_content:
-                if not is_fatal(frag_index - 1):
-                    self.report_skip_fragment(frag_index, 'fragment not found')
-                    return True
-                else:
-                    ctx['dest_stream'].close()
-                    self.report_error(
-                        'fragment %s not found, unable to continue' % frag_index)
-                    return False
-            self._append_fragment(ctx, pack_func(frag_content, frag_index))
+            if frag_content:
+                self._append_fragment(ctx, pack_func(frag_content, frag_index))
+            elif not is_fatal(frag_index - 1):
+                self.report_skip_fragment(frag_index, 'fragment not found')
+            else:
+                ctx['dest_stream'].close()
+                self.report_error(f'fragment {frag_index} not found, unable to continue')
+                return False
             return True
 
         decrypt_fragment = self.decrypter(info_dict)
@@ -520,23 +512,23 @@ class FragmentFD(FileDownloader):
 
             def _download_fragment(fragment):
                 ctx_copy = ctx.copy()
-                frag_content, frag_index = download_fragment(fragment, ctx_copy)
-                return fragment, frag_content, frag_index, ctx_copy.get('fragment_filename_sanitized')
+                download_fragment(fragment, ctx_copy)
+                return fragment, fragment['frag_index'], ctx_copy.get('fragment_filename_sanitized')
 
             self.report_warning('The download speed shown is only of one thread. This is a known issue and patches are welcome')
             with tpe or concurrent.futures.ThreadPoolExecutor(max_workers) as pool:
-                for fragment, frag_content, frag_index, frag_filename in pool.map(_download_fragment, fragments):
+                for fragment, frag_index, frag_filename in pool.map(_download_fragment, fragments):
                     ctx['fragment_filename_sanitized'] = frag_filename
                     ctx['fragment_index'] = frag_index
-                    result = append_fragment(decrypt_fragment(fragment, frag_content), frag_index, ctx)
+                    result = append_fragment(decrypt_fragment(fragment, self._read_fragment(ctx)), frag_index, ctx)
                     if not result:
                         return False
         else:
             for fragment in fragments:
                 if not interrupt_trigger[0]:
                     break
-                frag_content, frag_index = download_fragment(fragment, ctx)
-                result = append_fragment(decrypt_fragment(fragment, frag_content), frag_index, ctx)
+                download_fragment(fragment, ctx)
+                result = append_fragment(decrypt_fragment(fragment, self._read_fragment(ctx)), fragment['frag_index'], ctx)
                 if not result:
                     return False
 

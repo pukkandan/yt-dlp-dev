@@ -11,6 +11,7 @@ from ..utils import (
     encodeFilename,
     error_to_compat_str,
     format_bytes,
+    LockingUnsupportedError,
     sanitize_open,
     shell_quote,
     timeconvert,
@@ -159,7 +160,7 @@ class FileDownloader(object):
         return int(round(number * multiplier))
 
     def to_screen(self, *args, **kargs):
-        self.ydl.to_stdout(*args, quiet=self.params.get('quiet'), **kargs)
+        self.ydl.to_screen(*args, quiet=self.params.get('quiet'), **kargs)
 
     def to_stderr(self, message):
         self.ydl.to_stderr(message)
@@ -234,7 +235,10 @@ class FileDownloader(object):
 
     @wrap_file_access('open', fatal=True)
     def sanitize_open(self, filename, open_mode):
-        return sanitize_open(filename, open_mode)
+        f, filename = sanitize_open(filename, open_mode)
+        if not getattr(f, 'locked', None):
+            self.write_debug(f'{LockingUnsupportedError.msg}. Proceeding without locking', only_once=True)
+        return f, filename
 
     @wrap_file_access('remove')
     def try_remove(self, filename):
@@ -277,9 +281,9 @@ class FileDownloader(object):
         elif self.ydl.params.get('logger'):
             self._multiline = MultilineLogger(self.ydl.params['logger'], lines)
         elif self.params.get('progress_with_newline'):
-            self._multiline = BreaklineStatusPrinter(self.ydl._screen_file, lines)
+            self._multiline = BreaklineStatusPrinter(self.ydl._out_files['screen'], lines)
         else:
-            self._multiline = MultilinePrinter(self.ydl._screen_file, lines, not self.params.get('quiet'))
+            self._multiline = MultilinePrinter(self.ydl._out_files['screen'], lines, not self.params.get('quiet'))
         self._multiline.allow_colors = self._multiline._HAVE_FULLCAP and not self.params.get('no_color')
 
     def _finish_multiline_status(self):

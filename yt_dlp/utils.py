@@ -47,6 +47,7 @@ from .compat import (
     compat_HTMLParser,
     compat_HTTPError,
     compat_basestring,
+    compat_brotli,
     compat_chr,
     compat_cookiejar,
     compat_ctypes_WINFUNCTYPE,
@@ -83,6 +84,12 @@ from .socks import (
     ProxyType,
     sockssocket,
 )
+
+try:
+    import certifi
+    has_certifi = True
+except ImportError:
+    has_certifi = False
 
 
 def register_socks_protocols():
@@ -143,10 +150,15 @@ def random_user_agent():
     return _USER_AGENT_TPL % random.choice(_CHROME_VERSIONS)
 
 
+SUPPORTED_ENCODINGS = [
+    'gzip', 'deflate'
+]
+if compat_brotli:
+    SUPPORTED_ENCODINGS.append('br')
+
 std_headers = {
     'User-Agent': random_user_agent(),
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'en-us,en;q=0.5',
     'Sec-Fetch-Mode': 'navigate',
 }
@@ -662,26 +674,30 @@ def sanitize_open(filename, open_mode):
 
     It returns the tuple (stream, definitive_file_name).
     """
-    try:
-        if filename == '-':
-            if sys.platform == 'win32':
-                import msvcrt
-                msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-            return (sys.stdout.buffer if hasattr(sys.stdout, 'buffer') else sys.stdout, filename)
-        stream = locked_file(filename, open_mode, block=False).open()
-        return (stream, filename)
-    except (IOError, OSError) as err:
-        if err.errno in (errno.EACCES,):
-            raise
+    if filename == '-':
+        if sys.platform == 'win32':
+            import msvcrt
+            msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        return (sys.stdout.buffer if hasattr(sys.stdout, 'buffer') else sys.stdout, filename)
 
-        # In case of error, try to remove win32 forbidden chars
-        alt_filename = sanitize_path(filename)
-        if alt_filename == filename:
-            raise
-        else:
-            # An exception here should be caught in the caller
-            stream = locked_file(filename, open_mode, block=False).open()
-            return (stream, alt_filename)
+    for attempt in range(2):
+        try:
+            try:
+                if sys.platform == 'win32':
+                    # FIXME: An exclusive lock also locks the file from being read.
+                    # Since windows locks are mandatory, don't lock the file on windows (for now).
+                    # Ref: https://github.com/yt-dlp/yt-dlp/issues/3124
+                    raise LockingUnsupportedError()
+                stream = locked_file(filename, open_mode, block=False).__enter__()
+            except LockingUnsupportedError:
+                stream = open(filename, open_mode)
+            return (stream, filename)
+        except (IOError, OSError) as err:
+            if attempt or err.errno in (errno.EACCES,):
+                raise
+            old_filename, filename = filename, sanitize_path(filename)
+            if old_filename == filename:
+                raise
 
 
 def timeconvert(timestr):
@@ -693,36 +709,40 @@ def timeconvert(timestr):
     return timestamp
 
 
-def sanitize_filename(s, restricted=False, is_id=False):
+def sanitize_filename(s, restricted=False, is_id=NO_DEFAULT):
     """Sanitizes a string so it could be used as part of a filename.
-    If restricted is set, use a stricter subset of allowed characters.
-    Set is_id if this is not an arbitrary string, but an ID that should be kept
-    if possible.
+    @param restricted   Use a stricter subset of allowed characters
+    @param is_id        Whether this is an ID that should be kept unchanged if possible.
+                        If unset, yt-dlp's new sanitization rules are in effect
     """
+    if s == '':
+        return ''
+
     def replace_insane(char):
         if restricted and char in ACCENT_CHARS:
             return ACCENT_CHARS[char]
         elif not restricted and char == '\n':
-            return ' '
+            return '\0 '
         elif char == '?' or ord(char) < 32 or ord(char) == 127:
             return ''
         elif char == '"':
             return '' if restricted else '\''
         elif char == ':':
-            return '_-' if restricted else ' -'
+            return '\0_\0-' if restricted else '\0 \0-'
         elif char in '\\/|*<>':
-            return '_'
-        if restricted and (char in '!&\'()[]{}$;`^,#' or char.isspace()):
-            return '_'
-        if restricted and ord(char) > 127:
-            return '_'
+            return '\0_'
+        if restricted and (char in '!&\'()[]{}$;`^,#' or char.isspace() or ord(char) > 127):
+            return '\0_'
         return char
 
-    if s == '':
-        return ''
-    # Handle timestamps
-    s = re.sub(r'[0-9]+(?::[0-9]+)+', lambda m: m.group(0).replace(':', '_'), s)
+    s = re.sub(r'[0-9]+(?::[0-9]+)+', lambda m: m.group(0).replace(':', '_'), s)  # Handle timestamps
     result = ''.join(map(replace_insane, s))
+    if is_id is NO_DEFAULT:
+        result = re.sub('(\0.)(?:(?=\\1)..)+', r'\1', result)  # Remove repeated substitute chars
+        STRIP_RE = '(?:\0.|[ _-])*'
+        result = re.sub(f'^\0.{STRIP_RE}|{STRIP_RE}\0.$', '', result)  # Remove substitute chars from start/end
+    result = result.replace('\0', '') or '_'
+
     if not is_id:
         while '__' in result:
             result = result.replace('__', '_')
@@ -758,7 +778,7 @@ def sanitize_path(s, force=False):
         for path_part in norm_path]
     if drive_or_unc:
         sanitized_path.insert(0, drive_or_unc + os.path.sep)
-    elif force and s[0] == os.path.sep:
+    elif force and s and s[0] == os.path.sep:
         sanitized_path.insert(0, os.path.sep)
     return os.path.join(*sanitized_path)
 
@@ -1003,27 +1023,30 @@ def make_HTTPS_handler(params, **kwargs):
         context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
     context.verify_mode = ssl.CERT_REQUIRED if opts_check_certificate else ssl.CERT_NONE
     if opts_check_certificate:
-        try:
-            context.load_default_certs()
-            # Work around the issue in load_default_certs when there are bad certificates. See:
-            # https://github.com/yt-dlp/yt-dlp/issues/1060,
-            # https://bugs.python.org/issue35665, https://bugs.python.org/issue45312
-        except ssl.SSLError:
-            # enum_certificates is not present in mingw python. See https://github.com/yt-dlp/yt-dlp/issues/1151
-            if sys.platform == 'win32' and hasattr(ssl, 'enum_certificates'):
-                # Create a new context to discard any certificates that were already loaded
-                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-                context.check_hostname, context.verify_mode = True, ssl.CERT_REQUIRED
-                for storename in ('CA', 'ROOT'):
-                    _ssl_load_windows_store_certs(context, storename)
-            context.set_default_verify_paths()
+        if has_certifi and 'no-certifi' not in params.get('compat_opts', []):
+            context.load_verify_locations(cafile=certifi.where())
+        else:
+            try:
+                context.load_default_certs()
+                # Work around the issue in load_default_certs when there are bad certificates. See:
+                # https://github.com/yt-dlp/yt-dlp/issues/1060,
+                # https://bugs.python.org/issue35665, https://bugs.python.org/issue45312
+            except ssl.SSLError:
+                # enum_certificates is not present in mingw python. See https://github.com/yt-dlp/yt-dlp/issues/1151
+                if sys.platform == 'win32' and hasattr(ssl, 'enum_certificates'):
+                    # Create a new context to discard any certificates that were already loaded
+                    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                    context.check_hostname, context.verify_mode = True, ssl.CERT_REQUIRED
+                    for storename in ('CA', 'ROOT'):
+                        _ssl_load_windows_store_certs(context, storename)
+                context.set_default_verify_paths()
     return YoutubeDLHTTPSHandler(params, context=context, **kwargs)
 
 
 def bug_reports_message(before=';'):
-    msg = ('please report this issue on  https://github.com/yt-dlp/yt-dlp , '
-           'filling out the "Broken site" issue template properly. '
-           'Confirm you are on the latest version using -U')
+    msg = ('please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , '
+           'filling out the appropriate issue template. '
+           'Confirm you are on the latest version using  yt-dlp -U')
 
     before = before.rstrip()
     if not before or before.endswith(('.', '!', '?')):
@@ -1076,9 +1099,10 @@ class ExtractorError(YoutubeDLError):
             '' if expected else bug_reports_message())))
 
     def format_traceback(self):
-        if self.traceback is None:
-            return None
-        return ''.join(traceback.format_tb(self.traceback))
+        return join_nonempty(
+            self.traceback and ''.join(traceback.format_tb(self.traceback)),
+            self.cause and ''.join(traceback.format_exception(None, self.cause, self.cause.__traceback__)[1:]),
+            delim='\n') or None
 
 
 class UnsupportedError(ExtractorError):
@@ -1356,6 +1380,12 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
         except zlib.error:
             return zlib.decompress(data)
 
+    @staticmethod
+    def brotli(data):
+        if not data:
+            return data
+        return compat_brotli.decompress(data)
+
     def http_request(self, req):
         # According to RFC 3986, URLs can not contain non-ASCII characters, however this is not
         # always respected by websites, some tend to give out URLs with non percent-encoded
@@ -1372,11 +1402,14 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
         if url != url_escaped:
             req = update_Request(req, url=url_escaped)
 
-        for h, v in std_headers.items():
+        for h, v in self._params.get('http_headers', std_headers).items():
             # Capitalize is needed because of Python bug 2275: http://bugs.python.org/issue2275
             # The dict keys are capitalized because of this bug by urllib
             if h.capitalize() not in req.headers:
                 req.add_header(h, v)
+
+        if 'Accept-encoding' not in req.headers:
+            req.add_header('Accept-encoding', ', '.join(SUPPORTED_ENCODINGS))
 
         req.headers = handle_youtubedl_headers(req.headers)
 
@@ -1414,6 +1447,12 @@ class YoutubeDLHandler(compat_urllib_request.HTTPHandler):
         if resp.headers.get('Content-encoding', '') == 'deflate':
             gz = io.BytesIO(self.deflate(resp.read()))
             resp = compat_urllib_request.addinfourl(gz, old_resp.headers, old_resp.url, old_resp.code)
+            resp.msg = old_resp.msg
+            del resp.headers['Content-encoding']
+        # brotli
+        if resp.headers.get('Content-encoding', '') == 'br':
+            resp = compat_urllib_request.addinfourl(
+                io.BytesIO(self.brotli(resp.read())), old_resp.headers, old_resp.url, old_resp.code)
             resp.msg = old_resp.msg
             del resp.headers['Content-encoding']
         # Percent-encode redirect URL of Location HTTP header to satisfy RFC 3986 (see
@@ -2085,6 +2124,13 @@ def intlist_to_bytes(xs):
     return compat_struct_pack('%dB' % len(xs), *xs)
 
 
+class LockingUnsupportedError(IOError):
+    msg = 'File locking is not supported on this platform'
+
+    def __init__(self):
+        super().__init__(self.msg)
+
+
 # Cross-platform file locking
 if sys.platform == 'win32':
     import ctypes.wintypes
@@ -2145,18 +2191,15 @@ else:
         import fcntl
 
         def _lock_file(f, exclusive, block):
+            flags = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+            if not block:
+                flags |= fcntl.LOCK_NB
             try:
-                fcntl.flock(f,
-                            fcntl.LOCK_SH if not exclusive
-                            else fcntl.LOCK_EX if block
-                            else fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(f, flags)
             except BlockingIOError:
                 raise
             except OSError:  # AOSP does not have flock()
-                fcntl.lockf(f,
-                            fcntl.LOCK_SH if not exclusive
-                            else fcntl.LOCK_EX if block
-                            else fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.lockf(f, flags)
 
         def _unlock_file(f):
             try:
@@ -2165,58 +2208,70 @@ else:
                 fcntl.lockf(f, fcntl.LOCK_UN)
 
     except ImportError:
-        UNSUPPORTED_MSG = 'file locking is not supported on this platform'
 
         def _lock_file(f, exclusive, block):
-            raise IOError(UNSUPPORTED_MSG)
+            raise LockingUnsupportedError()
 
         def _unlock_file(f):
-            raise IOError(UNSUPPORTED_MSG)
+            raise LockingUnsupportedError()
 
 
 class locked_file(object):
-    _closed = False
+    locked = False
 
     def __init__(self, filename, mode, block=True, encoding=None):
-        assert mode in ['r', 'rb', 'a', 'ab', 'w', 'wb']
-        self.f = io.open(filename, mode, encoding=encoding)
-        self.mode = mode
-        self.block = block
+        if mode not in {'r', 'rb', 'a', 'ab', 'w', 'wb'}:
+            raise NotImplementedError(mode)
+        self.mode, self.block = mode, block
+
+        writable = any(f in mode for f in 'wax+')
+        readable = any(f in mode for f in 'r+')
+        flags = functools.reduce(operator.ior, (
+            getattr(os, 'O_CLOEXEC', 0),  # UNIX only
+            getattr(os, 'O_BINARY', 0),  # Windows only
+            getattr(os, 'O_NOINHERIT', 0),  # Windows only
+            os.O_CREAT if writable else 0,  # O_TRUNC only after locking
+            os.O_APPEND if 'a' in mode else 0,
+            os.O_EXCL if 'x' in mode else 0,
+            os.O_RDONLY if not writable else os.O_RDWR if readable else os.O_WRONLY,
+        ))
+
+        self.f = os.fdopen(os.open(filename, flags, 0o666), mode, encoding=encoding)
 
     def __enter__(self):
         exclusive = 'r' not in self.mode
         try:
             _lock_file(self.f, exclusive, self.block)
+            self.locked = True
         except IOError:
             self.f.close()
             raise
+        if 'w' in self.mode:
+            self.f.truncate()
         return self
 
-    def __exit__(self, etype, value, traceback):
+    def unlock(self):
+        if not self.locked:
+            return
         try:
-            if not self._closed:
-                _unlock_file(self.f)
+            _unlock_file(self.f)
+        finally:
+            self.locked = False
+
+    def __exit__(self, *_):
+        try:
+            self.unlock()
         finally:
             self.f.close()
-            self._closed = True
+
+    open = __enter__
+    close = __exit__
+
+    def __getattr__(self, attr):
+        return getattr(self.f, attr)
 
     def __iter__(self):
         return iter(self.f)
-
-    def write(self, *args):
-        return self.f.write(*args)
-
-    def read(self, *args):
-        return self.f.read(*args)
-
-    def flush(self):
-        self.f.flush()
-
-    def open(self):
-        return self.__enter__()
-
-    def close(self, *args):
-        self.__exit__(self, *args, value=False, traceback=False)
 
 
 def get_filesystem_encoding():
@@ -2259,8 +2314,9 @@ def format_decimal_suffix(num, fmt='%d%s', *, factor=1000):
     num, factor = float_or_none(num), float(factor)
     if num is None or num < 0:
         return None
-    exponent = 0 if num == 0 else int(math.log(num, factor))
-    suffix = ['', *'kMGTPEZY'][exponent]
+    POSSIBLE_SUFFIXES = 'kMGTPEZY'
+    exponent = 0 if num == 0 else min(int(math.log(num, factor)), len(POSSIBLE_SUFFIXES))
+    suffix = ['', *POSSIBLE_SUFFIXES][exponent]
     if factor == 1024:
         suffix = {'k': 'Ki', '': ''}.get(suffix, f'{suffix}i')
     converted = num / (factor ** exponent)
@@ -2382,11 +2438,14 @@ def parse_count(s):
         return str_to_int(mobj.group(1))
 
 
-def parse_resolution(s):
+def parse_resolution(s, *, lenient=False):
     if s is None:
         return {}
 
-    mobj = re.search(r'(?<![a-zA-Z0-9])(?P<w>\d+)\s*[xX×,]\s*(?P<h>\d+)(?![a-zA-Z0-9])', s)
+    if lenient:
+        mobj = re.search(r'(?P<w>\d+)\s*[xX×,]\s*(?P<h>\d+)', s)
+    else:
+        mobj = re.search(r'(?<![a-zA-Z0-9])(?P<w>\d+)\s*[xX×,]\s*(?P<h>\d+)(?![a-zA-Z0-9])', s)
     if mobj:
         return {
             'width': int(mobj.group('w')),
@@ -2608,23 +2667,23 @@ def parse_duration(s):
         m = re.match(
             r'''(?ix)(?:P?
                 (?:
-                    [0-9]+\s*y(?:ears?)?\s*
+                    [0-9]+\s*y(?:ears?)?,?\s*
                 )?
                 (?:
-                    [0-9]+\s*m(?:onths?)?\s*
+                    [0-9]+\s*m(?:onths?)?,?\s*
                 )?
                 (?:
-                    [0-9]+\s*w(?:eeks?)?\s*
+                    [0-9]+\s*w(?:eeks?)?,?\s*
                 )?
                 (?:
-                    (?P<days>[0-9]+)\s*d(?:ays?)?\s*
+                    (?P<days>[0-9]+)\s*d(?:ays?)?,?\s*
                 )?
                 T)?
                 (?:
-                    (?P<hours>[0-9]+)\s*h(?:ours?)?\s*
+                    (?P<hours>[0-9]+)\s*h(?:ours?)?,?\s*
                 )?
                 (?:
-                    (?P<mins>[0-9]+)\s*m(?:in(?:ute)?s?)?\s*
+                    (?P<mins>[0-9]+)\s*m(?:in(?:ute)?s?)?,?\s*
                 )?
                 (?:
                     (?P<secs>[0-9]+)(?P<ms>\.[0-9]+)?\s*s(?:ec(?:ond)?s?)?\s*
@@ -2677,7 +2736,9 @@ def check_executable(exe, args=[]):
     return exe
 
 
-def _get_exe_version_output(exe, args):
+def _get_exe_version_output(exe, args, *, to_screen=None):
+    if to_screen:
+        to_screen(f'Checking exe version: {shell_quote([exe] + args)}')
     try:
         # STDIN should be redirected too. On UNIX-like systems, ffmpeg triggers
         # SIGTTOU if yt-dlp is run in the background.
@@ -2842,6 +2903,7 @@ class PagedList:
 
 
 class OnDemandPagedList(PagedList):
+    """Download pages until a page with less than maximum results"""
     def _getslice(self, start, end):
         for pagenum in itertools.count(start // self._pagesize):
             firstid = pagenum * self._pagesize
@@ -2881,6 +2943,7 @@ class OnDemandPagedList(PagedList):
 
 
 class InAdvancePagedList(PagedList):
+    """PagedList with total number of pages known in advance"""
     def __init__(self, pagefunc, pagecount, pagesize):
         PagedList.__init__(self, pagefunc, pagesize, True)
         self._pagecount = pagecount
@@ -3049,36 +3112,37 @@ def multipart_encode(data, boundary=None):
 
 
 def dict_get(d, key_or_keys, default=None, skip_false_values=True):
-    if isinstance(key_or_keys, (list, tuple)):
-        for key in key_or_keys:
-            if key not in d or d[key] is None or skip_false_values and not d[key]:
-                continue
-            return d[key]
-        return default
-    return d.get(key_or_keys, default)
+    for val in map(d.get, variadic(key_or_keys)):
+        if val is not None and (val or not skip_false_values):
+            return val
+    return default
+
+
+def try_call(*funcs, expected_type=None, args=[], kwargs={}):
+    for f in funcs:
+        try:
+            val = f(*args, **kwargs)
+        except (AttributeError, KeyError, TypeError, IndexError, ZeroDivisionError):
+            pass
+        else:
+            if expected_type is None or isinstance(val, expected_type):
+                return val
 
 
 def try_get(src, getter, expected_type=None):
-    for get in variadic(getter):
-        try:
-            v = get(src)
-        except (AttributeError, KeyError, TypeError, IndexError):
-            pass
-        else:
-            if expected_type is None or isinstance(v, expected_type):
-                return v
+    return try_call(*variadic(getter), args=(src,), expected_type=expected_type)
+
+
+def filter_dict(dct, cndn=lambda _, v: v is not None):
+    return {k: v for k, v in dct.items() if cndn(k, v)}
 
 
 def merge_dicts(*dicts):
     merged = {}
     for a_dict in dicts:
         for k, v in a_dict.items():
-            if v is None:
-                continue
-            if (k not in merged
-                    or (isinstance(v, compat_str) and v
-                        and isinstance(merged[k], compat_str)
-                        and not merged[k])):
+            if (v is not None and k not in merged
+                    or isinstance(v, str) and merged[k] == ''):
                 merged[k] = v
     return merged
 
@@ -3277,6 +3341,10 @@ def error_to_compat_str(err):
     if sys.version_info[0] < 3:
         err_str = err_str.decode(preferredencoding())
     return err_str
+
+
+def error_to_str(err):
+    return f'{type(err).__name__}: {err}'
 
 
 def mimetype2ext(mt):
@@ -3485,7 +3553,7 @@ def render_table(header_row, data, delim=False, extra_gap=0, hide_empty=False):
     extra_gap += 1
     if delim:
         table = [header_row, [delim * (ml + extra_gap) for ml in max_lens]] + data
-        table[1][-1] = table[1][-1][:-extra_gap]  # Remove extra_gap from end of delimiter
+        table[1][-1] = table[1][-1][:-extra_gap * len(delim)]  # Remove extra_gap from end of delimiter
     for row in table:
         for pos, text in enumerate(map(str, row)):
             if '\t' in text:
@@ -3512,6 +3580,11 @@ def _match_one(filter_part, dct, incomplete):
         '>': operator.gt,
         '=': operator.eq,
     }
+
+    if isinstance(incomplete, bool):
+        is_incomplete = lambda _: incomplete
+    else:
+        is_incomplete = lambda k: k in incomplete
 
     operator_rex = re.compile(r'''(?x)\s*
         (?P<key>[a-z_]+)
@@ -3551,7 +3624,7 @@ def _match_one(filter_part, dct, incomplete):
         if numeric_comparison is not None and m['op'] in STRING_OPERATORS:
             raise ValueError('Operator %s only supports string values!' % m['op'])
         if actual_value is None:
-            return incomplete or m['none_inclusive']
+            return is_incomplete(m['key']) or m['none_inclusive']
         return op(actual_value, comparison_value if numeric_comparison is None else numeric_comparison)
 
     UNARY_OPERATORS = {
@@ -3566,7 +3639,7 @@ def _match_one(filter_part, dct, incomplete):
     if m:
         op = UNARY_OPERATORS[m.group('op')]
         actual_value = dct.get(m.group('key'))
-        if incomplete and actual_value is None:
+        if is_incomplete(m.group('key')) and actual_value is None:
             return True
         return op(actual_value)
 
@@ -3574,21 +3647,29 @@ def _match_one(filter_part, dct, incomplete):
 
 
 def match_str(filter_str, dct, incomplete=False):
-    """ Filter a dictionary with a simple string syntax. Returns True (=passes filter) or false
-        When incomplete, all conditions passes on missing fields
+    """ Filter a dictionary with a simple string syntax.
+    @returns           Whether the filter passes
+    @param incomplete  Set of keys that is expected to be missing from dct.
+                       Can be True/False to indicate all/none of the keys may be missing.
+                       All conditions on incomplete keys pass if the key is missing
     """
     return all(
         _match_one(filter_part.replace(r'\&', '&'), dct, incomplete)
         for filter_part in re.split(r'(?<!\\)&', filter_str))
 
 
-def match_filter_func(filter_str):
+def match_filter_func(filters):
+    if not filters:
+        return None
+    filters = variadic(filters)
+
     def _match_func(info_dict, *args, **kwargs):
-        if match_str(filter_str, info_dict, *args, **kwargs):
+        if any(match_str(f, info_dict, *args, **kwargs) for f in filters):
             return None
         else:
-            video_title = info_dict.get('title', info_dict.get('id', 'video'))
-            return '%s does not pass filter %s, skipping ..' % (video_title, filter_str)
+            video_title = info_dict.get('title') or info_dict.get('id') or 'video'
+            filter_str = ') | ('.join(map(str.strip, filters))
+            return f'{video_title} does not pass filter ({filter_str}), skipping ..'
     return _match_func
 
 
@@ -5097,8 +5178,8 @@ def traverse_obj(
     @param path_list        A list of paths which are checked one by one.
                             Each path is a list of keys where each key is a string,
                             a function, a tuple of strings/None or "...".
-                            When a fuction is given, it takes the key as argument and
-                            returns whether the key matches or not. When a tuple is given,
+                            When a fuction is given, it takes the key and value as arguments
+                            and returns whether the key matches or not. When a tuple is given,
                             all the keys given in the tuple are traversed, and
                             "..." traverses all the keys in the object
                             "None" returns the object without traversal
@@ -5143,7 +5224,7 @@ def traverse_obj(
                     obj = str(obj)
                 _current_depth += 1
                 depth = max(depth, _current_depth)
-                return [_traverse_obj(v, path[i + 1:], _current_depth) for k, v in obj if key(k)]
+                return [_traverse_obj(v, path[i + 1:], _current_depth) for k, v in obj if try_call(key, args=(k, v))]
             elif isinstance(obj, dict) and not (is_user_input and key == ':'):
                 obj = (obj.get(key) if casesense or (key in obj)
                        else next((v for k, v in obj.items() if _lower(k) == key), None))
@@ -5193,6 +5274,10 @@ def traverse_dict(dictn, keys, casesense=True):
     write_string('DeprecationWarning: yt_dlp.utils.traverse_dict is deprecated '
                  'and may be removed in a future version. Use yt_dlp.utils.traverse_obj instead')
     return traverse_obj(dictn, keys, casesense=casesense, is_user_input=True, traverse_string=True)
+
+
+def get_first(obj, keys, **kwargs):
+    return traverse_obj(obj, (..., *variadic(keys)), **kwargs, get_all=False)
 
 
 def variadic(x, allowed_types=(str, bytes, dict)):
@@ -5269,6 +5354,28 @@ def join_nonempty(*values, delim='-', from_dict=None):
     if from_dict is not None:
         values = map(from_dict.get, values)
     return delim.join(map(str, filter(None, values)))
+
+
+def scale_thumbnails_to_max_format_width(formats, thumbnails, url_width_re):
+    """
+    Find the largest format dimensions in terms of video width and, for each thumbnail:
+    * Modify the URL: Match the width with the provided regex and replace with the former width
+    * Update dimensions
+
+    This function is useful with video services that scale the provided thumbnails on demand
+    """
+    _keys = ('width', 'height')
+    max_dimensions = max(
+        [tuple(format.get(k) or 0 for k in _keys) for format in formats],
+        default=(0, 0))
+    if not max_dimensions[0]:
+        return thumbnails
+    return [
+        merge_dicts(
+            {'url': re.sub(url_width_re, str(max_dimensions[0]), thumbnail['url'])},
+            dict(zip(_keys, max_dimensions)), thumbnail)
+        for thumbnail in thumbnails
+    ]
 
 
 def parse_http_range(range):
@@ -5373,15 +5480,18 @@ class Config:
 class WebSocketsWrapper():
     """Wraps websockets module to use in non-async scopes"""
 
-    def __init__(self, url, headers=None):
+    def __init__(self, url, headers=None, connect=True):
         self.loop = asyncio.events.new_event_loop()
         self.conn = compat_websockets.connect(
             url, extra_headers=headers, ping_interval=None,
             close_timeout=float('inf'), loop=self.loop, ping_timeout=float('inf'))
+        if connect:
+            self.__enter__()
         atexit.register(self.__exit__, None, None, None)
 
     def __enter__(self):
-        self.pool = self.run_with_loop(self.conn.__aenter__(), self.loop)
+        if not self.pool:
+            self.pool = self.run_with_loop(self.conn.__aenter__(), self.loop)
         return self
 
     def send(self, *args):
@@ -5436,3 +5546,16 @@ class WebSocketsWrapper():
 
 
 has_websockets = bool(compat_websockets)
+
+
+def merge_headers(*dicts):
+    """Merge dicts of http headers case insensitively, prioritizing the latter ones"""
+    return {k.title(): v for k, v in itertools.chain.from_iterable(map(dict.items, dicts))}
+
+
+class classproperty:
+    def __init__(self, f):
+        self.f = f
+
+    def __get__(self, _, cls):
+        return self.f(cls)
