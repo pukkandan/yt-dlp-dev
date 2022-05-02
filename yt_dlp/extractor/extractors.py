@@ -168,6 +168,7 @@ from .bilibili import (
     BilibiliChannelIE,
     BiliIntlIE,
     BiliIntlSeriesIE,
+    BiliLiveIE,
 )
 from .biobiochiletv import BioBioChileTVIE
 from .bitchute import (
@@ -2115,6 +2116,7 @@ from .youtube import (
     YoutubeSearchURLIE,
     YoutubeMusicSearchURLIE,
     YoutubeSubscriptionsIE,
+    YoutubeStoriesIE,
     YoutubeTruncatedIDIE,
     YoutubeTruncatedURLIE,
     YoutubeYtBeIE,

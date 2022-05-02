@@ -208,8 +208,10 @@ class InfoExtractor:
                     * no_resume  The server does not support resuming the
                                  (HTTP or RTMP) download. Boolean.
                     * has_drm    The format has DRM and cannot be downloaded. Boolean
-                    * downloader_options  A dictionary of downloader options as
-                                 described in FileDownloader (For internal use only)
+                    * downloader_options  A dictionary of downloader options
+                                 (For internal use only)
+                                 * http_chunk_size Chunk size for HTTP downloads
+                                 * ffmpeg_args     Extra arguments for ffmpeg downloader
                     RTMP formats can also have the additional fields: page_url,
                     app, play_path, tc_url, flash_version, rtmp_live, rtmp_conn,
                     rtmp_protocol, rtmp_real_time
@@ -1920,8 +1922,7 @@ class InfoExtractor:
     def _sort_formats(self, formats, field_preference=[]):
         if not formats:
             return
-        format_sort = self.FormatSort(self, field_preference)
-        formats.sort(key=lambda f: format_sort.calculate_preference(f))
+        formats.sort(key=self.FormatSort(self, field_preference).calculate_preference)
 
     def _check_formats(self, formats, video_id):
         if formats:
@@ -2807,7 +2808,7 @@ class InfoExtractor:
                             content_type = 'video'
                         elif codecs['acodec'] != 'none':
                             content_type = 'audio'
-                        elif codecs.get('tcodec', 'none') != 'none':
+                        elif codecs.get('scodec', 'none') != 'none':
                             content_type = 'text'
                         elif mimetype2ext(mime_type) in ('tt', 'dfxp', 'ttml', 'xml', 'json'):
                             content_type = 'text'
