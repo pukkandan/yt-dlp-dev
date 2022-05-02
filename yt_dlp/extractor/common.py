@@ -177,6 +177,7 @@ class InfoExtractor:
                                             fragment_base_url
                                  * "duration" (optional, int or float)
                                  * "filesize" (optional, int)
+                                 * "packing" (optional, str) - for internal use
                     * is_from_start  Is a live format that can be downloaded
                                 from the start. Boolean
                     * preference Order number of this format. If this field is

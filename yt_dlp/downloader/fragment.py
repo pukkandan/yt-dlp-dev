@@ -1,5 +1,6 @@
 import concurrent.futures
 import contextlib
+import gzip
 import http.client
 import json
 import math
@@ -483,9 +484,17 @@ class FragmentFD(FileDownloader):
                 ctx['dest_stream'].close()
                 self.report_error('Giving up after %s fragment retries' % fragment_retries)
 
-        def append_fragment(frag_content, frag_index, ctx):
+        def pack_fragment(frag_content, frag_index, fragment):
+            frag_content = pack_func(frag_content, frag_index)
+            packing = fragment.get('packing')
+            if packing == 'gzip':
+                return gzip.decompress(frag_content)
+            assert packing is None
+            return frag_content
+
+        def append_fragment(frag_content, frag_index, ctx, fragment):
             if frag_content:
-                self._append_fragment(ctx, pack_func(frag_content, frag_index))
+                self._append_fragment(ctx, pack_fragment(frag_content, frag_index, fragment))
             elif not is_fatal(frag_index - 1):
                 self.report_skip_fragment(frag_index, 'fragment not found')
             else:
@@ -509,7 +518,8 @@ class FragmentFD(FileDownloader):
                 for fragment, frag_index, frag_filename in pool.map(_download_fragment, fragments):
                     ctx['fragment_filename_sanitized'] = frag_filename
                     ctx['fragment_index'] = frag_index
-                    result = append_fragment(decrypt_fragment(fragment, self._read_fragment(ctx)), frag_index, ctx)
+                    result = append_fragment(
+                        decrypt_fragment(fragment, self._read_fragment(ctx)), frag_index, ctx, fragment)
                     if not result:
                         return False
         else:
@@ -519,7 +529,7 @@ class FragmentFD(FileDownloader):
                 try:
                     download_fragment(fragment, ctx)
                     result = append_fragment(
-                        decrypt_fragment(fragment, self._read_fragment(ctx)), fragment['frag_index'], ctx)
+                        decrypt_fragment(fragment, self._read_fragment(ctx)), fragment['frag_index'], ctx, fragment)
                 except KeyboardInterrupt:
                     if info_dict.get('is_live'):
                         break

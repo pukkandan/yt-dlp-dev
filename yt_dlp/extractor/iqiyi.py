@@ -735,12 +735,12 @@ class IqIE(InfoExtractor):
                         'url': traverse_obj(self._download_json(url, video_id, note='Resolving audio fragment url', errnote='Unable to resolve fragment URL', fatal=False), 'l', expected_type=str)
                     }
                     audio_fragments.append(fragment)
+                audio_fragments[0]['packing'] = 'gzip'
 
                 # Special format for the audio, we need to decrypt it as we download it.
                 format = [{
                     'format_id': audio_format_name,
                     'fragments': audio_fragments,
-                    'protocol': 'iq_audio_fragments',
                     'quality': qualities(list(self._BID_TAGS.keys()))(audio_format['bid']),
                     'vcodec': 'none',
                     'acodec': 'aac',
