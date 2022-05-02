@@ -36,7 +36,6 @@ from .rtmp import RtmpFD
 from .rtsp import RtspFD
 from .websocket import WebSocketFragmentFD
 from .youtube_live_chat import YoutubeLiveChatFD
-from .iqaudio import IqAudioFragmentFD
 
 PROTOCOL_MAP = {
     'rtmp': RtmpFD,
