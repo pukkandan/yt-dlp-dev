@@ -348,6 +348,22 @@ jobs:
       id: sha512_win32
       run: echo "::set-output name=sha512_win32::$((Get-FileHash dist\yt-dlp_x86.exe -Algorithm SHA512).Hash.ToLower())"
 
+    - name: Run PyInstaller Script with --onedir
+      run: |
+        python pyinst.py --onedir
+        Compress-Archive -LiteralPath ./dist/yt-dlp -DestinationPath ./dist/yt-dlp_win.zip
+    - name: Upload yt-dlp Windows onedir
+      id: upload-release-windows-zip
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.build_unix.outputs.upload_url }}
+        asset_path: ./dist/yt-dlp_win.zip
+        asset_name: yt-dlp_winx86.zip
+        asset_content_type: application/zip
+
+
   finish:
     runs-on: ubuntu-latest
     needs: [build_unix, build_windows, build_windows32, build_macos]
