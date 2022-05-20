@@ -362,14 +362,14 @@ def xpath_attr(node, xpath, key, name=None, fatal=False, default=NO_DEFAULT):
     return n.attrib[key]
 
 
-def get_element_by_id(id, html):
+def get_element_by_id(id, html, **kwargs):
     """Return the content of the tag with the specified ID in the passed HTML document"""
-    return get_element_by_attribute('id', id, html)
+    return get_element_by_attribute('id', id, html, **kwargs)
 
 
-def get_element_html_by_id(id, html):
+def get_element_html_by_id(id, html, **kwargs):
     """Return the html of the tag with the specified ID in the passed HTML document"""
-    return get_element_html_by_attribute('id', id, html)
+    return get_element_html_by_attribute('id', id, html, **kwargs)
 
 
 def get_element_by_class(class_name, html):
@@ -384,17 +384,17 @@ def get_element_html_by_class(class_name, html):
     return retval[0] if retval else None
 
 
-def get_element_by_attribute(attribute, value, html, escape_value=True):
-    retval = get_elements_by_attribute(attribute, value, html, escape_value)
+def get_element_by_attribute(attribute, value, html, **kwargs):
+    retval = get_elements_by_attribute(attribute, value, html, **kwargs)
     return retval[0] if retval else None
 
 
-def get_element_html_by_attribute(attribute, value, html, escape_value=True):
-    retval = get_elements_html_by_attribute(attribute, value, html, escape_value)
+def get_element_html_by_attribute(attribute, value, html, **kargs):
+    retval = get_elements_html_by_attribute(attribute, value, html, **kargs)
     return retval[0] if retval else None
 
 
-def get_elements_by_class(class_name, html):
+def get_elements_by_class(class_name, html, **kargs):
     """Return the content of all tags with the specified class in the passed HTML document as a list"""
     return get_elements_by_attribute(
         'class', r'[^\'"]*\b%s\b[^\'"]*' % re.escape(class_name),
