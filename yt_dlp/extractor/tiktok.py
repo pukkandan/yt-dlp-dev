@@ -275,6 +275,9 @@ class TikTokBaseIE(InfoExtractor):
 
         return {
             'id': aweme_id,
+            'extractor_key': TikTokIE.ie_key(),
+            'extractor': TikTokIE.IE_NAME,
+            'webpage_url': self._create_url(author_info.get('uid'), aweme_id),
             'title': aweme_detail.get('desc'),
             'description': aweme_detail.get('desc'),
             'view_count': int_or_none(stats_info.get('play_count')),
@@ -575,20 +578,12 @@ class TikTokIE(TikTokBaseIE):
 
 
 class TikTokBaseListIE(TikTokBaseIE):
-    def _entries(self, list_id, display_id):
-        query = {
-            self._QUERY_NAME: list_id,
-            'cursor': 0,
-            'count': 20,
-            'type': 5,
-            'device_id': ''.join(random.choice(string.digits) for i in range(19))
-        }
-
+    def _extract_pages(self, endpoint, display_id, query, cursor='cursor'):
         max_retries = self.get_param('extractor_retries', 3)
         for page in itertools.count(1):
             for retries in itertools.count():
                 try:
-                    post_list = self._call_api(self._API_ENDPOINT, query, display_id,
+                    post_list = self._call_api(endpoint, query, display_id,
                                                note='Downloading video list page %d%s' % (page, f' (attempt {retries})' if retries != 0 else ''),
                                                errnote='Unable to download video list')
                 except ExtractorError as e:
@@ -597,23 +592,28 @@ class TikTokBaseListIE(TikTokBaseIE):
                         continue
                     raise
                 break
-            for video in post_list.get('aweme_list', []):
-                yield {
-                    **self._parse_aweme_video_app(video),
-                    'extractor_key': TikTokIE.ie_key(),
-                    'extractor': 'TikTok',
-                    'webpage_url': f'https://tiktok.com/@_/video/{video["aweme_id"]}',
-                }
+            yield from post_list.get('aweme_list', [])
             if not post_list.get('has_more'):
                 break
-            query['cursor'] = post_list['cursor']
+            query[cursor] = post_list[cursor]
+
+    def _entries(self, list_id, display_id):
+        return map(
+            self._parse_aweme_video_app,
+            self._extract_pages(self._API_ENDPOINT, display_id, {
+                self._QUERY_NAME: list_id,
+                'cursor': 0,
+                'count': 20,
+                'type': 5,
+                'device_id': ''.join(random.choice(string.digits) for i in range(19))
+            }))
 
     def _real_extract(self, url):
         list_id = self._match_id(url)
         return self.playlist_result(self._entries(list_id, list_id), list_id)
 
 
-class TikTokUserIE(TikTokBaseIE):
+class TikTokUserIE(TikTokBaseListIE):
     IE_NAME = 'tiktok:user'
     _VALID_URL = r'https?://(?:www\.)?tiktok\.com/@(?P<id>[\w\.-]+)/?(?:$|[#?])'
     _TESTS = [{
@@ -645,73 +645,31 @@ class TikTokUserIE(TikTokBaseIE):
         'expected_warnings': ['Retrying']
     }]
 
-    r'''  # TODO: Fix by adding _signature to api_url
-    def _entries(self, webpage, user_id, username):
-        secuid = self._search_regex(r'\"secUid\":\"(?P<secUid>[^\"]+)', webpage, username)
-        verifyfp_cookie = self._get_cookies('https://www.tiktok.com').get('s_v_web_id')
-        if not verifyfp_cookie:
-            raise ExtractorError('Improper cookies (missing s_v_web_id).', expected=True)
-        api_url = f'https://m.tiktok.com/api/post/item_list/?aid=1988&cookie_enabled=true&count=30&verifyFp={verifyfp_cookie.value}&secUid={secuid}&cursor='
-        cursor = '0'
-        for page in itertools.count():
-            data_json = self._download_json(api_url + cursor, username, note='Downloading Page %d' % page)
-            for video in data_json.get('itemList', []):
-                video_id = video['id']
-                video_url = f'https://www.tiktok.com/@{user_id}/video/{video_id}'
-                yield self._url_result(video_url, 'TikTok', video_id, str_or_none(video.get('desc')))
-            if not data_json.get('hasMore'):
-                break
-            cursor = data_json['cursor']
-    '''
 
-    def _video_entries_api(self, webpage, user_id, username):
-        query = {
-            'user_id': user_id,
-            'count': 21,
-            'max_cursor': 0,
-            'min_cursor': 0,
-            'retry_type': 'no_retry',
-            'device_id': ''.join(random.choice(string.digits) for _ in range(19)),  # Some endpoints don't like randomized device_id, so it isn't directly set in _call_api.
-        }
+    def _extract_from_api(self, user_id, user_name):
+        videos = LazyList(self._extract_pages(
+            'aweme/post', user_name, cursor='max_cursor', query={
+                'user_id': user_id,
+                'count': 21,
+                'max_cursor': 0,
+                'min_cursor': 0,
+                'retry_type': 'no_retry',
+                # Some endpoints don't like randomized device_id, so it isn't directly set in _call_api.
+                'device_id': ''.join(random.choice(string.digits) for _ in range(19)),
+            }))
+        return self.playlist_result(
+            map(self._parse_aweme_video_app, videos), user_id, user_name,
+            thumbnail=traverse_obj(videos, (0, 'author', 'avatar_larger', 'url_list', 0)))
 
-        max_retries = self.get_param('extractor_retries', 3)
-        for page in itertools.count(1):
-            for retries in itertools.count():
-                try:
-                    post_list = self._call_api('aweme/post', query, username,
-                                               note='Downloading user video list page %d%s' % (page, f' (attempt {retries})' if retries != 0 else ''),
-                                               errnote='Unable to download user video list')
-                except ExtractorError as e:
-                    if isinstance(e.cause, json.JSONDecodeError) and e.cause.pos == 0 and retries != max_retries:
-                        self.report_warning('%s. Retrying...' % str(e.cause or e.msg))
-                        continue
-                    raise
-                break
-            yield from post_list.get('aweme_list', [])
-            if not post_list.get('has_more'):
-                break
-            query['max_cursor'] = post_list['max_cursor']
-
-    def _entries_api(self, user_id, videos):
-        for video in videos:
-            yield {
-                **self._parse_aweme_video_app(video),
-                'extractor_key': TikTokIE.ie_key(),
-                'extractor': 'TikTok',
-                'webpage_url': f'https://tiktok.com/@{user_id}/video/{video["aweme_id"]}',
-            }
 
     def _real_extract(self, url):
         user_name = self._match_id(url)
         webpage = self._download_webpage(url, user_name, headers={
             'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'
         })
-        user_id = self._html_search_regex(r'snssdk\d*://user/profile/(\d+)', webpage, 'user ID', default=None) or user_name
-
-        videos = LazyList(self._video_entries_api(webpage, user_id, user_name))
-        thumbnail = traverse_obj(videos, (0, 'author', 'avatar_larger', 'url_list', 0))
-
-        return self.playlist_result(self._entries_api(user_id, videos), user_id, user_name, thumbnail=thumbnail)
+        user_id = self._html_search_regex(
+            r'snssdk\d*://user/profile/(\d+)', webpage, 'user ID', default=None) or user_name
+        return self._extract_from_api(user_id, user_name)
 
 
 class TikTokSoundIE(TikTokBaseListIE):
