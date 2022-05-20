@@ -34,6 +34,7 @@ class TikTokBaseIE(InfoExtractor):
     _UPLOADER_URL_FORMAT = 'https://www.tiktok.com/@%s'
     _WEBPAGE_HOST = 'https://www.tiktok.com/'
     QUALITIES = ('360p', '540p', '720p', '1080p')
+    _session_initialized = False
 
     @staticmethod
     def _create_url(user_id, video_id):
@@ -42,6 +43,12 @@ class TikTokBaseIE(InfoExtractor):
     def _get_sigi_state(self, webpage, display_id):
         return self._parse_json(get_element_by_id(
             'SIGI_STATE|sigi-persisted-data', webpage, escape_value=False), display_id)
+
+    def _real_initialize(self):
+        if self._session_initalized:
+            return
+        self._request_webpage(HEADRequest('https://www.tiktok.com'), None, note='Setting up session', fatal=False)
+        TikTokBaseIE._session_initalized = True
 
     def _call_api_impl(self, ep, query, manifest_app_version, video_id, fatal=True,
                        note='Downloading API JSON', errnote='Unable to download API page'):
@@ -548,8 +555,6 @@ class TikTokIE(TikTokBaseIE):
         except ExtractorError as e:
             self.report_warning(f'{e}; Retrying with webpage')
 
-        # If we only call once, we get a 403 when downlaoding the video.
-        self._download_webpage(url, video_id)
 
         webpage = self._download_webpage(url, video_id, headers={'User-Agent': 'User-Agent:Mozilla/5.0'})
 
