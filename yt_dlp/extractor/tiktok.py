@@ -675,6 +675,7 @@ class TikTokUserIE(TikTokBaseListIE):
         user_id = self._html_search_regex(
             r'snssdk\d*://user/profile/(\d+)', webpage, 'user ID', default=None) or user_name
         try:
+            raise ExtractorError('API-based extraction is known to be broken')
             return self._extract_from_api(user_id, user_name)
         except ExtractorError as e:
             self.report_warning(f'{e.orig_msg}; Retrying with webpage')
