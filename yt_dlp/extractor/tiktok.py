@@ -1,3 +1,4 @@
+import functools
 import itertools
 import json
 import random
@@ -476,7 +477,7 @@ class TikTokIE(TikTokBaseIE):
             'repost_count': int,
             'comment_count': int,
         },
-        'expected_warnings': ['Retrying with webpage', 'Unable to find video in feed']
+        'expected_warnings': ['trying with webpage', 'Unable to find video in feed']
     }, {
         # Video without title and description
         'url': 'https://www.tiktok.com/@pokemonlife22/video/7059698374567611694',
@@ -522,7 +523,7 @@ class TikTokIE(TikTokBaseIE):
             'repost_count': int,
             'comment_count': int,
         },
-        'expected_warnings': ['Retrying with feed workaround', 'Unable to find video in feed']
+        'expected_warnings': ['trying feed workaround', 'Unable to find video in feed']
     }, {
         # Auto-captions available
         'url': 'https://www.tiktok.com/@hankgreen1/video/7047596209028074758',
@@ -541,7 +542,7 @@ class TikTokIE(TikTokBaseIE):
             if not aweme_detail:
                 raise ExtractorError('Video not available', video_id=aweme_id)
         except ExtractorError as e:
-            self.report_warning(f'{e.orig_msg}; Retrying with feed workaround')
+            self.report_warning(f'{e.orig_msg}; trying feed workaround')
             feed_list = self._call_api('feed', {'aweme_id': aweme_id}, aweme_id,
                                        note='Downloading video feed', errnote='Unable to download video feed').get('aweme_list') or []
             aweme_detail = next((aweme for aweme in feed_list if str(aweme.get('aweme_id')) == aweme_id), None)
@@ -551,16 +552,13 @@ class TikTokIE(TikTokBaseIE):
 
     def _real_extract(self, url):
         video_id, user_id = self._match_valid_url(url).group('id', 'user_id')
-        url = self._create_url(user_id, video_id)
-
         try:
             return self._extract_aweme_app(video_id)
         except ExtractorError as e:
-            self.report_warning(f'{e}; Retrying with webpage')
+            self.report_warning(f'{e}; trying with webpage')
 
-
+        url = self._create_url(user_id, video_id)
         webpage = self._download_webpage(url, video_id, headers={'User-Agent': 'User-Agent:Mozilla/5.0'})
-
         next_data = self._search_nextjs_data(webpage, video_id, default='{}')
         if next_data:
             status = traverse_obj(next_data, ('props', 'pageProps', 'statusCode'), expected_type=int) or 0
@@ -645,7 +643,6 @@ class TikTokUserIE(TikTokBaseListIE):
         'expected_warnings': ['Retrying']
     }]
 
-
     def _extract_from_api(self, user_id, user_name):
         videos = LazyList(self._extract_pages(
             'aweme/post', user_name, cursor='max_cursor', query={
@@ -678,7 +675,7 @@ class TikTokUserIE(TikTokBaseListIE):
             raise ExtractorError('API-based extraction is known to be broken')
             return self._extract_from_api(user_id, user_name)
         except ExtractorError as e:
-            self.report_warning(f'{e.orig_msg}; Retrying with webpage')
+            self.report_warning(f'{e.orig_msg}; trying with webpage')
             return self._extract_from_webpage(user_id, user_name, webpage)
 
 
@@ -847,7 +844,7 @@ class DouyinIE(TikTokIE):
         try:
             return self._extract_aweme_app(video_id)
         except ExtractorError as e:
-            self.report_warning(f'{e}; Retrying with webpage')
+            self.report_warning(f'{e}; trying with webpage')
 
         webpage = self._download_webpage(url, video_id)
         render_data_json = self._search_regex(
