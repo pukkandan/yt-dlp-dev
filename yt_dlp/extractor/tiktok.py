@@ -661,13 +661,24 @@ class TikTokUserIE(TikTokBaseListIE):
             map(self._parse_aweme_video_app, videos), user_id, user_name,
             thumbnail=traverse_obj(videos, (0, 'author', 'avatar_larger', 'url_list', 0)))
 
+    def _extract_from_webpage(self, user_id, user_name, webpage):
+        item_data = self._get_sigi_state(webpage, user_name)['ItemList']['user-post']
+        item_list = traverse_obj(item_data, ('list', ...), ('browserList', ...), ('preloadList', ..., 'id'))
+        if item_data.get('hasMore'):
+            self.report_warning('Unable to extract more videos')
+        return self.playlist_from_matches(
+            item_list, user_id, getter=functools.partial(self._create_url, user_id), ie=TikTokIE)
 
     def _real_extract(self, url):
         user_name = self._match_id(url)
         webpage = self._download_webpage(url, user_name, headers={'User-Agent': 'Mozilla/5.0'})
         user_id = self._html_search_regex(
             r'snssdk\d*://user/profile/(\d+)', webpage, 'user ID', default=None) or user_name
-        return self._extract_from_api(user_id, user_name)
+        try:
+            return self._extract_from_api(user_id, user_name)
+        except ExtractorError as e:
+            self.report_warning(f'{e.orig_msg}; Retrying with webpage')
+            return self._extract_from_webpage(user_id, user_name, webpage)
 
 
 class TikTokSoundIE(TikTokBaseListIE):
