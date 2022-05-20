@@ -664,9 +664,7 @@ class TikTokUserIE(TikTokBaseListIE):
 
     def _real_extract(self, url):
         user_name = self._match_id(url)
-        webpage = self._download_webpage(url, user_name, headers={
-            'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'
-        })
+        webpage = self._download_webpage(url, user_name, headers={'User-Agent': 'Mozilla/5.0'})
         user_id = self._html_search_regex(
             r'snssdk\d*://user/profile/(\d+)', webpage, 'user ID', default=None) or user_name
         return self._extract_from_api(user_id, user_name)
@@ -885,7 +883,7 @@ class TikTokVMIE(InfoExtractor):
 
     def _real_extract(self, url):
         new_url = self._request_webpage(
-            HEADRequest(url), self._match_id(url), headers={'User-Agent': 'facebookexternalhit/1.1'}).geturl()
+            HEADRequest(url), self._match_id(url), headers={'User-Agent': 'Mozilla/5.0'}).geturl()
         if self.suitable(new_url):  # Prevent infinite loop in case redirect fails
             raise UnsupportedError(new_url)
         return self.url_result(new_url)
