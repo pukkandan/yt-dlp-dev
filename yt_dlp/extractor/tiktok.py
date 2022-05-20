@@ -574,6 +574,45 @@ class TikTokIE(TikTokBaseIE):
         raise ExtractorError('Video not available', video_id=video_id)
 
 
+class TikTokBaseListIE(TikTokBaseIE):
+    def _entries(self, list_id, display_id):
+        query = {
+            self._QUERY_NAME: list_id,
+            'cursor': 0,
+            'count': 20,
+            'type': 5,
+            'device_id': ''.join(random.choice(string.digits) for i in range(19))
+        }
+
+        max_retries = self.get_param('extractor_retries', 3)
+        for page in itertools.count(1):
+            for retries in itertools.count():
+                try:
+                    post_list = self._call_api(self._API_ENDPOINT, query, display_id,
+                                               note='Downloading video list page %d%s' % (page, f' (attempt {retries})' if retries != 0 else ''),
+                                               errnote='Unable to download video list')
+                except ExtractorError as e:
+                    if isinstance(e.cause, json.JSONDecodeError) and e.cause.pos == 0 and retries != max_retries:
+                        self.report_warning('%s. Retrying...' % str(e.cause or e.msg))
+                        continue
+                    raise
+                break
+            for video in post_list.get('aweme_list', []):
+                yield {
+                    **self._parse_aweme_video_app(video),
+                    'extractor_key': TikTokIE.ie_key(),
+                    'extractor': 'TikTok',
+                    'webpage_url': f'https://tiktok.com/@_/video/{video["aweme_id"]}',
+                }
+            if not post_list.get('has_more'):
+                break
+            query['cursor'] = post_list['cursor']
+
+    def _real_extract(self, url):
+        list_id = self._match_id(url)
+        return self.playlist_result(self._entries(list_id, list_id), list_id)
+
+
 class TikTokUserIE(TikTokBaseIE):
     IE_NAME = 'tiktok:user'
     _VALID_URL = r'https?://(?:www\.)?tiktok\.com/@(?P<id>[\w\.-]+)/?(?:$|[#?])'
@@ -673,45 +712,6 @@ class TikTokUserIE(TikTokBaseIE):
         thumbnail = traverse_obj(videos, (0, 'author', 'avatar_larger', 'url_list', 0))
 
         return self.playlist_result(self._entries_api(user_id, videos), user_id, user_name, thumbnail=thumbnail)
-
-
-class TikTokBaseListIE(TikTokBaseIE):
-    def _entries(self, list_id, display_id):
-        query = {
-            self._QUERY_NAME: list_id,
-            'cursor': 0,
-            'count': 20,
-            'type': 5,
-            'device_id': ''.join(random.choice(string.digits) for i in range(19))
-        }
-
-        max_retries = self.get_param('extractor_retries', 3)
-        for page in itertools.count(1):
-            for retries in itertools.count():
-                try:
-                    post_list = self._call_api(self._API_ENDPOINT, query, display_id,
-                                               note='Downloading video list page %d%s' % (page, f' (attempt {retries})' if retries != 0 else ''),
-                                               errnote='Unable to download video list')
-                except ExtractorError as e:
-                    if isinstance(e.cause, json.JSONDecodeError) and e.cause.pos == 0 and retries != max_retries:
-                        self.report_warning('%s. Retrying...' % str(e.cause or e.msg))
-                        continue
-                    raise
-                break
-            for video in post_list.get('aweme_list', []):
-                yield {
-                    **self._parse_aweme_video_app(video),
-                    'extractor_key': TikTokIE.ie_key(),
-                    'extractor': 'TikTok',
-                    'webpage_url': f'https://tiktok.com/@_/video/{video["aweme_id"]}',
-                }
-            if not post_list.get('has_more'):
-                break
-            query['cursor'] = post_list['cursor']
-
-    def _real_extract(self, url):
-        list_id = self._match_id(url)
-        return self.playlist_result(self._entries(list_id, list_id), list_id)
 
 
 class TikTokSoundIE(TikTokBaseListIE):
