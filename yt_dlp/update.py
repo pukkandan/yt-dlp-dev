@@ -12,7 +12,7 @@ from .utils import Popen, traverse_obj
 from .version import __version__
 
 
-RELEASE_JSON_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
+RELEASE_JSON_URL = 'https://api.github.com/repos/pukkandan/yt-dlp-dev/releases/latest'
 
 @functools.cache
 def get_variant_and_executable_path():
