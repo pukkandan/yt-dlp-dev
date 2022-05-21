@@ -20,7 +20,7 @@ def get_variant_and_executable_path():
     """@returns (variant, executable_path)"""
     if hasattr(sys, 'frozen'):
         path = sys.executable
-        prefix = 'mac' if sys.platform == 'darwin' else 'win'
+        prefix = {'darwin': 'mac', 'win32': 'win'}.get(sys.platform, 'unix')
         if getattr(sys, '_MEIPASS', None):
             if sys._MEIPASS == os.path.dirname(sys.executable):
                 return f'{prefix}_dir', path
@@ -44,12 +44,13 @@ _FILE_SUFFIXES = {
     'win_exe': '.exe',
     'py2exe': '_min.exe',
     'mac_exe': '_macos',
+    'unix_exe': '_unix',
 }
 
 _NON_UPDATEABLE_REASONS = {
     **{variant: None for variant in _FILE_SUFFIXES},  # Updatable
-    'win_dir': 'Auto-update is not supported for unpackaged windows executable; Re-download the latest release',
-    'mac_dir': 'Auto-update is not supported for unpackaged MacOS executable; Re-download the latest release',
+    **{variant: f'Auto-update is not supported for unpackaged {name} executable; Re-download the latest release'
+       for variant, name in {'win_dir': 'Windows', 'mac_dir': 'MacOS', 'unix_dir': 'Unix'}.items()},
     'source': 'You cannot update when running from source code; Use git to pull the latest changes',
     'unknown': 'It looks like you installed yt-dlp with a package manager, pip or setup.py; Use that to update',
 }
