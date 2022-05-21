@@ -14,6 +14,7 @@ from .version import __version__
 
 RELEASE_JSON_URL = 'https://api.github.com/repos/pukkandan/yt-dlp-dev/releases/latest'
 
+
 @functools.cache
 def get_variant_and_executable_path():
     """@returns (variant, executable_path)"""

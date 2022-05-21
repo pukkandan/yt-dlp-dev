@@ -9,9 +9,8 @@ tar: yt-dlp.tar.gz
 # Keep this list in sync with MANIFEST.in
 # intended use: when building a source distribution,
 # make pypi-files && python setup.py sdist
-pypi-files:
-	AUTHORS Changelog.md LICENSE README.md README.txt supportedsites \
-	completions yt-dlp.1 requirements.txt devscripts/* test/*
+pypi-files: AUTHORS Changelog.md LICENSE README.md README.txt supportedsites \
+	        completions yt-dlp.1 requirements.txt setup.cfg devscripts/* test/*
 
 .PHONY: all clean install test tar pypi-files completions ot offlinetest codetest supportedsites
 
@@ -149,7 +148,7 @@ yt-dlp.tar.gz: all
 		CONTRIBUTING.md Collaborators.md CONTRIBUTORS AUTHORS \
 		Makefile MANIFEST.in yt-dlp.1 README.txt completions \
 		setup.py setup.cfg yt-dlp yt_dlp requirements.txt \
-		devscripts test
+		devscripts test tox.ini pytest.ini
 
 AUTHORS: .mailmap
 	git shortlog -s -n | cut -f2 | sort > AUTHORS
