@@ -46,10 +46,10 @@ class TikTokBaseIE(InfoExtractor):
             'SIGI_STATE|sigi-persisted-data', webpage, escape_value=False), display_id)
 
     def _real_initialize(self):
-        if self._session_initalized:
+        if self._session_initialized:
             return
         self._request_webpage(HEADRequest('https://www.tiktok.com'), None, note='Setting up session', fatal=False)
-        TikTokBaseIE._session_initalized = True
+        TikTokBaseIE._session_initialized = True
 
     def _call_api_impl(self, ep, query, manifest_app_version, video_id, fatal=True,
                        note='Downloading API JSON', errnote='Unable to download API page'):
