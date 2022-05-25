@@ -9,8 +9,12 @@ from .compat_utils import passthrough_module
 
 
 # XXX: Implement this the same way as other DeprecationWarnings without circular import
-passthrough_module(__name__, '._legacy', callback=lambda attr: warnings.warn(
-    DeprecationWarning(f'{__name__}.{attr} is deprecated'), stacklevel=2))
+try:
+    passthrough_module(__name__, '._legacy', callback=lambda attr: warnings.warn(
+        DeprecationWarning(f'{__name__}.{attr} is deprecated'), stacklevel=2))
+    HAS_LEGACY = False
+except ModuleNotFoundError:
+    HAS_LEGACY = False
 del passthrough_module
 
 
