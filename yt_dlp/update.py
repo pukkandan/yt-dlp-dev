@@ -1,3 +1,4 @@
+import atexit
 import hashlib
 import json
 import os
@@ -205,22 +206,18 @@ class Updater:
         if self.variant not in ('win32_exe', 'py2exe'):
             if old_filename:
                 os.remove(old_filename)
-            self.ydl.to_screen(f'Updated yt-dlp to version {self.new_version}; Restart yt-dlp to use the new version')
-            return
+        else:
+            # Run in the background after yt-dlp exits
+            atexit.register(Popen, f'ping 127.0.0.1 -n 5 -w 1000 & del /F "{old_filename}"',
+                            shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        try:
-            # Continues to run in the background
-            Popen(f'ping 127.0.0.1 -n 5 -w 1000 & del /F "{old_filename}"',
-                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.ydl.to_screen(f'Updated yt-dlp to version {self.new_version}')
-            return True  # Exit app
-        except OSError:
-            self._report_unable('delete the old version')
+        self.ydl.to_screen(f'Updated yt-dlp to version {self.new_version}')
+        return True
 
 
 def run_update(ydl):
     """Update the program file with the latest version from the repository
-    Returns whether the program should terminate
+    @returns    Whether whether there was a successfull update (No update = False)
     """
     return Updater(ydl).update()
 

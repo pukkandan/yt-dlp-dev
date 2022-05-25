@@ -33,6 +33,7 @@ from .utils import (
     DownloadCancelled,
     DownloadError,
     GeoUtils,
+    Popen,
     SameFileError,
     decodeOption,
     expand_path,
@@ -45,6 +46,7 @@ from .utils import (
     read_stdin,
     render_table,
     setproctitle,
+    shell_quote,
     std_headers,
     traverse_obj,
     variadic,
@@ -848,9 +850,12 @@ def _real_main(argv=None):
         if opts.rm_cachedir:
             ydl.cache.remove()
 
-        if opts.update_self and run_update(ydl) and actual_use:
-            # If updater returns True, exit. Required for windows
-            return 100, 'ERROR: The program must exit for the update to complete'
+        update = opts.update_self and run_update(ydl)
+        if update and actual_use:
+            ydl.write_debug(f'Restarting: {shell_quote(sys.argv)}')
+            proc = Popen(sys.argv)
+            proc.communicate_or_kill()
+            return proc.returncode
 
         if not actual_use:
             if opts.update_self or opts.rm_cachedir:
