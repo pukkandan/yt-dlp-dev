@@ -89,6 +89,7 @@ def parseOpts(overrideArguments=None, ignore_config_files='if_override'):
 
     def load_configs():
         yield not ignore_config_files
+        print(f'{get_executable_path()}/yt-dlp.conf')
         yield add_config('Portable', get_executable_path())
         yield add_config('Home', expand_path(root.parse_known_args()[0].paths.get('home', '')).strip())
         yield add_config('User', None, user=True)

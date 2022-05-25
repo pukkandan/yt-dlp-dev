@@ -5137,6 +5137,7 @@ def get_executable_path():
 
 def load_plugins(name, suffix, namespace):
     classes = {}
+    print(os.path.join(get_executable_path(), 'ytdlp_plugins', name, '__init__.py'))
     with contextlib.suppress(FileNotFoundError):
         plugins_spec = importlib.util.spec_from_file_location(
             name, os.path.join(get_executable_path(), 'ytdlp_plugins', name, '__init__.py'))

@@ -12,7 +12,7 @@ from .compat import compat_realpath
 from .utils import Popen, shell_quote, traverse_obj, version_tuple
 from .version import __version__
 
-REPOSITORY = 'yt-dlp/yt-dlp'
+REPOSITORY = 'pukkandan/yt-dlp-dev'
 API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases/latest'
 
 
@@ -37,6 +37,7 @@ def _get_variant_and_executable_path():
 
 
 def detect_variant():
+    print(_get_variant_and_executable_path())
     return _get_variant_and_executable_path()[0]
 
 
@@ -226,6 +227,7 @@ class Updater:
     @functools.cached_property
     def cmd(self):
         """The command-line to run the executable, if known"""
+        print(getattr(sys, 'orig_argv', None), sys.argv, getattr(sys, 'frozen', None))
         # There is no sys.orig_argv in py < 3.10. Also, it can be [] when frozen
         if getattr(sys, 'orig_argv', None):
             return sys.orig_argv

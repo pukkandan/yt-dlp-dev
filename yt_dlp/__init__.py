@@ -889,6 +889,7 @@ def _real_main(argv=None):
             if updater.update() and actual_use:
                 if updater.cmd:
                     return updater.restart()
+                # Unreachable code?
                 return 100, 'ERROR: The program must exit for the update to complete'
         elif opts.call_home:
             updater.check_update()
