@@ -70,7 +70,7 @@ def _sha256_file(path):
 
 
 class Updater:
-    REPO = 'yt-dlp/yt-dlp'
+    REPO = 'pukkandan/yt-dlp-dev'
     API_URL = f'https://api.github.com/repos/{REPO}/releases/latest'
     _version_cache, _hash_data = None, None
 
