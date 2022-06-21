@@ -800,6 +800,8 @@ You can also fork the project on github and run your fork's [build workflow](.gi
     --write-pages                   Write downloaded intermediary pages to files
                                     in the current directory to debug problems
     --print-traffic                 Display sent and read HTTP traffic
+    -C, --call-home                 Check for new version without updating
+    --no-call-home                  Check for new version only with -U (default)
 
 ## Workarounds:
     --encoding ENCODING             Force the specified encoding (experimental)
@@ -2120,8 +2122,6 @@ These options may no longer work as intended
 
     --prefer-avconv                  avconv is not officially supported by yt-dlp (Alias: --no-prefer-ffmpeg)
     --prefer-ffmpeg                  Default (Alias: --no-prefer-avconv)
-    -C, --call-home                  Not implemented
-    --no-call-home                   Default
     --include-ads                    No longer supported
     --no-include-ads                 Default
     --write-annotations              No supported site has annotations now

@@ -491,7 +491,6 @@ def validate_options(opts):
     report_deprecation(opts.sponskrub, '--sponskrub', '--sponsorblock-mark or --sponsorblock-remove')
     report_deprecation(not opts.prefer_ffmpeg, '--prefer-avconv', 'ffmpeg')
     # report_deprecation(opts.include_ads, '--include-ads')  # We may re-implement this in future
-    # report_deprecation(opts.call_home, '--call-home')  # We may re-implement this in future
     # report_deprecation(opts.writeannotations, '--write-annotations')  # It's just that no website has it
 
     # Dependent options
@@ -879,7 +878,7 @@ def _real_main(argv=None):
         return
 
     with YoutubeDL(ydl_opts) as ydl:
-        pre_process = opts.update_self or opts.rm_cachedir
+        pre_process = opts.update_self or opts.rm_cachedir or opts.call_home
         actual_use = all_urls or opts.load_info_filename
 
         if opts.rm_cachedir:

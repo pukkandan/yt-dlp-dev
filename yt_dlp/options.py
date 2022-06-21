@@ -1197,13 +1197,11 @@ def create_parser():
     verbosity.add_option(
         '-C', '--call-home',
         dest='call_home', action='store_true', default=False,
-        # help='Contact the yt-dlp server for debugging')
-        help=optparse.SUPPRESS_HELP)
+        help='Check for new version without updating')
     verbosity.add_option(
         '--no-call-home',
         dest='call_home', action='store_false',
-        # help='Do not contact the yt-dlp server for debugging (default)')
-        help=optparse.SUPPRESS_HELP)
+        help='Check for new version only with -U (default)')
 
     filesystem = optparse.OptionGroup(parser, 'Filesystem Options')
     filesystem.add_option(
