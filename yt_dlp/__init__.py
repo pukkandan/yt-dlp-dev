@@ -26,7 +26,7 @@ from .postprocessor import (
     MetadataFromFieldPP,
     MetadataParserPP,
 )
-from .update import run_update
+from .update import Updater
 from .utils import (
     NO_DEFAULT,
     POSTPROCESS_WHEN,
@@ -879,17 +879,23 @@ def _real_main(argv=None):
         return
 
     with YoutubeDL(ydl_opts) as ydl:
+        pre_process = opts.update_self or opts.rm_cachedir
         actual_use = all_urls or opts.load_info_filename
 
         if opts.rm_cachedir:
             ydl.cache.remove()
 
-        if opts.update_self and run_update(ydl) and actual_use:
-            # If updater returns True, exit. Required for windows
-            return 100, 'ERROR: The program must exit for the update to complete'
+        updater = Updater(ydl)
+        if opts.update_self:
+            if updater.update() and actual_use:
+                if updater.cmd:
+                    return updater.restart()
+                return 100, 'ERROR: The program must exit for the update to complete'
+        elif opts.call_home:
+            updater.check_update()
 
         if not actual_use:
-            if opts.update_self or opts.rm_cachedir:
+            if pre_process:
                 return ydl._download_retcode
 
             ydl.warn_if_short_id(sys.argv[1:] if argv is None else argv)
