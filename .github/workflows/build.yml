@@ -71,7 +71,8 @@ jobs:
 
   build_unix:
     needs: create_release
-    runs-on: ubuntu-18.04  # Standalone executable should be built on minimum supported OS
+    runs-on: ubuntu-latest
+    container: ubuntu:18.04  # Standalone executable should be built on minimum supported OS
     outputs:
       sha256_bin: ${{ steps.get_sha.outputs.sha256_bin }}
       sha512_bin: ${{ steps.get_sha.outputs.sha512_bin }}
@@ -84,12 +85,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-          python-version: '3.10'
+    - name: Install Python  # deadsnakes:ppa has newer Python linked against old GLIBC
+      run: |
+          apt-get update && apt-get install -y curl software-properties-common
+          add-apt-repository ppa:deadsnakes/ppa
+          apt-get update && apt-get install -y python3.10 python3.10-dev python3.10-distutils
+          ln -s /usr/bin/python3.10 /usr/bin/python
+          curl -sSL https://bootstrap.pypa.io/get-pip.py -o /get-pip.py
+          python /get-pip.py
     - name: Install Requirements
       run: |
-          sudo apt-get -y install zip pandoc man
+          apt-get -y install binutils make tar zip pandoc man
           python -m pip install --upgrade pip setuptools wheel twine
           python -m pip install Pyinstaller -r requirements.txt
 
@@ -160,7 +166,7 @@ jobs:
       run: |
         rm -rf dist/*
         python setup.py sdist bdist_wheel
-        twine upload dist/*
+        python -m twine upload dist/*
 
     - name: Install SSH private key for Homebrew
       env:
