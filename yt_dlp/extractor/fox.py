@@ -1,14 +1,12 @@
 import json
+import urllib.parse
 import uuid
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_HTTPError,
-    compat_str,
-    compat_urllib_parse_unquote,
-)
+from ..compat import compat_HTTPError
 from ..utils import (
     ExtractorError,
+    get_domain,
     int_or_none,
     parse_age_limit,
     parse_duration,
@@ -52,67 +50,69 @@ class FOXIE(InfoExtractor):
     _HOME_PAGE_URL = 'https://www.fox.com/'
     _API_KEY = '6E9S4bmcoNnZwVLOHywOv8PJEdu76cM9'
     _access_token = None
-    _device_id = compat_str(uuid.uuid4())
+    _device_id = str(uuid.uuid4())
 
-    def _call_api(self, path, video_id, data=None):
-        headers = {
-            'X-Api-Key': self._API_KEY,
-        }
+    def _call_api(self, path, video_id, **kwargs):
+        headers = {'X-Api-Key': self._API_KEY}
         if self._access_token:
-            headers['Authorization'] = 'Bearer ' + self._access_token
-        try:
-            return self._download_json(
-                'https://api3.fox.com/v2.0/' + path,
-                video_id, data=data, headers=headers)
-        except ExtractorError as e:
-            if isinstance(e.cause, compat_HTTPError) and e.cause.code == 403:
-                entitlement_issues = self._parse_json(
-                    e.cause.read().decode(), video_id)['entitlementIssues']
-                for e in entitlement_issues:
-                    if e.get('errorCode') == 1005:
-                        raise ExtractorError(
-                            'This video is only available via cable service provider '
-                            'subscription. You may want to use --cookies.', expected=True)
-                messages = ', '.join([e['message'] for e in entitlement_issues])
-                raise ExtractorError(messages, expected=True)
-            raise
+            headers['Authorization'] = f'Bearer {self._access_token}'
+        for attempt in range(2):
+            try:
+                return self._download_json(f'https://api3.fox.com/v2.0/{path}', video_id, headers=headers, **kwargs)
+            except ExtractorError as e:
+                if not isinstance(e.cause, compat_HTTPError):
+                    raise
+                elif path == 'watch' and e.cause.code == 410 and not attempt:
+                    self._login(video_id)
+                elif e.cause.code == 403:
+                    entitlement_issues = self._parse_json(
+                        e.cause.read().decode(), video_id)['entitlementIssues']
+                    for e in entitlement_issues:
+                        if e.get('errorCode') == 1005:
+                            self.raise_login_required(
+                                'This video is only available via cable service provider subscription', method='cookies')
+                    messages = ', '.join([e['message'] for e in entitlement_issues])
+                    raise ExtractorError(messages, expected=True)
+                else:
+                    raise
 
     def _real_initialize(self):
+        self._login()
+
+    def _login(self, video_id=None):
         if not self._access_token:
             mvpd_auth = self._get_cookies(self._HOME_PAGE_URL).get('mvpd-auth')
             if mvpd_auth:
-                self._access_token = (self._parse_json(compat_urllib_parse_unquote(
-                    mvpd_auth.value), None, fatal=False) or {}).get('accessToken')
-            if not self._access_token:
-                self._access_token = self._call_api(
-                    'login', None, json.dumps({
-                        'deviceId': self._device_id,
-                    }).encode())['accessToken']
+                self._access_token = (self._parse_json(
+                    urllib.parse.unquote(mvpd_auth.value), video_id, fatal=False) or {}).get('accessToken')
+        if not self._access_token:
+            self.cookiejar.clear(f'.{get_domain(self._HOME_PAGE_URL)}')
+            self._access_token = self._call_api(
+                'previewpassmvpd', video_id, note='Getting preview token',
+                query={'device_id': self._device_id, 'mvpd_id': 'TempPass_fbcfox_60min'})['accessToken']
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
 
-        self._access_token = self._call_api(
-            'previewpassmvpd?device_id=%s&mvpd_id=TempPass_fbcfox_60min' % self._device_id,
-            video_id)['accessToken']
-
-        video = self._call_api('watch', video_id, data=json.dumps({
-            'capabilities': ['drm/widevine', 'fsdk/yo'],
-            'deviceWidth': 1280,
-            'deviceHeight': 720,
-            'maxRes': '720p',
-            'os': 'macos',
-            'osv': '',
-            'provider': {
-                'freewheel': {'did': self._device_id},
-                'vdms': {'rays': ''},
-                'dmp': {'kuid': '', 'seg': ''}
-            },
-            'playlist': '',
-            'privacy': {'us': '1---'},
-            'siteSection': '',
-            'streamType': 'vod',
-            'streamId': video_id}).encode('utf-8'))
+        video = self._call_api(
+            'watch', video_id, note='Downloading video metadata', data=json.dumps({
+                'capabilities': ['drm/widevine', 'fsdk/yo'],
+                'deviceWidth': 1280,
+                'deviceHeight': 720,
+                'maxRes': '720p',
+                'os': 'macos',
+                'osv': '',
+                'provider': {
+                    'freewheel': {'did': self._device_id},
+                    'vdms': {'rays': ''},
+                    'dmp': {'kuid': '', 'seg': ''}
+                },
+                'playlist': '',
+                'privacy': {'us': '1---'},
+                'siteSection': '',
+                'streamType': 'vod',
+                'streamId': video_id,
+            }).encode('utf-8'))
 
         title = video['name']
         release_url = video['url']

@@ -1592,6 +1592,10 @@ class YoutubeDLCookieJar(http.cookiejar.MozillaCookieJar):
                 cookie.expires = None
                 cookie.discard = True
 
+    def clear(self, *args, **kwargs):
+        with contextlib.suppress(KeyError):
+            return super().clear(*args, **kwargs)
+
 
 class YoutubeDLCookieProcessor(urllib.request.HTTPCookieProcessor):
     def __init__(self, cookiejar=None):
