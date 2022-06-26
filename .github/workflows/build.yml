@@ -85,27 +85,31 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    #- uses: actions/setup-python@v2
-    #  with:
-    #      python-version: '3.10'
+    - name: Install Python  # deadsnakes:ppa Has newer Python linked against old GLIBC
+      run: |
+          echo "deb http://ppa.launchpad.net/fkrull/deadsnakes/ubuntu xenial main" >> /etc/apt/sources.list
+          echo "deb-src http://ppa.launchpad.net/fkrull/deadsnakes/ubuntu xenial main" >> /etc/apt/sources.list
+          apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FF3997E83CD969B409FB24BC5BB92C09DB82666C
+          apt-get update
+          apt-get install -y python3.10
+          ln -s /usr/bin/python3.10 /usr/bin/python
+          pip install --upgrade pip
     - name: Install Requirements
       run: |
-          apt-get update
-          add-apt-repository ppa:deadsnakes/ppa  # Has newer Python linked against old GLIBC
-          apt-get -y install zip pandoc man python3.10
-          python3.10 -m pip install --upgrade pip setuptools wheel twine
-          python3.10 -m pip install Pyinstaller -r requirements.txt
+          apt-get -y install zip pandoc man
+          python -m pip install --upgrade pip setuptools wheel twine
+          python -m pip install Pyinstaller -r requirements.txt
 
     - name: Prepare
       run: |
-          python3.10 devscripts/update-version.py ${{ needs.create_release.outputs.version_suffix }}
-          python3.10 devscripts/make_lazy_extractors.py
+          python devscripts/update-version.py ${{ needs.create_release.outputs.version_suffix }}
+          python devscripts/make_lazy_extractors.py
     - name: Build Unix executables
       run: |
           make all tar
-          python3.10 pyinst.py --onedir
+          python pyinst.py --onedir
           (cd ./dist/yt-dlp_linux && zip -r ../yt-dlp_linux.zip .)
-          python3.10 pyinst.py
+          python pyinst.py
     - name: Get SHA2-SUMS
       id: get_sha
       run: |
@@ -162,8 +166,8 @@ jobs:
       if: "env.TWINE_PASSWORD != ''"
       run: |
         rm -rf dist/*
-        python3.10 setup.py sdist bdist_wheel
-        python3.10 -m twine upload dist/*
+        python setup.py sdist bdist_wheel
+        python -m twine upload dist/*
 
     - name: Install SSH private key for Homebrew
       env:
@@ -178,7 +182,7 @@ jobs:
       if: "env.BREW_TOKEN != ''"
       run: |
         git clone git@github.com:yt-dlp/homebrew-taps taps/
-        python3.10 devscripts/update-formulae.py taps/Formula/yt-dlp.rb "${{ needs.create_release.outputs.ytdlp_version }}"
+        python devscripts/update-formulae.py taps/Formula/yt-dlp.rb "${{ needs.create_release.outputs.ytdlp_version }}"
         git -C taps/ config user.name github-actions
         git -C taps/ config user.email github-actions@example.com
         git -C taps/ commit -am 'yt-dlp: ${{ needs.create_release.outputs.ytdlp_version }}'
