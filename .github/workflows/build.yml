@@ -1,5 +1,5 @@
 name: Build
-on: workflow_dispatch
+on: push
 
 jobs:
   create_release:
@@ -65,13 +65,14 @@ jobs:
 
           ### Changelog:
           ${{ env.changelog }}
-        draft: false
+        draft: true
         prerelease: false
 
 
   build_unix:
     needs: create_release
-    runs-on: ubuntu-18.04  # Standalone executable should be built on minimum supported OS
+    runs-on: ubuntu-latest
+    container: ubuntu:16.04
     outputs:
       sha256_bin: ${{ steps.get_sha.outputs.sha256_bin }}
       sha512_bin: ${{ steps.get_sha.outputs.sha512_bin }}
@@ -84,25 +85,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-          python-version: '3.10'
+    #- uses: actions/setup-python@v2
+    #  with:
+    #      python-version: '3.10'
     - name: Install Requirements
       run: |
-          sudo apt-get -y install zip pandoc man
-          python -m pip install --upgrade pip setuptools wheel twine
-          python -m pip install Pyinstaller -r requirements.txt
+          apt-get update
+          add-apt-repository ppa:deadsnakes/ppa  # Has newer Python linked against old GLIBC
+          apt-get -y install zip pandoc man python3.10
+          python3.10 -m pip install --upgrade pip setuptools wheel twine
+          python3.10 -m pip install Pyinstaller -r requirements.txt
 
     - name: Prepare
       run: |
-          python devscripts/update-version.py ${{ needs.create_release.outputs.version_suffix }}
-          python devscripts/make_lazy_extractors.py
+          python3.10 devscripts/update-version.py ${{ needs.create_release.outputs.version_suffix }}
+          python3.10 devscripts/make_lazy_extractors.py
     - name: Build Unix executables
       run: |
           make all tar
-          python pyinst.py --onedir
+          python3.10 pyinst.py --onedir
           (cd ./dist/yt-dlp_linux && zip -r ../yt-dlp_linux.zip .)
-          python pyinst.py
+          python3.10 pyinst.py
     - name: Get SHA2-SUMS
       id: get_sha
       run: |
@@ -159,8 +162,8 @@ jobs:
       if: "env.TWINE_PASSWORD != ''"
       run: |
         rm -rf dist/*
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        python3.10 setup.py sdist bdist_wheel
+        python3.10 -m twine upload dist/*
 
     - name: Install SSH private key for Homebrew
       env:
@@ -175,7 +178,7 @@ jobs:
       if: "env.BREW_TOKEN != ''"
       run: |
         git clone git@github.com:yt-dlp/homebrew-taps taps/
-        python devscripts/update-formulae.py taps/Formula/yt-dlp.rb "${{ needs.create_release.outputs.ytdlp_version }}"
+        python3.10 devscripts/update-formulae.py taps/Formula/yt-dlp.rb "${{ needs.create_release.outputs.ytdlp_version }}"
         git -C taps/ config user.name github-actions
         git -C taps/ config user.email github-actions@example.com
         git -C taps/ commit -am 'yt-dlp: ${{ needs.create_release.outputs.ytdlp_version }}'
@@ -395,3 +398,12 @@ jobs:
         asset_path: ./SHA2-512SUMS
         asset_name: SHA2-512SUMS
         asset_content_type: text/plain
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.create_release.outputs.ytdlp_version }}
+        draft: false
