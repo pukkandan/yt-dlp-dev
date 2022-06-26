@@ -1,5 +1,5 @@
 name: Build
-on: workflow_dispatch
+on: push
 
 jobs:
   create_release:
@@ -71,7 +71,8 @@ jobs:
 
   build_unix:
     needs: create_release
-    runs-on: ubuntu-18.04  # Standalone executable should be built on minimum supported OS
+    runs-on: ubuntu-latest
+    container: ubuntu:xenial
     outputs:
       sha256_bin: ${{ steps.get_sha.outputs.sha256_bin }}
       sha512_bin: ${{ steps.get_sha.outputs.sha512_bin }}
@@ -89,7 +90,8 @@ jobs:
           python-version: '3.10'
     - name: Install Requirements
       run: |
-          sudo apt-get -y install zip pandoc man
+          apt-get update
+          apt-get -y install zip pandoc man
           python -m pip install --upgrade pip setuptools wheel twine
           python -m pip install Pyinstaller -r requirements.txt
 
