@@ -3,17 +3,18 @@ import hashlib
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 from zipimport import zipimporter
 
 from .compat import functools  # isort: split
 from .compat import compat_realpath
-from .utils import Popen, shell_quote, traverse_obj, version_tuple
+from .utils import Popen, shell_quote, system_identifier, traverse_obj, version_tuple, cached_method
 from .version import __version__
 
 REPOSITORY = 'yt-dlp/yt-dlp'
-API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases/latest'
+API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases'
 
 
 @functools.cache
@@ -76,9 +77,20 @@ class Updater:
         self.ydl = ydl
 
     @functools.cached_property
-    def _new_version_info(self):
-        self.ydl.write_debug(f'Fetching release info: {API_URL}')
-        return json.loads(self.ydl.urlopen(API_URL).read().decode())
+    def _tag(self):
+        identifier = f'{detect_variant()} {system_identifier()}'
+        for line in self._download('_update_spec', 'latest').decode().splitlines():
+            if not line.startswith('lock '):
+                continue
+            _, tag, pattern = line.split(' ', 2)
+            if re.search(pattern, identifier):
+                return f'tags/{tag}'
+        return 'latest'
+
+    @cached_method
+    def _get_version_info(self, tag):
+        self.ydl.write_debug(f'Fetching release info: {API_URL}/{tag}')
+        return json.loads(self.ydl.urlopen(f'{API_URL}/{tag}').read().decode())
 
     @property
     def current_version(self):
@@ -88,7 +100,7 @@ class Updater:
     @property
     def new_version(self):
         """Version of the latest release"""
-        return self._new_version_info['tag_name']
+        return self._get_version_info(self._tag)['tag_name']
 
     @property
     def has_update(self):
@@ -100,9 +112,8 @@ class Updater:
         """Filename of the executable"""
         return compat_realpath(_get_variant_and_executable_path()[1])
 
-    def _download(self, name=None):
-        name = name or self.release_name
-        url = traverse_obj(self._new_version_info, (
+    def _download(self, name, tag):
+        url = traverse_obj(self._get_version_info(tag), (
             'assets', lambda _, v: v['name'] == name, 'browser_download_url'), get_all=False)
         if not url:
             raise Exception('Unable to find download URL')
@@ -120,7 +131,7 @@ class Updater:
     @functools.cached_property
     def release_hash(self):
         """Hash of the latest release"""
-        hash_data = dict(ln.split()[::-1] for ln in self._download('SHA2-256SUMS').decode().splitlines())
+        hash_data = dict(ln.split()[::-1] for ln in self._download('SHA2-256SUMS', self._tag).decode().splitlines())
         return hash_data[self.release_name]
 
     def _report_error(self, msg, expected=False):
@@ -173,7 +184,7 @@ class Updater:
             return self._report_error('Unable to remove the old version')
 
         try:
-            newcontent = self._download()
+            newcontent = self._download(self.release_name, self._tag)
         except OSError:
             return self._report_network_error('download latest version')
         except Exception:
