@@ -8,6 +8,7 @@ jobs:
       version_suffix: ${{ steps.version_suffix.outputs.version_suffix }}
       ytdlp_version: ${{ steps.bump_version.outputs.ytdlp_version }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -413,9 +414,11 @@ jobs:
         asset_content_type: text/plain
 
     - name: Finalize release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh api \
           --method PATCH \
           -H "Accept: application/vnd.github.v3+json" \
-          /repos/${{ env.GITHUB_ACTION_REPOSITORY }}/releases/${{ needs.create_release.outputs.ytdlp_version }} \
+          /repos/${{ github.repository }}/releases/${{ needs.create_release.outputs.release_id }} \
           -F draft=false
