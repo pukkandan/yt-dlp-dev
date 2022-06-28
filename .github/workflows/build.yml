@@ -378,7 +378,6 @@ jobs:
         echo "${{ needs.build_windows.outputs.sha512_win_zip }}  yt-dlp_win.zip" >> SHA2-512SUMS
         echo "${{ needs.build_macos.outputs.sha512_macos }}  yt-dlp_macos" >> SHA2-512SUMS
         echo "${{ needs.build_macos.outputs.sha512_macos_zip }}  yt-dlp_macos.zip" >> SHA2-512SUMS
-
     - name: Upload SHA2-256SUMS file
       uses: actions/upload-release-asset@v1
       env:
@@ -397,6 +396,18 @@ jobs:
         asset_path: ./SHA2-512SUMS
         asset_name: SHA2-512SUMS
         asset_content_type: text/plain
+
+    - name: Make Update spec
+      run: |
+        echo "# This file is used for regulating the self-update mechanism" >> _update_spec
+    - name: Upload update spec
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ needs.create_release.outputs.upload_url }}
+        asset_path: ./_update_spec
+        asset_name: _update_spec
+        asset_content_type: text/plain
+
     - name: Finalize release
       uses: softprops/action-gh-release
       with:
