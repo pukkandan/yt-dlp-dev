@@ -10,7 +10,6 @@ import json
 import locale
 import operator
 import os
-import platform
 import random
 import re
 import shutil
