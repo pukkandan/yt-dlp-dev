@@ -13,7 +13,7 @@ from .compat import compat_realpath
 from .utils import Popen, shell_quote, system_identifier, traverse_obj, version_tuple, cached_method
 from .version import __version__
 
-REPOSITORY = 'yt-dlp/yt-dlp'
+REPOSITORY = 'pukkandan/yt-dlp-dev'
 API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases'
 
 
@@ -83,6 +83,7 @@ class Updater:
             if not line.startswith('lock '):
                 continue
             _, tag, pattern = line.split(' ', 2)
+            print(tag, pattern, identifier, re.search(pattern, identifier))
             if re.search(pattern, identifier):
                 return f'tags/{tag}'
         return 'latest'
@@ -149,6 +150,7 @@ class Updater:
             self.ydl.to_screen(
                 f'Latest version: {self.new_version}, Current version: {self.current_version}')
         except Exception:
+            raise
             return self._report_network_error('obtain version info', delim='; Please try again later or')
 
         if not self.has_update:
