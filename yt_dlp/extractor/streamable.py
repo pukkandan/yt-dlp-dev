@@ -12,6 +12,7 @@ from ..utils import (
 
 class StreamableIE(InfoExtractor):
     _VALID_URL = r'https?://streamable\.com/(?:[es]/)?(?P<id>\w+)'
+    _EMBED_REGEX = r'<iframe[^>]+\bsrc=(?P<q1>[\'"])(?P<url>(?:https?:)?//streamable\.com/.+?)(?P=q1)'
     _TESTS = [
         {
             'url': 'https://streamable.com/dnd1',
@@ -52,14 +53,6 @@ class StreamableIE(InfoExtractor):
             'only_matching': True,
         }
     ]
-
-    @staticmethod
-    def _extract_url(webpage):
-        mobj = re.search(
-            r'<iframe[^>]+\bsrc=(?P<q1>[\'"])(?P<src>(?:https?:)?//streamable\.com/.+?)(?P=q1)',
-            webpage)
-        if mobj:
-            return mobj.group('src')
 
     def _real_extract(self, url):
         video_id = self._match_id(url)

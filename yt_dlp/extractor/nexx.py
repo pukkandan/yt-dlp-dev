@@ -135,10 +135,6 @@ class NexxIE(InfoExtractor):
 
         return entries
 
-    @staticmethod
-    def _extract_url(webpage):
-        return NexxIE._extract_urls(webpage)[0]
-
     def _handle_error(self, response):
         if traverse_obj(response, ('metadata', 'notice'), expected_type=str):
             self.report_warning('%s said: %s' % (self.IE_NAME, response['metadata']['notice']))

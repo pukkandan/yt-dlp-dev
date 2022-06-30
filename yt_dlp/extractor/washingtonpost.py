@@ -8,7 +8,7 @@ from ..utils import traverse_obj
 class WashingtonPostIE(InfoExtractor):
     IE_NAME = 'washingtonpost'
     _VALID_URL = r'(?:washingtonpost:|https?://(?:www\.)?washingtonpost\.com/(?:video|posttv)/(?:[^/]+/)*)(?P<id>[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})'
-    _EMBED_URL = r'https?://(?:www\.)?washingtonpost\.com/video/c/embed/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}'
+    _EMBED_REGEX = r'https?://(?:www\.)?washingtonpost\.com/video/c/embed/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}'
     _TESTS = [{
         'url': 'https://www.washingtonpost.com/video/c/video/480ba4ee-1ec7-11e6-82c2-a7dcb313287d',
         'md5': '6f537e1334b714eb15f9563bd4b9cdfa',
@@ -31,7 +31,7 @@ class WashingtonPostIE(InfoExtractor):
     @classmethod
     def _extract_urls(cls, webpage):
         return re.findall(
-            r'<iframe[^>]+\bsrc=["\'](%s)' % cls._EMBED_URL, webpage)
+            r'<iframe[^>]+\bsrc=["\'](%s)' % cls._EMBED_REGEX, webpage)
 
     def _real_extract(self, url):
         video_id = self._match_id(url)

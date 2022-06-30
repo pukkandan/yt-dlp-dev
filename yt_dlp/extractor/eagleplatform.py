@@ -52,14 +52,14 @@ class EaglePlatformIE(InfoExtractor):
         'only_matching': True,
     }]
 
-    @staticmethod
-    def _extract_url(webpage):
+    @classmethod
+    def _extract_urls(cls, url, webpage):
         # Regular iframe embedding
         mobj = re.search(
             r'<iframe[^>]+src=(["\'])(?P<url>(?:https?:)?//.+?\.media\.eagleplatform\.com/index/player\?.+?)\1',
             webpage)
         if mobj is not None:
-            return mobj.group('url')
+            return [mobj.group('url')]
         PLAYER_JS_RE = r'''
                         <script[^>]+
                             src=(?P<qjs>["\'])(?:https?:)?//(?P<host>(?:(?!(?P=qjs)).)+\.media\.eagleplatform\.com)/player/player\.js(?P=qjs)
@@ -74,7 +74,7 @@ class EaglePlatformIE(InfoExtractor):
                         data-id=["\'](?P<id>\d+)
             ''' % PLAYER_JS_RE, webpage)
         if mobj is not None:
-            return 'eagleplatform:%(host)s:%(id)s' % mobj.groupdict()
+            return ['eagleplatform:%(host)s:%(id)s' % mobj.groupdict()]
         # Generalization of "Javascript code usage", "Combined usage" and
         # "Usage without attaching to DOM" embeddings (see
         # http://dultonmedia.github.io/eplayer/)
@@ -95,7 +95,7 @@ class EaglePlatformIE(InfoExtractor):
                     </script>
             ''' % PLAYER_JS_RE, webpage)
         if mobj is not None:
-            return 'eagleplatform:%(host)s:%(id)s' % mobj.groupdict()
+            return ['eagleplatform:%(host)s:%(id)s' % mobj.groupdict()]
 
     @staticmethod
     def _handle_error(response):

@@ -5,6 +5,7 @@ from ..utils import (
     ExtractorError,
     float_or_none,
     int_or_none,
+    try_call,
     try_get,
     unescapeHTML,
 )
@@ -146,41 +147,37 @@ class WistiaIE(WistiaBaseIE):
     }]
 
     # https://wistia.com/support/embed-and-share/video-on-your-website
-    @staticmethod
-    def _extract_url(webpage):
-        urls = WistiaIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
-    @staticmethod
-    def _extract_urls(webpage):
-        urls = []
+    @classmethod
+    def _extract_urls(cls, url, webpage):
         for match in re.finditer(
                 r'<(?:meta[^>]+?content|(?:iframe|script)[^>]+?src)=["\'](?P<url>(?:https?:)?//(?:fast\.)?wistia\.(?:net|com)/embed/(?:iframe|medias)/[a-z0-9]{10})', webpage):
-            urls.append(unescapeHTML(match.group('url')))
+            yield unescapeHTML(match.group('url'))
         for match in re.finditer(
                 r'''(?sx)
                     <div[^>]+class=(["'])(?:(?!\1).)*?\bwistia_async_(?P<id>[a-z0-9]{10})\b(?:(?!\1).)*?\1
                 ''', webpage):
-            urls.append('wistia:%s' % match.group('id'))
+            yield 'wistia:%s' % match.group('id')
         for match in re.finditer(r'(?:data-wistia-?id=["\']|Wistia\.embed\(["\']|id=["\']wistia_)(?P<id>[a-z0-9]{10})', webpage):
-            urls.append('wistia:%s' % match.group('id'))
-        return urls
+            yield 'wistia:%s' % match.group('id')
 
-    @staticmethod
-    def _extract_embeds(genIE, ie, webpage, video_id, video_title, video_uploader, source_url):
+    @classmethod
+    def _extract_embeds(cls, url, webpage):
         from .teachable import TeachableIE
-        if TeachableIE._extract_url(webpage, source_url):
+
+        if list(TeachableIE._extract_urls(url, webpage)):
             return
-        urls = ie._extract_urls(webpage)
-        if urls:
-            playlist = genIE.playlist_from_matches(urls, video_id, video_title, ie=ie.ie_key())
-            playlist['entries'] = list(playlist['entries'])
-            for entry in playlist['entries']:
-                entry.update({
-                    '_type': 'url_transparent',
-                    'uploader': video_uploader,
-                })
-            return playlist
+
+        playlist = super()._extract_embeds(url, webpage, _force_playlist=True)
+        if not playlist:
+            return
+
+        playlist['entries'] = list(playlist['entries'])
+        for entry in playlist['entries']:
+            entry.update({
+                '_type': 'url_transparent',
+                'uploader': try_call(lambda: re.match(r'(?:https?://)?([^/]+)/', url).group(1)),
+            })
+        return playlist
 
     def _real_extract(self, url):
         video_id = self._match_id(url)

@@ -122,11 +122,6 @@ class GediDigitalIE(InfoExtractor):
         return GediDigitalIE._sanitize_urls(entries)
 
     @staticmethod
-    def _extract_url(webpage):
-        urls = GediDigitalIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
-    @staticmethod
     def _clean_formats(formats):
         format_urls = set()
         clean_formats = []

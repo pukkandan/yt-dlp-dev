@@ -341,11 +341,6 @@ class RCSEmbedsIE(RCSBaseIE):
             \1''', webpage)]
         return RCSEmbedsIE._sanitize_urls(entries)
 
-    @staticmethod
-    def _extract_url(webpage):
-        urls = RCSEmbedsIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
 
 class RCSIE(RCSBaseIE):
     _VALID_URL = r'''(?x)https?://(?P<vid>video|viaggi)\.

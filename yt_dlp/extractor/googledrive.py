@@ -26,6 +26,7 @@ class GoogleDriveIE(InfoExtractor):
                             )
                             (?P<id>[a-zA-Z0-9_-]{28,})
                     '''
+    _EMBED_REGEX = r'<iframe[^>]+src="https?://(?:video\.google\.com/get_player\?.*?docid=|(?:docs|drive)\.google\.com/file/d/)(?P<id>[a-zA-Z0-9_-]{28,})'
     _TESTS = [{
         'url': 'https://drive.google.com/file/d/0ByeS4oOUV-49Zzh4R1J6R09zazQ/edit?pli=1',
         'md5': '5c602afbbf2c1db91831f5d82f678554',
@@ -77,13 +78,10 @@ class GoogleDriveIE(InfoExtractor):
     _caption_formats_ext = []
     _captions_xml = None
 
-    @staticmethod
-    def _extract_url(webpage):
-        mobj = re.search(
-            r'<iframe[^>]+src="https?://(?:video\.google\.com/get_player\?.*?docid=|(?:docs|drive)\.google\.com/file/d/)(?P<id>[a-zA-Z0-9_-]{28,})',
-            webpage)
-        if mobj:
-            return 'https://drive.google.com/file/d/%s' % mobj.group('id')
+    @classmethod
+    def _extract_urls(cls, url, webpage):
+        for url in super()._extract_urls(url, webpage):
+            yield f'https://drive.google.com/file/d/{url}'
 
     def _download_subtitles_xml(self, video_id, subtitles_id, hl):
         if self._captions_xml:

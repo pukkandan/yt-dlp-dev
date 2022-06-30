@@ -58,6 +58,7 @@ from ..utils import (
     parse_m3u8_attributes,
     parse_resolution,
     sanitize_filename,
+    sanitize_url,
     sanitized_Request,
     str_or_none,
     str_to_int,
@@ -1139,10 +1140,11 @@ class InfoExtractor:
             'url': url,
         }
 
-    def playlist_from_matches(self, matches, playlist_id=None, playlist_title=None, getter=None, ie=None, video_kwargs=None, **kwargs):
-        urls = (self.url_result(self._proto_relative_url(m), ie, **(video_kwargs or {}))
+    @classmethod
+    def playlist_from_matches(cls, matches, playlist_id=None, playlist_title=None, getter=None, ie=None, video_kwargs=None, **kwargs):
+        urls = (cls.url_result(m, ie, **(video_kwargs or {}))
                 for m in orderedSet(map(getter, matches) if getter else matches))
-        return self.playlist_result(urls, playlist_id, playlist_title, **kwargs)
+        return cls.playlist_result(urls, playlist_id, playlist_title, **kwargs)
 
     @staticmethod
     def playlist_result(entries, playlist_id=None, playlist_title=None, playlist_description=None, *, multi_video=False, **kwargs):
@@ -1961,14 +1963,9 @@ class InfoExtractor:
             else 'https:')
 
     def _proto_relative_url(self, url, scheme=None):
-        if url is None:
-            return url
-        if url.startswith('//'):
-            if scheme is None:
-                scheme = self.http_scheme()
-            return scheme + url
-        else:
-            return url
+        scheme = scheme or self.http_scheme()
+        assert scheme.endswith(':')
+        return sanitize_url(url, scheme=scheme[:-1])
 
     def _sleep(self, timeout, video_id, msg_template=None):
         if msg_template is None:
@@ -3811,6 +3808,56 @@ class InfoExtractor:
             return False
         self.to_screen(f'Downloading {playlist_label}{playlist_id} - add --no-playlist to download just the {video_label}{video_id}')
         return True
+
+
+    @classmethod
+    def _match_embed_url(cls, webpage):
+        """@returns all the embed urls on the webpage"""
+        if '_EMBED_URL_RE' not in cls.__dict__:
+            regex = cls.__dict__.get('_EMBED_REGEX')
+            cls._EMBED_URL_RE = re.compile(regex) if regex else None
+        return cls._EMBED_URL_RE.finditer(webpage) if cls._EMBED_URL_RE else []
+
+    @classmethod
+    def _extract_urls(cls, url, webpage):
+        for mobj in cls._match_embed_url(webpage):
+            yield mobj.group('url')
+
+    @classmethod
+    def _extract_url(cls, webpage):
+        """Only for compatibility with older extractors"""
+        return next(iter(cls._extract_urls(None, webpage) or []), None)
+
+    @classmethod
+    def extract_from_webpage(cls, ydl, url, webpage):
+        if hasattr(cls, '_extract_from_webpage'):
+            ie = ydl.get_info_extractor(cls.ie_key())
+            return ie._extract_from_webpage(url, webpage)
+
+        res = cls._extract_embeds(url, webpage)
+        if res:
+            return res
+
+    def _extract_embeds(cls, url, webpage, *, _force_playlist=False):
+        embed_urls = list(cls._extract_urls(url, webpage))
+        if not embed_urls:
+            return
+        if not _force_playlist and len(embed_urls) == 1:
+            return cls.url_result(embed_urls[0], cls.ie_key())
+
+        def _search_regex(*regexes):
+            # This is re-implemented since ie._search_regex and similar are
+            # too tightly coupled to ydl and cannot be used as classmethod
+            for regex in regexes:
+                value = re.search(regex, webpage)
+                if value:
+                    return clean_html(value.group(1)).strip()
+
+        return cls.playlist_from_matches(
+            embed_urls, cls._generic_id(url), ie=cls.ie_key(),
+            title=_search_regex(*cls._og_regexes('title'), r'(?s)<title\b[^>]*>([^<]+)</title>'),
+            description=_search_regex(*cls.og_regexes('description')),
+            thumbnail=_search_regex(*cls.og_regexes('thumbnail')))
 
 
 class SearchInfoExtractor(InfoExtractor):

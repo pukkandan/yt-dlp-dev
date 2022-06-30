@@ -13,7 +13,10 @@ from ..utils import (
 
 class SendtoNewsIE(InfoExtractor):
     _VALID_URL = r'https?://embed\.sendtonews\.com/player2/embedplayer\.php\?.*\bSC=(?P<id>[0-9A-Za-z-]+)'
-
+    _EMBED_REGEX = r'''(?x)<script[^>]+src=([\'"])
+        (?:https?:)?//embed\.sendtonews\.com/player/responsiveembed\.php\?
+            .*\bSC=(?P<url>[0-9a-zA-Z-]+).*
+        \1>'''
     _TEST = {
         # From http://cleveland.cbslocal.com/2016/05/16/indians-score-season-high-15-runs-in-blowout-win-over-reds-rapid-reaction/
         'url': 'http://embed.sendtonews.com/player2/embedplayer.php?SC=GxfCe0Zo7D-175909-5588&type=single&autoplay=on&sound=YES',
@@ -43,14 +46,9 @@ class SendtoNewsIE(InfoExtractor):
     _URL_TEMPLATE = '//embed.sendtonews.com/player2/embedplayer.php?SC=%s'
 
     @classmethod
-    def _extract_url(cls, webpage):
-        mobj = re.search(r'''(?x)<script[^>]+src=([\'"])
-            (?:https?:)?//embed\.sendtonews\.com/player/responsiveembed\.php\?
-                .*\bSC=(?P<SC>[0-9a-zA-Z-]+).*
-            \1>''', webpage)
-        if mobj:
-            sc = mobj.group('SC')
-            return cls._URL_TEMPLATE % sc
+    def _extract_urls(cls, url, webpage):
+        for url in super()._extract_urls(url, webpage):
+            yield cls._URL_TEMPLATE % sc
 
     def _real_extract(self, url):
         playlist_id = self._match_id(url)

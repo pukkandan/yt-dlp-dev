@@ -3046,11 +3046,6 @@ class GenericIE(InfoExtractor):
         if matches:
             return self.playlist_from_matches(matches, video_id, video_title, ie='BBCCoUk')
 
-        # Look for embedded Spotify player
-        spotify_urls = SpotifyBaseIE._extract_embed_urls(webpage)
-        if spotify_urls:
-            return self.playlist_from_matches(spotify_urls, video_id, video_title)
-
         mobj = re.search(
             r'<iframe[^>]+?src=(["\'])(?P<url>https?://m(?:lb)?\.mlb\.com/shared/video/embed/embed\.html\?.+?)\1',
             webpage)
@@ -3167,55 +3162,35 @@ class GenericIE(InfoExtractor):
         # TODO: END: Move Embeds
 
         # Look for embedded players
-        kwargs = {
-            'webpage': webpage, 'url': url, 'source_url': url, 'origin_url': url, 'self': self, 'genIE': self,
-            'html': webpage, 'video_id': video_id, 'video_title': video_title,
-            'video_uploader': video_uploader, 'video_description': video_description}
-        extracted = []
-        for ie in gen_extractor_classes():
-            extracted_urls = []
-            extracted_entry = None
-            if callable(getattr(ie, '_extract_embeds', None)):
-                extracted_entry = call_func_with_accepted_args(ie._extract_embeds, ie=ie, **kwargs)
-            if hasattr(ie, '_EMBED_REGEX'):
-                extracted_urls = [
-                    mobj.group('url') if mobj.group('url') is not None
-                    else '%s:%s' % (ie.IENAME, mobj.group('id'))
-                    for mobj in re.finditer(ie._EMBED_REGEX, webpage)]
-            else:
-                for fn_name in ('_extract_urls', '_extract_embed_url', '_search_iframe_url', '_extract_url'):
-                    extractor_func = getattr(ie, fn_name, None)
-                    if callable(extractor_func):
-                        extracted_urls = call_func_with_accepted_args(extractor_func, ie=ie, **kwargs)
-                        break
+        def _extract_embeds():
+            kwargs = {
+                'webpage': webpage, 'url': url, 'source_url': url, 'origin_url': url, 'self': self, 'genIE': self,
+                'html': webpage, 'video_id': video_id, 'video_title': video_title,
+                'video_uploader': video_uploader, 'video_description': video_description}
+            for ie in gen_extractor_classes():
+                # TODO: When done, the inside of the loop should just be:
+                # yield from ie.extract_from_webpage(self._downloader, url, webpage)
 
-            extracted_urls = list(variadic(extracted_urls or []))
-            if callable(getattr(ie, '_process_embed_urls', {})):
-                extracted_urls = [
-                    call_func_with_accepted_args(ie._process_embed_urls, ie=ie, **kwargs)
-                    for url in extracted_urls]
-            if len(extracted_urls) == 1:
-                extracted_entry = self.url_result(
-                    self._proto_relative_url(extracted_urls[0]),
-                    ie.ie_key(), video_id, video_title)
-            elif extracted_urls:
-                extracted_entry = self.playlist_from_matches(
-                    extracted_urls, video_id, video_title, ie=ie.ie_key())
-            if extracted_entry is not None:
-                if extracted_entry.get('_type', 'video') in ('playlist', 'multi_video'):
-                    extracted_entry.setdefault('extractor', ie.IE_NAME if isinstance(ie.IE_NAME, str) else ie.ie_key())
-                    extracted_entry.setdefault('extractor_key', ie.ie_key())
-                #self._downloader.to_screen('%s' % extracted_entry) # DEBUG:remove
-                extracted.append(extracted_entry)
+                try:
+                    ret = ie.extract_from_webpage(self._downloader, url, webpage)
+                    if ret:
+                        yield from ret
+                        continue
+                except TypeError as e:
+                    if not any(x in str(e) for x in (
+                        'required positional argument',
+                        'positional argument but 4 were given'
+                    )):
+                        raise
+                extractor_func = getattr(ie, '_extract_urls', None)
+                if callable(extractor_func):
+                    yield from call_func_with_accepted_args(extractor_func, ie=ie, **kwargs) or []
 
-        if len(extracted) == 1:
-            return extracted[0]
-        elif extracted:
-            return self.playlist_result(
-                extracted,
-                playlist_id=video_id, playlist_title=video_title,
-                playlist_description=video_description)
-
+        embeds = list(_extract_embeds())
+        if len(embeds) == 1:
+            return embeds[0]
+        elif embeds:
+            return self.playlist_result(embeds, video_id, video_title, video_description)
 
         # Look for HTML5 media
         entries = self._parse_html5_media_entries(url, webpage, video_id, m3u8_id='hls')

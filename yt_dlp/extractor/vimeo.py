@@ -748,11 +748,6 @@ class VimeoIE(VimeoBaseInfoExtractor):
                 urls.append(mobj.group('url'))
         return urls
 
-    @staticmethod
-    def _extract_url(url, webpage):
-        urls = VimeoIE._extract_urls(url, webpage)
-        return urls[0] if urls else None
-
     def _verify_player_video_password(self, url, video_id, headers):
         password = self._get_video_password()
         data = urlencode_postdata({
@@ -1386,12 +1381,12 @@ class VimeoLikesIE(VimeoChannelIE):
 class VHXEmbedIE(VimeoBaseInfoExtractor):
     IE_NAME = 'vhx:embed'
     _VALID_URL = r'https?://embed\.vhx\.tv/videos/(?P<id>\d+)'
+    _EMBED_REGEX = r'<iframe[^>]+src="(?P<url>https?://embed\.vhx\.tv/videos/\d+[^"]*)"'
 
-    @staticmethod
-    def _extract_url(url, webpage):
-        mobj = re.search(
-            r'<iframe[^>]+src="(https?://embed\.vhx\.tv/videos/\d+[^"]*)"', webpage)
-        return VimeoIE._smuggle_referrer(unescapeHTML(mobj.group(1)), url) if mobj else None
+    @classmethod
+    def _extract_urls(cls, url, webpage):
+        for embed_url in super()._extract_urls(url, webpage):
+            yield cls._smuggle_referrer(unescapeHTML(embed_url), url)
 
     def _real_extract(self, url):
         video_id = self._match_id(url)

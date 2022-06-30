@@ -401,7 +401,7 @@ class BrightcoveNewIE(AdobePassIE):
     }]
 
     @staticmethod
-    def _extract_url(ie, webpage):
+    def _extract_url(ie, webpage):  # TODO
         urls = BrightcoveNewIE._extract_urls(ie, webpage)
         return urls[0] if urls else None
 

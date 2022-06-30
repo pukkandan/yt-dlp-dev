@@ -140,12 +140,12 @@ class TeachableIE(TeachableBaseIE):
             r'<link[^>]+href=["\']https?://(?:process\.fs|assets)\.teachablecdn\.com',
             webpage)
 
-    @staticmethod
-    def _extract_url(webpage, source_url):
-        if not TeachableIE._is_teachable(webpage):
+    @classmethod
+    def _extract_urls(cls, url, webpage):  # TODO: exclusive
+        if not cls._is_teachable(webpage):
             return
-        if re.match(r'https?://[^/]+/(?:courses|p)', source_url):
-            return '%s%s' % (TeachableBaseIE._URL_PREFIX, source_url)
+        if re.match(r'https?://[^/]+/(?:courses|p)', url):
+            yield f'{cls._URL_PREFIX}{url}'
 
     def _real_extract(self, url):
         mobj = self._match_valid_url(url)

@@ -109,11 +109,6 @@ class ViceIE(ViceBaseIE, AdobePassIE):
             r'<iframe\b[^>]+\bsrc=["\']((?:https?:)?//video\.vice\.com/[^/]+/embed/[\da-f]{24})',
             webpage)
 
-    @staticmethod
-    def _extract_url(webpage):
-        urls = ViceIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
     def _real_extract(self, url):
         locale, video_id = self._match_valid_url(url).groups()
 

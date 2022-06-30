@@ -2708,11 +2708,6 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         return entries
 
-    @staticmethod
-    def _extract_url(webpage):
-        urls = YoutubeIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
     @classmethod
     def extract_id(cls, url):
         video_id = cls.get_temp_id(url)

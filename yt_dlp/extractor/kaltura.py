@@ -112,11 +112,6 @@ class KalturaIE(InfoExtractor):
     ]
 
     @staticmethod
-    def _extract_url(webpage):
-        urls = KalturaIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
-    @staticmethod
     def _extract_urls(webpage):
         # Embed codes: https://knowledge.kaltura.com/embedding-kaltura-media-players-your-site
         finditer = (

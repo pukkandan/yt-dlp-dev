@@ -23,11 +23,6 @@ class JWPlatformIE(InfoExtractor):
     }]
 
     @staticmethod
-    def _extract_url(webpage):
-        urls = JWPlatformIE._extract_urls(webpage)
-        return urls[0] if urls else None
-
-    @staticmethod
     def _extract_urls(webpage):
         for tag, key in ((r'(?:script|iframe)', 'src'), ('input', 'value')):
             # <input value=URL> is used by hyland.com
