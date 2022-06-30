@@ -5094,6 +5094,14 @@ def format_field(obj, field=None, template='%s', ignore=NO_DEFAULT, default='', 
     return template % func(val)
 
 
+def call_func_with_accepted_args(fn, **kwargs):
+    spec = inspect.getfullargspec(fn)
+    if spec.varkw:
+        return fn(**kwargs)
+    allowed_args = spec.args + spec.kwonlyargs
+    return fn(**{k: kwargs[k] for k in allowed_args if k in kwargs})
+
+
 def clean_podcast_url(url):
     return re.sub(r'''(?x)
         (?:

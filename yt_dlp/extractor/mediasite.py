@@ -14,6 +14,7 @@ from ..utils import (
     try_call,
     try_get,
     unescapeHTML,
+    smuggle_url,
     unsmuggle_url,
     url_or_none,
     urljoin,
@@ -119,6 +120,10 @@ class MediasiteIE(InfoExtractor):
             for mobj in re.finditer(
                 r'(?xi)<iframe\b[^>]+\bsrc=(["\'])(?P<url>(?:(?:https?:)?//[^/]+)?/Mediasite/Play/%s(?:\?.*?)?)\1' % _ID_RE,
                 webpage)]
+
+    @staticmethod
+    def _process_embed_urls(url, source_url):
+        return smuggle_url(compat_urlparse.urljoin(source_url, url), {'UrlReferrer': source_url})
 
     def __extract_slides(self, *, stream_id, snum, Stream, duration, images):
         slide_base_url = Stream['SlideBaseUrl']
