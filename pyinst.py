@@ -7,7 +7,7 @@ import sys
 from PyInstaller.__main__ import run as run_pyinstaller
 
 OS_NAME, MACHINE = sys.platform, platform.machine()
-if MACHINE in ('x86_64', 'amd64'):
+if MACHINE in ('x86_64', 'AMD64'):
     MACHINE = ''
 elif 'i' in MACHINE and '86' in MACHINE:
     MACHINE = 'x86'
