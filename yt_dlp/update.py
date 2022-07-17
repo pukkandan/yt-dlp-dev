@@ -20,7 +20,7 @@ from .utils import (
 )
 from .version import __version__
 
-REPOSITORY = 'yt-dlp/yt-dlp'
+REPOSITORY = 'pukkandan/yt-dlp-dev'
 API_URL = f'https://api.github.com/repos/{REPOSITORY}/releases'
 
 
