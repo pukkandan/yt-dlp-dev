@@ -454,7 +454,7 @@ jobs:
     - name: Make Update spec
       run: |
         echo "# This file is used for regulating self-update" >> _update_spec
-        echo "lock 2022.07.18 .+ Python 3.6" >> _update_spec
+        echo "lock 2022.07.17.115527 .+ Python 3.6" >> _update_spec
     - name: Upload update spec
       uses: actions/upload-release-asset@v1
       env:
