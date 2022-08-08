@@ -90,19 +90,14 @@ jobs:
           echo "::set-output name=sha256_linux_zip::$(sha256sum dist/yt-dlp_linux.zip | awk '{print $1}')"
           echo "::set-output name=sha512_linux_zip::$(sha512sum dist/yt-dlp_linux.zip | awk '{print $1}')"
 
-    - name: Prepare artifacts
-      run: |
-        mv dist/yt-dlp_linux yt-dlp_linux
-        mv dist/yt-dlp_linux.zip yt-dlp_linux.zip
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         path: |
           yt-dlp
           yt-dlp.tar.gz
-          yt-dlp_linux
-          yt-dlp_linux.zip
+          dist/yt-dlp_linux
+          dist/yt-dlp_linux.zip
 
     - name: Build and publish on PyPi
       env:
@@ -169,17 +164,12 @@ jobs:
           echo "::set-output name=sha256_macos_zip::$(sha256sum dist/yt-dlp_macos.zip | awk '{print $1}')"
           echo "::set-output name=sha512_macos_zip::$(sha512sum dist/yt-dlp_macos.zip | awk '{print $1}')"
 
-    - name: Prepare artifacts
-      run: |
-        mv dist/yt-dlp_macos yt-dlp_macos
-        mv dist/yt-dlp_macos.zip yt-dlp_macos.zip
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         path: |
-          yt-dlp_macos
-          yt-dlp_macos.zip
+          dist/yt-dlp_macos
+          dist/yt-dlp_macos.zip
 
 
   build_macos_legacy:
@@ -221,15 +211,11 @@ jobs:
           echo "::set-output name=sha256_macos_legacy::$(sha256sum dist/yt-dlp_macos | awk '{print $1}')"
           echo "::set-output name=sha512_macos_legacy::$(sha512sum dist/yt-dlp_macos | awk '{print $1}')"
 
-    - name: Prepare artifacts
-      run: |
-        mv dist/yt-dlp_macos yt-dlp_macos_legacy
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         path: |
-          yt-dlp_macos_legacy
+          dist/yt-dlp_macos_legacy
 
 
   build_windows:
@@ -274,19 +260,13 @@ jobs:
           echo "::set-output name=sha256_win_zip::$((Get-FileHash dist\yt-dlp_win.zip -Algorithm SHA256).Hash.ToLower())"
           echo "::set-output name=sha512_win_zip::$((Get-FileHash dist\yt-dlp_win.zip -Algorithm SHA512).Hash.ToLower())"
 
-    - name: Prepare artifacts
-      run: |
-        Move-Item ./dist/yt-dlp.exe ./yt-dlp.exe
-        Move-Item ./dist/yt-dlp_min.exe ./yt-dlp_min.exe
-        Move-Item ./dist/yt-dlp_win.zip  ./yt-dlp_win.zip
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         path: |
-          yt-dlp.exe
-          yt-dlp_min.exe
-          yt-dlp_win.zip
+          dist/yt-dlp.exe
+          dist/yt-dlp_min.exe
+          dist/yt-dlp_win.zip
 
 
   build_windows32:
@@ -320,15 +300,11 @@ jobs:
           echo "::set-output name=sha256_win32::$((Get-FileHash dist\yt-dlp_x86.exe -Algorithm SHA256).Hash.ToLower())"
           echo "::set-output name=sha512_win32::$((Get-FileHash dist\yt-dlp_x86.exe -Algorithm SHA512).Hash.ToLower())"
 
-    - name: Prepare artifacts
-      run: |
-        Move-Item ./dist/yt-dlp_x86.exe ./yt-dlp_x86.exe
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         path: |
-          yt-dlp_x86.exe
+          dist/yt-dlp_x86.exe
 
 
   publish_release:
@@ -402,14 +378,14 @@ jobs:
           SHA2-256SUMS
           SHA2-512SUMS
           artifact/yt-dlp
-          artifact/yt-dlp.exe
           artifact/yt-dlp.tar.gz
-          artifact/yt-dlp_linux
-          artifact/yt-dlp_linux.zip
-          artifact/yt-dlp_macos
-          artifact/yt-dlp_macos.zip
-          artifact/yt-dlp_macos_legacy
-          artifact/yt-dlp_min.exe
-          artifact/yt-dlp_win.zip
-          artifact/yt-dlp_x86.exe
+          artifact/dist/yt-dlp.exe
+          artifact/dist/yt-dlp_win.zip
+          artifact/dist/yt-dlp_min.exe
+          artifact/dist/yt-dlp_x86.exe
+          artifact/dist/yt-dlp_linux
+          artifact/dist/yt-dlp_linux.zip
+          artifact/dist/yt-dlp_macos
+          artifact/dist/yt-dlp_macos.zip
+          artifact/dist/yt-dlp_macos_legacy
           _update_spec
