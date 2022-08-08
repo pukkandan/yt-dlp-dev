@@ -316,6 +316,9 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v3
 
+    - name: Display structure of downloaded files
+      run: ls -R
+
     - name: Make SHA2-SUMS files
       run: |
         echo "${{ needs.build_unix.outputs.sha256_bin }}  yt-dlp" >> SHA2-256SUMS
