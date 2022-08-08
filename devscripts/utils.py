@@ -1,5 +1,5 @@
+import argparse
 import functools
-import optparse
 
 
 def read_file(fname):
@@ -18,20 +18,17 @@ def read_version(fname='yt_dlp/version.py'):
     return locals()['__version__']
 
 
-def get_filename_args(infile=False, default_outfile=None):
-    usage = '%prog '
-    usage += 'INFILE ' if infile else ''
-    usage += '[OUTFILE]' if default_outfile else 'OUTFILE'
-    parser = optparse.OptionParser(usage=usage)
-    _, args = parser.parse_args()
+def get_filename_args(has_infile=False, default_outfile=None):
+    parser = argparse.ArgumentParser()
+    if has_infile:
+        parser.add_argument('infile', help='Input file')
+    kwargs = {'nargs': '?', 'default': default_outfile} if default_outfile else {}
+    parser.add_argument('outfile', **kwargs, help='Output file')
 
-    num_args = 2 if infile else 1
-    if default_outfile and len(args) == num_args - 1:
-        args.append(default_outfile)
-    elif len(args) != num_args:
-        parser.error(parser.get_usage())
-
-    return args if infile else args[0]
+    opts = parser.parse_args()
+    if has_infile:
+        return opts.infile, opts.outfile
+    return opts.outfile
 
 
 def compose_functions(*functions):

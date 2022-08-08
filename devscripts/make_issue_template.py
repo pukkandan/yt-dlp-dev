@@ -58,7 +58,7 @@ def main():
     fields['verbose'] = VERBOSE_TMPL % fields
     fields['verbose_optional'] = re.sub(r'(\n\s+validations:)?\n\s+required: true', '', fields['verbose'])
 
-    infile, outfile = get_filename_args(infile=True)
+    infile, outfile = get_filename_args(has_infile=True)
     write_file(outfile, read_file(infile) % fields)
 
 
