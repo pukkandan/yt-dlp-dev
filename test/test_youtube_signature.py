@@ -94,6 +94,10 @@ _NSIG_TESTS = [
         'https://www.youtube.com/s/player/5dd88d1d/player-plasma-ias-phone-en_US.vflset/base.js',
         'kSxKFLeqzv_ZyHSAt', 'n8gS8oRlHOxPFA',
     ),
+    (
+        'https://www.youtube.com/s/player/324f67b9/player_ias.vflset/en_US/base.js',
+        'xdftNy7dh9QGnhW', 'n8gS8oRlHOxPFA',
+    ),
 ]
 
 
