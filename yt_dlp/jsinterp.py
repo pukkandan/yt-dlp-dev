@@ -1,15 +1,21 @@
-import email.utils
 import collections
 import contextlib
-import functools
+import itertools
 import json
 import operator
 import re
 
-from .utils import ExtractorError, remove_quotes, unified_timestamp
+from .utils import (
+    NO_DEFAULT,
+    ExtractorError,
+    js_to_json,
+    remove_quotes,
+    unified_timestamp,
+)
 
 _NAME_RE = r'[a-zA-Z_$][\w$]*'
 _OPERATORS = {
+    '?': None,  # Defined in JSInterpreter._operator
     '&&': lambda l, r: l and r,
     '||': lambda l, r: l or r,
     '|': operator.or_,
@@ -22,11 +28,10 @@ _OPERATORS = {
     '%': operator.mod,
     '/': operator.truediv,
     '*': operator.mul,
-    '<': operator.lt,
-    '>': operator.gt,
     '<=': operator.le,
     '>=': operator.ge,
-    '?': None  # Defined in JSInterpreter._operator
+    '<': operator.lt,
+    '>': operator.gt,
 }
 
 _MATCHING_PARENS = dict(zip('({[', ')}]'))
@@ -107,7 +112,7 @@ class JSInterpreter:
     def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
         if op == '?':
             true, false = self._separate(right_expr, ':', 1)
-            return self.interpret_statement(true if left_val else false, local_vars, allow_recursion - 1)
+            return self.interpret_expression(true if left_val else false, local_vars, allow_recursion - 1)
         right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
         if should_abort:
             raise ExtractorError(f'Premature right-side return of {op} in {expr!r}')
@@ -163,6 +168,7 @@ class JSInterpreter:
 
         if expr[0] in _QUOTES:
             inner, outer = self._separate(expr, expr[0], 1)
+            inner = json.loads(js_to_json(f'{inner}{expr[0]}', strict=True))
             if not outer:
                 return inner
             expr = self._named_object(local_vars, inner) + outer
@@ -171,9 +177,8 @@ class JSInterpreter:
             obj = expr[4:]
             if obj.startswith('Date('):
                 left, right = self._separate_at_paren(obj[4:], ')')
-                try:
-                    expr = email.utils.parsedate_to_datetime(left[1:-1]).timestamp()
-                except ValueError:
+                expr = unified_timestamp(left[1:-1])
+                if not expr:
                     raise ExtractorError(f'Failed to parse date {left!r}')
                 expr = self._dump(int(expr * 1000), local_vars) + right
             else:
@@ -321,8 +326,9 @@ class JSInterpreter:
                 raise ExtractorError(f'Cannot index undefined variable: {m.group("out")}')
 
             idx = self.interpret_expression(m.group('index'), local_vars, allow_recursion)
-            if not isinstance(idx, int):
+            if not isinstance(idx, (int, float)):
                 raise ExtractorError(f'List indices must be integers: {idx}')
+            idx = int(idx)
             left_val[idx] = self._operator(
                 m.group('op'), left_val[idx], m.group('expr'), expr, local_vars, allow_recursion)
             return left_val[idx]
@@ -336,13 +342,10 @@ class JSInterpreter:
             raise JS_Continue()
 
         elif m and m.group('return'):
-            try:
-                return local_vars[m.group('name')]
-            except Exception:
-                raise Exception(str(m.groupdict()))
+            return local_vars[m.group('name')]
 
         with contextlib.suppress(ValueError):
-            return json.loads(expr)
+            return json.loads(js_to_json(expr, strict=True))
 
         if m and m.group('indexing'):
             val = local_vars[m.group('in')]
@@ -378,11 +381,12 @@ class JSInterpreter:
                     raise ExtractorError(f'{member} {msg}: {expr}')
 
             def eval_method():
-                if variable == 'String':
-                    obj = str
-                elif variable in local_vars:
-                    obj = local_vars[variable]
-                else:
+                types = {
+                    'String': str,
+                    'Math': float,
+                }
+                obj = local_vars.get(variable, types.get(variable, NO_DEFAULT))
+                if obj is NO_DEFAULT:
                     if variable not in self._objects:
                         self._objects[variable] = self.extract_object(variable)
                     obj = self._objects[variable]
@@ -400,7 +404,12 @@ class JSInterpreter:
                     if member == 'fromCharCode':
                         assertion(argvals, 'takes one or more arguments')
                         return ''.join(map(chr, argvals))
-                    raise ExtractorError(f'Unsupported string method {member}')
+                    raise ExtractorError(f'Unsupported String method {member}')
+                elif obj == float:
+                    if member == 'pow':
+                        assertion(len(argvals) == 2, 'takes two arguments')
+                        return argvals[0] ** argvals[1]
+                    raise ExtractorError(f'Unsupported Math method {member}')
 
                 if member == 'split':
                     assertion(argvals, 'takes one or more arguments')
@@ -492,6 +501,8 @@ class JSInterpreter:
                 }\s*;
             ''' % (re.escape(objname), _FUNC_NAME_RE),
             self.code)
+        if not obj_m:
+            raise ExtractorError(f'Could not find object {objname}')
         fields = obj_m.group('fields')
         # Currently, it only supports function definitions
         fields_m = re.finditer(
@@ -508,16 +519,16 @@ class JSInterpreter:
     def extract_function_code(self, funcname):
         """ @returns argnames, code """
         func_m = re.search(
-            r'''(?x)
+            r'''(?xs)
                 (?:
                     function\s+%(name)s|
                     [{;,]\s*%(name)s\s*=\s*function|
                     var\s+%(name)s\s*=\s*function
                 )\s*
                 \((?P<args>[^)]*)\)\s*
-                (?P<code>{(?:(?!};)[^"]|"([^"]|\\")*")+})''' % {'name': re.escape(funcname)},
+                (?P<code>{.+})''' % {'name': re.escape(funcname)},
             self.code)
-        code, _ = self._separate_at_paren(func_m.group('code'), '}')  # refine the match
+        code, _ = self._separate_at_paren(func_m.group('code'), '}')
         if func_m is None:
             raise ExtractorError(f'Could not find JS function "{funcname}"')
         return func_m.group('args').split(','), code
@@ -547,7 +558,7 @@ class JSInterpreter:
 
         def resf(args, **kwargs):
             global_stack[0].update({
-                **dict(zip(argnames, args)),
+                **dict(itertools.zip_longest(argnames, args, fillvalue=None)),
                 **kwargs
             })
             var_stack = LocalNameSpace(*global_stack)

@@ -96,7 +96,11 @@ _NSIG_TESTS = [
     ),
     (
         'https://www.youtube.com/s/player/324f67b9/player_ias.vflset/en_US/base.js',
-        'xdftNy7dh9QGnhW', 'n8gS8oRlHOxPFA',
+        'xdftNy7dh9QGnhW', 'n8gS8oRlHOxPFA',  # XXX: decrypted is wrong. First we need to get this to run
+    ),
+    (
+        'https://www.youtube.com/s/player/4c3f79c5/player_ias.vflset/en_US/base.js',
+        'TDCstCG66tEAO5pR9o', 'n8gS8oRlHOxPFA',
     ),
 ]
 

@@ -51,8 +51,11 @@ class TestJSInterpreter(unittest.TestCase):
         jsi = JSInterpreter('function f(){return 11 >> 2;}')
         self.assertEqual(jsi.call_function('f'), 2)
 
+        jsi = JSInterpreter('function f(){return 1? 2+3: 4;}')
+        self.assertEqual(jsi.call_function('f'), 5)
+
     def test_array_access(self):
-        jsi = JSInterpreter('function f(){var x = [1,2,3]; x[0] = 4; x[0] = 5; x[2] = 7; return x;}')
+        jsi = JSInterpreter('function f(){var x = [1,2,3]; x[0] = 4; x[0] = 5; x[2.0] = 7; return x;}')
         self.assertEqual(jsi.call_function('f'), [5, 2, 7])
 
     def test_parens(self):
@@ -61,6 +64,10 @@ class TestJSInterpreter(unittest.TestCase):
 
         jsi = JSInterpreter('function f(){return (1 + 2) * 3;}')
         self.assertEqual(jsi.call_function('f'), 9)
+
+    def test_quotes(self):
+        jsi = JSInterpreter(R'function f(){return "a\"\\("}')
+        self.assertEqual(jsi.call_function('f'), R'a"\(')
 
     def test_assignments(self):
         jsi = JSInterpreter('function f(){var x = 20; x = 30 + 1; return x;}')
@@ -107,10 +114,11 @@ class TestJSInterpreter(unittest.TestCase):
     def test_call(self):
         jsi = JSInterpreter('''
         function x() { return 2; }
-        function y(a) { return x() + a; }
+        function y(a) { return x() + (a?a:0); }
         function z() { return y(3); }
         ''')
         self.assertEqual(jsi.call_function('z'), 5)
+        self.assertEqual(jsi.call_function('y'), 2)
 
     def test_for_loop(self):
         jsi = JSInterpreter('''
@@ -176,6 +184,12 @@ class TestJSInterpreter(unittest.TestCase):
         function x() { a=5; a -= 1, a+=3; return a }
         ''')
         self.assertEqual(jsi.call_function('x'), 7)
+
+    def test_return_function(self):
+        jsi = JSInterpreter('''
+        function x() { return [1, function(){return 1}][1] }
+        ''')
+        self.assertEqual(jsi.call_function('x')([]), 1)
 
 
 if __name__ == '__main__':

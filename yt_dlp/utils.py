@@ -1747,8 +1747,12 @@ def unified_timestamp(date_str, day_first=True):
         return None
 
     date_str = re.sub(r'[,|]', '', date_str)
-
     pm_delta = 12 if re.search(r'(?i)PM', date_str) else 0
+
+    timetuple = email.utils.parsedate_tz(date_str)
+    if timetuple:
+        return calendar.timegm(timetuple) - timetuple[-1] + pm_delta * 3600
+
     timezone, date_str = extract_timezone(date_str)
 
     # Remove AM/PM + timezone
@@ -1768,6 +1772,7 @@ def unified_timestamp(date_str, day_first=True):
         with contextlib.suppress(ValueError):
             dt = datetime.datetime.strptime(date_str, expression) - timezone + datetime.timedelta(hours=pm_delta)
             return calendar.timegm(dt.timetuple())
+
     timetuple = email.utils.parsedate_tz(date_str)
     if timetuple:
         return calendar.timegm(timetuple) + pm_delta * 3600
@@ -3199,7 +3204,7 @@ def strip_jsonp(code):
         r'\g<callback_data>', code)
 
 
-def js_to_json(code, vars={}):
+def js_to_json(code, vars={}, *, strict=False):
     # vars is a dict of var, val pairs to substitute
     COMMENT_RE = r'/\*(?:(?!\*/).)*?\*/|//[^\n]*\n'
     SKIP_RE = fr'\s*(?:{COMMENT_RE})?\s*'
@@ -3233,14 +3238,17 @@ def js_to_json(code, vars={}):
 
             if v in vars:
                 return vars[v]
+            if strict:
+                raise ValueError(f'Unknown value: {v}')
 
         return '"%s"' % v
 
     def create_map(mobj):
         return json.dumps(dict(json.loads(js_to_json(mobj.group(1) or '[]', vars=vars))))
 
-    code = re.sub(r'new Date\((".+")\)', r'\g<1>', code)
     code = re.sub(r'new Map\((\[.*?\])?\)', create_map, code)
+    if not strict:
+        code = re.sub(r'new Date\((".+")\)', r'\g<1>', code)
 
     return re.sub(r'''(?sx)
         "(?:[^"\\]*(?:\\\\|\\['"nurtbfx/\n]))*[^"\\]*"|
