@@ -10,6 +10,7 @@ from .utils import (
     ExtractorError,
     js_to_json,
     remove_quotes,
+    truncate_string,
     unified_timestamp,
 )
 
@@ -67,6 +68,12 @@ class JSInterpreter:
         self.code, self._functions = code, {}
         self._objects = {} if objects is None else objects
 
+    class Exception(ExtractorError):
+        def __init__(self, msg, expr=None, *args, **kwargs):
+            if expr is not None:
+                msg += f' in: {truncate_string(expr, 50, 50)}'
+            super().__init__(msg, *args, **kwargs)
+
     def _named_object(self, namespace, obj):
         self.__named_object_counter += 1
         name = f'__yt_dlp_jsinterp_obj{self.__named_object_counter}'
@@ -106,7 +113,7 @@ class JSInterpreter:
     def _separate_at_paren(cls, expr, delim):
         separated = list(cls._separate(expr, delim, 1))
         if len(separated) < 2:
-            raise ExtractorError(f'No terminating paren {delim} in {expr:.100s}')
+            raise cls.Exception(f'No terminating paren {delim}', expr)
         return separated[0][1:].strip(), separated[1].strip()
 
     def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
@@ -115,13 +122,13 @@ class JSInterpreter:
             return self.interpret_expression(true if left_val else false, local_vars, allow_recursion - 1)
         right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
         if should_abort:
-            raise ExtractorError(f'Premature right-side return of {op} in {expr!r}')
+            raise self.Exception(f'Premature right-side return of {op}', expr)
         if not op:
             return right_val
         try:
             return _OPERATORS[op](left_val, right_val)
         except Exception as e:
-            raise ExtractorError(f'Failed to evaluate {left_val!r} {op} {right_val!r} from {expr!r}', cause=e)
+            raise self.Exception(f'Failed to evaluate {left_val!r} {op} {right_val!r}', expr, cause=e)
 
     def _index(self, obj, idx):
         if idx == 'length':
@@ -129,7 +136,7 @@ class JSInterpreter:
         try:
             return obj[int(idx)] if isinstance(obj, list) else obj[idx]
         except Exception as e:
-            raise ExtractorError(f'Failed to evaluate {obj[:100]!r}[{idx!r}]', cause=e)
+            raise self.Exception(f'Cannot get index {idx}', repr(obj), cause=e)
 
     def _dump(self, obj, namespace):
         try:
@@ -139,7 +146,7 @@ class JSInterpreter:
 
     def interpret_statement(self, stmt, local_vars, allow_recursion=100):
         if allow_recursion < 0:
-            raise ExtractorError('Recursion limit reached')
+            raise self.Exception('Recursion limit reached')
 
         should_abort = False
         sub_statements = list(self._separate(stmt, ';')) or ['']
@@ -179,10 +186,10 @@ class JSInterpreter:
                 left, right = self._separate_at_paren(obj[4:], ')')
                 expr = unified_timestamp(left[1:-1])
                 if not expr:
-                    raise ExtractorError(f'Failed to parse date {left!r}')
+                    raise self.Exception(f'Failed to parse date {left!r}', expr)
                 expr = self._dump(int(expr * 1000), local_vars) + right
             else:
-                raise ExtractorError(f'Unsupported object {obj}')
+                raise self.Exception(f'Unsupported object {obj}', expr)
 
         if expr.startswith('{'):
             inner, outer = self._separate_at_paren(expr, '}')
@@ -237,8 +244,7 @@ class JSInterpreter:
                     body, expr = remaining, ''
             start, cndn, increment = self._separate(constructor, ';')
             if self.interpret_statement(start, local_vars, allow_recursion - 1)[1]:
-                raise ExtractorError(
-                    f'Premature return in the initialization of a for loop in {constructor!r}')
+                raise self.Exception('Premature return in the initialization of a for loop', constructor)
             while True:
                 if not self.interpret_expression(cndn, local_vars, allow_recursion):
                     break
@@ -251,8 +257,7 @@ class JSInterpreter:
                 except JS_Continue:
                     pass
                 if self.interpret_statement(increment, local_vars, allow_recursion - 1)[1]:
-                    raise ExtractorError(
-                        f'Premature return in the initialization of a for loop in {constructor!r}')
+                    raise self.Exception('Premature return in the initialization of a for loop', constructor)
             return self.interpret_statement(expr, local_vars, allow_recursion - 1)[0]
 
         elif m and m.group('switch'):
@@ -323,11 +328,11 @@ class JSInterpreter:
                     m.group('op'), left_val, m.group('expr'), expr, local_vars, allow_recursion)
                 return local_vars[m.group('out')]
             elif left_val is None:
-                raise ExtractorError(f'Cannot index undefined variable: {m.group("out")}')
+                raise self.Exception(f'Cannot index undefined variable {m.group("out")}', expr)
 
             idx = self.interpret_expression(m.group('index'), local_vars, allow_recursion)
             if not isinstance(idx, (int, float)):
-                raise ExtractorError(f'List indices must be integers: {idx}')
+                raise self.Exception(f'List index {idx} must be integer', expr)
             idx = int(idx)
             left_val[idx] = self._operator(
                 m.group('op'), left_val[idx], m.group('expr'), expr, local_vars, allow_recursion)
@@ -361,7 +366,7 @@ class JSInterpreter:
             left_val, should_abort = self.interpret_statement(
                 left_val, local_vars, allow_recursion - 1)
             if should_abort:
-                raise ExtractorError(f'Premature left-side return of {op} in {expr!r}')
+                raise self.Exception(f'Premature left-side return of {op}', expr)
             return self._operator(op, left_val or 0, right_val, expr, local_vars, allow_recursion)
 
         if m and m.group('attribute'):
@@ -378,7 +383,7 @@ class JSInterpreter:
             def assertion(cndn, msg):
                 """ assert, but without risk of getting optimized out """
                 if not cndn:
-                    raise ExtractorError(f'{member} {msg}: {expr}')
+                    raise self.Exception(f'{member} {msg}', expr)
 
             def eval_method():
                 types = {
@@ -404,12 +409,12 @@ class JSInterpreter:
                     if member == 'fromCharCode':
                         assertion(argvals, 'takes one or more arguments')
                         return ''.join(map(chr, argvals))
-                    raise ExtractorError(f'Unsupported String method {member}')
+                    raise self.Exception(f'Unsupported String method {member}', expr)
                 elif obj == float:
                     if member == 'pow':
                         assertion(len(argvals) == 2, 'takes two arguments')
                         return argvals[0] ** argvals[1]
-                    raise ExtractorError(f'Unsupported Math method {member}')
+                    raise self.Exception(f'Unsupported Math method {member}', expr)
 
                 if member == 'split':
                     assertion(argvals, 'takes one or more arguments')
@@ -489,7 +494,7 @@ class JSInterpreter:
                 self._functions[fname] = self.extract_function(fname)
             return self._functions[fname](argvals)
 
-        raise ExtractorError(f'Unsupported JS expression {expr!r}')
+        raise self.Exception('Unsupported JS expression', expr)
 
     def extract_object(self, objname):
         _FUNC_NAME_RE = r'''(?:[a-zA-Z$0-9]+|"[a-zA-Z$0-9]+"|'[a-zA-Z$0-9]+')'''
@@ -502,7 +507,7 @@ class JSInterpreter:
             ''' % (re.escape(objname), _FUNC_NAME_RE),
             self.code)
         if not obj_m:
-            raise ExtractorError(f'Could not find object {objname}')
+            raise self.Exception(f'Could not find object {objname}')
         fields = obj_m.group('fields')
         # Currently, it only supports function definitions
         fields_m = re.finditer(
@@ -530,7 +535,7 @@ class JSInterpreter:
             self.code)
         code, _ = self._separate_at_paren(func_m.group('code'), '}')
         if func_m is None:
-            raise ExtractorError(f'Could not find JS function "{funcname}"')
+            raise self.Exception(f'Could not find JS function "{funcname}"')
         return func_m.group('args').split(','), code
 
     def extract_function(self, funcname):
