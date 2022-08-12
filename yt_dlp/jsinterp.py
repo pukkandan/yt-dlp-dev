@@ -16,9 +16,10 @@ from .utils import (
 
 _NAME_RE = r'[a-zA-Z_$][\w$]*'
 _OPERATORS = {
-    '?': None,  # Defined in JSInterpreter._operator
-    '&&': lambda l, r: l and r,
-    '||': lambda l, r: l or r,
+    # None => Defined in JSInterpreter._operator
+    '?': None,
+    '&&': None,
+    '||': None,
     '|': operator.or_,
     '^': operator.xor,
     '&': operator.and_,
@@ -117,14 +118,18 @@ class JSInterpreter:
         return separated[0][1:].strip(), separated[1].strip()
 
     def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
-        if op == '?':
+        if op == '||' and left_val or op == '&&' and not left_val:
+            return left_val  # short circuiting
+        elif op == '?':
             true, false = self._separate(right_expr, ':', 1)
             return self.interpret_statement(true if left_val else false, local_vars, allow_recursion - 1)
+
         right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
         if should_abort:
             raise self.Exception(f'Premature right-side return of {op}', expr)
-        if not op:
+        elif not _OPERATORS.get(op):
             return right_val
+
         try:
             return _OPERATORS[op](left_val, right_val)
         except Exception as e:
