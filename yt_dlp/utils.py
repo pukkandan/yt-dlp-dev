@@ -150,6 +150,16 @@ MONTH_NAMES = {
         'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
 }
 
+# From https://github.com/python/cpython/blob/3.11/Lib/email/_parseaddr.py#L36-L42
+TIMEZONE_NAMES = {
+    'UT': 0, 'UTC': 0, 'GMT': 0, 'Z': 0,
+    'AST': -4, 'ADT': -3,  # Atlantic (used in Canada)
+    'EST': -5, 'EDT': -4,  # Eastern
+    'CST': -6, 'CDT': -5,  # Central
+    'MST': -7, 'MDT': -6,  # Mountain
+    'PST': -8, 'PDT': -7   # Pacific
+}
+
 # needed for sanitizing filenames in restricted mode
 ACCENT_CHARS = dict(zip('ÂÃÄÀÁÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖŐØŒÙÚÛÜŰÝÞßàáâãäåæçèéêëìíîïðñòóôõöőøœùúûüűýþÿ',
                         itertools.chain('AAAAAA', ['AE'], 'CEEEEIIIIDNOOOOOOO', ['OE'], 'UUUUUY', ['TH', 'ss'],
@@ -1684,7 +1694,11 @@ def extract_timezone(date_str):
             $)
         ''', date_str)
     if not m:
-        timezone = datetime.timedelta()
+        m = re.search(r'\d{1,2}:\d{1,2}(?:\.\d+)?(?P<tz>\s*[A-Z]+)$', date_str)
+        timezone = TIMEZONE_NAMES.get(m and m.group('tz').strip())
+        if timezone is not None:
+            date_str = date_str[:-len(m.group('tz'))]
+        timezone = datetime.timedelta(hours=timezone or 0)
     else:
         date_str = date_str[:-len(m.group('tz'))]
         if not m.group('sign'):
@@ -1746,13 +1760,10 @@ def unified_timestamp(date_str, day_first=True):
     if date_str is None:
         return None
 
-    date_str = re.sub(r'[,|]', '', date_str)
+    date_str = re.sub(r'\s+', ' ', re.sub(
+        r'(?i)[,|]|(mon|tues?|wed(?:nes)|thu(?:rs)|fri|sat(?:ur)?)(?:day)?', '', date_str))
+
     pm_delta = 12 if re.search(r'(?i)PM', date_str) else 0
-
-    timetuple = email.utils.parsedate_tz(date_str)
-    if timetuple:
-        return calendar.timegm(timetuple) - timetuple[-1] + pm_delta * 3600
-
     timezone, date_str = extract_timezone(date_str)
 
     # Remove AM/PM + timezone
@@ -1775,7 +1786,7 @@ def unified_timestamp(date_str, day_first=True):
 
     timetuple = email.utils.parsedate_tz(date_str)
     if timetuple:
-        return calendar.timegm(timetuple) + pm_delta * 3600
+        return calendar.timegm(timetuple) + pm_delta * 3600 - timezone.total_seconds()
 
 
 def determine_ext(url, default_ext='unknown_video'):

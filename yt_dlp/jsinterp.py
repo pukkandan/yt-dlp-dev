@@ -184,7 +184,7 @@ class JSInterpreter:
             obj = expr[4:]
             if obj.startswith('Date('):
                 left, right = self._separate_at_paren(obj[4:], ')')
-                expr = unified_timestamp(left[1:-1])
+                expr = unified_timestamp(left[1:-1], False)
                 if not expr:
                     raise self.Exception(f'Failed to parse date {left!r}', expr)
                 expr = self._dump(int(expr * 1000), local_vars) + right
