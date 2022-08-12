@@ -24,8 +24,8 @@ _OPERATORS = {
     '&': operator.and_,
     '>>': operator.rshift,
     '<<': operator.lshift,
-    '-': operator.sub,
     '+': operator.add,
+    '-': operator.sub,
     '%': operator.mod,
     '/': operator.truediv,
     '*': operator.mul,
@@ -71,7 +71,7 @@ class JSInterpreter:
     class Exception(ExtractorError):
         def __init__(self, msg, expr=None, *args, **kwargs):
             if expr is not None:
-                msg += f' in: {truncate_string(expr, 50, 50)}'
+                msg = f'{msg.rstrip()} in: {truncate_string(expr, 50, 50)}'
             super().__init__(msg, *args, **kwargs)
 
     def _named_object(self, namespace, obj):
@@ -119,7 +119,7 @@ class JSInterpreter:
     def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
         if op == '?':
             true, false = self._separate(right_expr, ':', 1)
-            return self.interpret_expression(true if left_val else false, local_vars, allow_recursion - 1)
+            return self.interpret_statement(true if left_val else false, local_vars, allow_recursion - 1)
         right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
         if should_abort:
             raise self.Exception(f'Premature right-side return of {op}', expr)
@@ -169,7 +169,7 @@ class JSInterpreter:
         return self.interpret_expression(expr, local_vars, allow_recursion), should_abort
 
     def interpret_expression(self, expr, local_vars, allow_recursion):
-        expr = expr.strip()
+        orig_expr = expr = expr.strip()
         if not expr:
             return None
 
@@ -361,13 +361,14 @@ class JSInterpreter:
             separated = list(self._separate(expr, op))
             if len(separated) < 2:
                 continue
-            right_val = separated.pop()
-            left_val = op.join(separated)
-            left_val, should_abort = self.interpret_statement(
-                left_val, local_vars, allow_recursion - 1)
+            right_expr = separated.pop()
+            while op == '-' and len(separated) > 1 and not separated[-1].strip():
+                right_expr = f'-{right_expr}'
+                separated.pop()
+            left_val, should_abort = self.interpret_statement(op.join(separated), local_vars, allow_recursion - 1)
             if should_abort:
                 raise self.Exception(f'Premature left-side return of {op}', expr)
-            return self._operator(op, left_val or 0, right_val, expr, local_vars, allow_recursion)
+            return self._operator(op, left_val or 0, right_expr, expr, local_vars, allow_recursion)
 
         if m and m.group('attribute'):
             variable = m.group('var')
@@ -494,7 +495,8 @@ class JSInterpreter:
                 self._functions[fname] = self.extract_function(fname)
             return self._functions[fname](argvals)
 
-        raise self.Exception('Unsupported JS expression', expr)
+        raise self.Exception(
+            f'Unsupported JS expression {truncate_string(expr, 20, 20) if expr != orig_expr else ""}', orig_expr)
 
     def extract_object(self, objname):
         _FUNC_NAME_RE = r'''(?:[a-zA-Z$0-9]+|"[a-zA-Z$0-9]+"|'[a-zA-Z$0-9]+')'''
