@@ -219,7 +219,7 @@ class JSInterpreter:
                 for item in self._separate(inner)])
             expr = name + outer
 
-        m = re.match(r'(?P<try>try)\s*|(?:(?P<catch>catch)|(?P<for>for)|(?P<switch>switch))\s*\(', expr)
+        m = re.match(r'(?P<try>try|finally)\s*|(?:(?P<catch>catch)|(?P<for>for)|(?P<switch>switch))\s*\(', expr)
         if m and m.group('try'):
             if expr[m.end()] == '{':
                 try_expr, expr = self._separate_at_paren(expr[m.end():], '}')
