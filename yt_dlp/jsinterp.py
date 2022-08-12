@@ -15,25 +15,29 @@ from .utils import (
 )
 
 _NAME_RE = r'[a-zA-Z_$][\w$]*'
-_OPERATORS = {
-    # None => Defined in JSInterpreter._operator
+_OPERATORS = {  # None => Defined in JSInterpreter._operator
     '?': None,
+
     '&&': None,
     '||': None,
+    '&': operator.and_,
     '|': operator.or_,
     '^': operator.xor,
-    '&': operator.and_,
-    '>>': operator.rshift,
-    '<<': operator.lshift,
-    '+': operator.add,
-    '-': operator.sub,
-    '%': operator.mod,
-    '/': operator.truediv,
-    '*': operator.mul,
+
     '<=': operator.le,
     '>=': operator.ge,
     '<': operator.lt,
     '>': operator.gt,
+
+    '>>': operator.rshift,
+    '<<': operator.lshift,
+
+    '+': operator.add,
+    '-': operator.sub,
+
+    '*': operator.mul,
+    '/': operator.truediv,
+    '%': operator.mod,
 }
 
 _MATCHING_PARENS = dict(zip('({[', ')}]'))
