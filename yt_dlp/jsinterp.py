@@ -140,10 +140,8 @@ class JSInterpreter:
             return self.interpret_statement(
                 _ternary(left_val, *self._separate(right_expr, ':', 1)), local_vars, allow_recursion - 1)
 
-        right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion)
-        if should_abort:
-            raise self.Exception(f'Premature right-side return of {op}', expr)
-        elif not _OPERATORS.get(op):
+        right_val = self.interpret_expression(right_expr, local_vars, allow_recursion)
+        if not _OPERATORS.get(op):
             return right_val
 
         try:
@@ -168,38 +166,29 @@ class JSInterpreter:
     def interpret_statement(self, stmt, local_vars, allow_recursion=100):
         if allow_recursion < 0:
             raise self.Exception('Recursion limit reached')
+        allow_recursion -= 1
 
-        should_abort = False
+        should_return = False
         sub_statements = list(self._separate(stmt, ';')) or ['']
-        stmt = sub_statements.pop().lstrip()
+        expr = stmt = sub_statements.pop().strip()
 
         for sub_stmt in sub_statements:
-            ret, should_abort = self.interpret_statement(sub_stmt, local_vars, allow_recursion - 1)
-            if should_abort:
-                return ret, should_abort
+            ret, should_return = self.interpret_statement(sub_stmt, local_vars, allow_recursion)
+            if should_return:
+                return ret, should_return
 
         m = re.match(r'(?P<var>var\s)|return(?:\s+|$)', stmt)
-        if not m:  # Try interpreting it as an expression
-            expr = stmt
-        elif m.group('var'):
-            expr = stmt[len(m.group(0)):]
-        else:
-            expr = stmt[len(m.group(0)):]
-            should_abort = True
-
-        return self.interpret_expression(expr, local_vars, allow_recursion), should_abort
-
-    def interpret_expression(self, expr, local_vars, allow_recursion):
-        allow_recursion -= 1
-        orig_expr = expr = expr.strip()
+        if m:
+            expr = stmt[len(m.group(0)):].strip()
+            should_return = not m.group('var')
         if not expr:
-            return None
+            return None, should_return
 
         if expr[0] in _QUOTES:
             inner, outer = self._separate(expr, expr[0], 1)
             inner = json.loads(js_to_json(f'{inner}{expr[0]}', strict=True))
             if not outer:
-                return inner
+                return inner, should_return
             expr = self._named_object(local_vars, inner) + outer
 
         if expr.startswith('new '):
@@ -217,15 +206,15 @@ class JSInterpreter:
             inner, outer = self._separate_at_paren(expr, '}')
             inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion)
             if not outer or should_abort:
-                return inner
+                return inner, should_abort or should_return
             else:
                 expr = self._dump(inner, local_vars) + outer
 
         if expr.startswith('('):
             inner, outer = self._separate_at_paren(expr, ')')
-            inner = self.interpret_expression(inner, local_vars, allow_recursion)
-            if not outer:
-                return inner
+            inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion)
+            if not outer or should_abort:
+                return inner, should_abort or should_return
             else:
                 expr = self._dump(inner, local_vars) + outer
 
@@ -244,13 +233,15 @@ class JSInterpreter:
                 try_expr, expr = expr[m.end() - 1:], ''
             ret, should_abort = self.interpret_statement(try_expr, local_vars, allow_recursion)
             if should_abort:
-                return ret
-            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
+                return ret, True
+            ret, should_abort = self.interpret_statement(expr, local_vars, allow_recursion)
+            return ret, should_abort or should_return
 
         elif m and m.group('catch'):
             # We ignore the catch block
             _, expr = self._separate_at_paren(expr, '}')
-            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
+            ret, should_abort = self.interpret_statement(expr, local_vars, allow_recursion)
+            return ret, should_abort or should_return
 
         elif m and m.group('for'):
             constructor, remaining = self._separate_at_paren(expr[m.end() - 1:], ')')
@@ -265,22 +256,21 @@ class JSInterpreter:
                 else:
                     body, expr = remaining, ''
             start, cndn, increment = self._separate(constructor, ';')
-            if self.interpret_statement(start, local_vars, allow_recursion)[1]:
-                raise self.Exception('Premature return in the initialization of a for loop', constructor)
+            self.interpret_expression(start, local_vars, allow_recursion)
             while True:
-                if not self.interpret_expression(cndn, local_vars, allow_recursion):
+                if not _ternary(self.interpret_expression(cndn, local_vars, allow_recursion)):
                     break
                 try:
                     ret, should_abort = self.interpret_statement(body, local_vars, allow_recursion)
                     if should_abort:
-                        return ret
+                        return ret, True
                 except JS_Break:
                     break
                 except JS_Continue:
                     pass
-                if self.interpret_statement(increment, local_vars, allow_recursion)[1]:
-                    raise self.Exception('Premature return in the initialization of a for loop', constructor)
-            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
+                self.interpret_expression(increment, local_vars, allow_recursion)
+            ret, should_abort = self.interpret_statement(expr, local_vars, allow_recursion)
+            return ret, should_abort or should_return
 
         elif m and m.group('switch'):
             switch_val, remaining = self._separate_at_paren(expr[m.end() - 1:], ')')
@@ -305,13 +295,16 @@ class JSInterpreter:
                         break
                 if matched:
                     break
-            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
+            ret, should_abort = self.interpret_statement(expr, local_vars, allow_recursion)
+            return ret, should_abort or should_return
 
         # Comma separated statements
         sub_expressions = list(self._separate(expr))
         expr = sub_expressions.pop().strip() if sub_expressions else ''
         for sub_expr in sub_expressions:
-            self.interpret_expression(sub_expr, local_vars, allow_recursion)
+            ret, should_abort = self.interpret_statement(sub_expr, local_vars, allow_recursion)
+            if should_abort:
+                return ret, True
 
         for m in re.finditer(rf'''(?x)
                 (?P<pre_sign>\+\+|--)(?P<var1>{_NAME_RE})|
@@ -326,7 +319,7 @@ class JSInterpreter:
             expr = expr[:start] + self._dump(ret, local_vars) + expr[end:]
 
         if not expr:
-            return None
+            return None, should_return
 
         m = re.match(fr'''(?x)
             (?P<assign>
@@ -348,7 +341,7 @@ class JSInterpreter:
             if not m.group('index'):
                 local_vars[m.group('out')] = self._operator(
                     m.group('op'), left_val, m.group('expr'), expr, local_vars, allow_recursion)
-                return local_vars[m.group('out')]
+                return local_vars[m.group('out')], should_return
             elif left_val is None:
                 raise self.Exception(f'Cannot index undefined variable {m.group("out")}', expr)
 
@@ -358,10 +351,10 @@ class JSInterpreter:
             idx = int(idx)
             left_val[idx] = self._operator(
                 m.group('op'), left_val[idx], m.group('expr'), expr, local_vars, allow_recursion)
-            return left_val[idx]
+            return left_val[idx], should_return
 
         elif expr.isdigit():
-            return int(expr)
+            return int(expr), should_return
 
         elif expr == 'break':
             raise JS_Break()
@@ -369,15 +362,15 @@ class JSInterpreter:
             raise JS_Continue()
 
         elif m and m.group('return'):
-            return local_vars[m.group('name')]
+            return local_vars[m.group('name')], should_return
 
         with contextlib.suppress(ValueError):
-            return json.loads(js_to_json(expr, strict=True))
+            return json.loads(js_to_json(expr, strict=True)), should_return
 
         if m and m.group('indexing'):
             val = local_vars[m.group('in')]
             idx = self.interpret_expression(m.group('idx'), local_vars, allow_recursion)
-            return self._index(val, idx)
+            return self._index(val, idx), should_return
 
         for op in _OPERATORS:
             separated = list(self._separate(expr, op))
@@ -387,11 +380,9 @@ class JSInterpreter:
             while op == '-' and len(separated) > 1 and not separated[-1].strip():
                 right_expr = f'-{right_expr}'
                 separated.pop()
-            left_val, should_abort = self.interpret_statement(op.join(separated), local_vars, allow_recursion)
-            if should_abort:
-                raise self.Exception(f'Premature left-side return of {op}', expr)
+            left_val = self.interpret_expression(op.join(separated), local_vars, allow_recursion)
             return self._operator(op, 0 if left_val is None else left_val,
-                                  right_expr, expr, local_vars, allow_recursion)
+                                  right_expr, expr, local_vars, allow_recursion), should_return
 
         if m and m.group('attribute'):
             variable = m.group('var')
@@ -503,24 +494,31 @@ class JSInterpreter:
                 return obj[idx](argvals, allow_recursion=allow_recursion)
 
             if remaining:
-                return self.interpret_expression(
+                ret, should_abort = self.interpret_statement(
                     self._named_object(local_vars, eval_method()) + remaining,
                     local_vars, allow_recursion)
+                return ret, should_return or should_abort
             else:
-                return eval_method()
+                return eval_method(), should_return
 
         elif m and m.group('function'):
             fname = m.group('fname')
             argvals = [self.interpret_expression(v, local_vars, allow_recursion)
                        for v in self._separate(m.group('args'))]
             if fname in local_vars:
-                return local_vars[fname](argvals, allow_recursion=allow_recursion)
+                return local_vars[fname](argvals, allow_recursion=allow_recursion), should_return
             elif fname not in self._functions:
                 self._functions[fname] = self.extract_function(fname)
-            return self._functions[fname](argvals, allow_recursion=allow_recursion)
+            return self._functions[fname](argvals, allow_recursion=allow_recursion), should_return
 
         raise self.Exception(
-            f'Unsupported JS expression {truncate_string(expr, 20, 20) if expr != orig_expr else ""}', orig_expr)
+            f'Unsupported JS expression {truncate_string(expr, 20, 20) if expr != stmt else ""}', stmt)
+
+    def interpret_expression(self, expr, local_vars, allow_recursion):
+        ret, should_return = self.interpret_statement(expr, local_vars, allow_recursion)
+        if should_return:
+            raise self.Exception('Cannot return from an expression', expr)
+        return ret
 
     def extract_object(self, objname):
         _FUNC_NAME_RE = r'''(?:[a-zA-Z$0-9]+|"[a-zA-Z$0-9]+"|'[a-zA-Z$0-9]+')'''
@@ -593,9 +591,7 @@ class JSInterpreter:
                 **kwargs
             })
             var_stack = LocalNameSpace(*global_stack)
-            for stmt in self._separate(code.replace('\n', ''), ';'):
-                ret, should_abort = self.interpret_statement(stmt, var_stack, allow_recursion)
-                if should_abort:
-                    break
-            return ret
+            ret, should_abort = self.interpret_statement(code.replace('\n', ''), var_stack, allow_recursion - 1)
+            if should_abort:
+                return ret
         return resf

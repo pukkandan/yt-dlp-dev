@@ -19,6 +19,9 @@ class TestJSInterpreter(unittest.TestCase):
         jsi = JSInterpreter('function x3(){return 42;}')
         self.assertEqual(jsi.call_function('x3'), 42)
 
+        jsi = JSInterpreter('function x3(){42}')
+        self.assertEqual(jsi.call_function('x3'), None)
+
         jsi = JSInterpreter('var x5 = function(){return 42;}')
         self.assertEqual(jsi.call_function('x5'), 42)
 
