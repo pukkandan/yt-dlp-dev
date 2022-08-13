@@ -13,6 +13,7 @@ from .utils import (
     remove_quotes,
     truncate_string,
     unified_timestamp,
+    write_string,
 )
 
 _NAME_RE = r'[a-zA-Z_$][\w$]*'
@@ -76,6 +77,26 @@ class LocalNameSpace(collections.ChainMap):
 
     def __delitem__(self, key):
         raise NotImplementedError('Deleting is not supported')
+
+
+class Debugger:
+    ENABLED = True
+
+    @staticmethod
+    def write(*args, level=100):
+        write_string(f'[debug] JS: {"  " * (100 - level)}'
+                     f'{" ".join(truncate_string(str(x), 50, 50) for x in args)}\n')
+
+    @classmethod
+    def wrap_interpreter(cls, f):
+        def interpret_statement(self, stmt, local_vars, allow_recursion, *args, **kwargs):
+            if stmt.strip():
+                cls.write(stmt, level=allow_recursion)
+            ret, should_ret = f(self, stmt, local_vars, allow_recursion, *args, **kwargs)
+            if stmt.strip():
+                cls.write(['->', '=>'][should_ret], repr(ret), '<-|', stmt, level=allow_recursion)
+            return ret, should_ret
+        return interpret_statement
 
 
 class JSInterpreter:
@@ -163,6 +184,7 @@ class JSInterpreter:
         except TypeError:
             return self._named_object(namespace, obj)
 
+    @Debugger.wrap_interpreter
     def interpret_statement(self, stmt, local_vars, allow_recursion=100):
         if allow_recursion < 0:
             raise self.Exception('Recursion limit reached')
@@ -401,6 +423,11 @@ class JSInterpreter:
                     raise self.Exception(f'{member} {msg}', expr)
 
             def eval_method():
+                if (variable, member) == ('console', 'debug'):
+                    if Debugger.ENABLED:
+                        Debugger.write(self.interpret_expression(f'[{arg_str}]', local_vars, allow_recursion))
+                    return
+
                 types = {
                     'String': str,
                     'Math': float,
