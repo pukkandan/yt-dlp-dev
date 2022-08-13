@@ -54,7 +54,7 @@ class TestJSInterpreter(unittest.TestCase):
         jsi = JSInterpreter('function f(){return 11 >> 2;}')
         self.assertEqual(jsi.call_function('f'), 2)
 
-        jsi = JSInterpreter('function f(){return 1? 2+3: 4;}')
+        jsi = JSInterpreter('function f(){return []? 2+3: 4;}')
         self.assertEqual(jsi.call_function('f'), 5)
 
     def test_array_access(self):

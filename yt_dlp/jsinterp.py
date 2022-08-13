@@ -19,19 +19,20 @@ _NAME_RE = r'[a-zA-Z_$][\w$]*'
 _OPERATORS = {  # None => Defined in JSInterpreter._operator
     '?': None,
 
-    '&&': None,
     '||': None,
+    '&&': None,
     '&': operator.and_,
     '|': operator.or_,
     '^': operator.xor,
+
+    # FIXME: This should actually be below comparision
+    '>>': operator.rshift,
+    '<<': operator.lshift,
 
     '<=': operator.le,
     '>=': operator.ge,
     '<': operator.lt,
     '>': operator.gt,
-
-    '>>': operator.rshift,
-    '<<': operator.lshift,
 
     '+': operator.add,
     '-': operator.sub,
@@ -137,8 +138,7 @@ class JSInterpreter:
             if (op == '&&') ^ _ternary(left_val):
                 return left_val  # short circuiting
         elif op == '?':
-            return self.interpret_statement(
-                _ternary(left_val, *self._separate(right_expr, ':', 1)), local_vars, allow_recursion - 1)
+            right_expr = _ternary(left_val, *self._separate(right_expr, ':', 1))
 
         right_val = self.interpret_expression(right_expr, local_vars, allow_recursion)
         if not _OPERATORS.get(op):
@@ -327,7 +327,7 @@ class JSInterpreter:
                 (?P<op>{"|".join(map(re.escape, _OPERATORS))})?
                 =(?P<expr>.*)$
             )|(?P<return>
-                (?!if|return|true|false|null)(?P<name>{_NAME_RE})$
+                (?!if|return|true|false|null|undefined)(?P<name>{_NAME_RE})$
             )|(?P<indexing>
                 (?P<in>{_NAME_RE})\[(?P<idx>.+)\]$
             )|(?P<attribute>
@@ -480,7 +480,7 @@ class JSInterpreter:
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at-most 2 arguments')
                     f, this = (argvals + [''])[:2]
-                    return [f((item, idx, obj), {'this': this}) for idx, item in enumerate(obj)]
+                    return [f((item, idx, obj), {'this': this}, allow_recursion) for idx, item in enumerate(obj)]
                 elif member == 'indexOf':
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at-most 2 arguments')
@@ -560,7 +560,7 @@ class JSInterpreter:
         code, _ = self._separate_at_paren(func_m.group('code'), '}')
         if func_m is None:
             raise self.Exception(f'Could not find JS function "{funcname}"')
-        return func_m.group('args').split(','), code
+        return map(str.strip, func_m.group('args').split(',')), code
 
     def extract_function(self, funcname):
         return self.extract_function_from_code(*self.extract_function_code(funcname))
@@ -574,7 +574,7 @@ class JSInterpreter:
             start, body_start = mobj.span()
             body, remaining = self._separate_at_paren(code[body_start - 1:], '}')
             name = self._named_object(local_vars, self.extract_function_from_code(
-                [x.strip() for x in mobj.group('args').split(',')],
+                map(str.strip, mobj.group('args').split(',')),
                 body, local_vars, *global_stack))
             code = code[:start] + name + remaining
         return self.build_function(argnames, code, local_vars, *global_stack)
@@ -584,6 +584,7 @@ class JSInterpreter:
 
     def build_function(self, argnames, code, *global_stack):
         global_stack = list(global_stack) or [{}]
+        argnames = tuple(argnames)
 
         def resf(args, kwargs={}, allow_recursion=100):
             global_stack[0].update({
