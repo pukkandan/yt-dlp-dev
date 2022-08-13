@@ -140,7 +140,7 @@ class JSInterpreter:
             return self.interpret_statement(
                 _ternary(left_val, *self._separate(right_expr, ':', 1)), local_vars, allow_recursion - 1)
 
-        right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
+        right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion)
         if should_abort:
             raise self.Exception(f'Premature right-side return of {op}', expr)
         elif not _OPERATORS.get(op):
@@ -190,6 +190,7 @@ class JSInterpreter:
         return self.interpret_expression(expr, local_vars, allow_recursion), should_abort
 
     def interpret_expression(self, expr, local_vars, allow_recursion):
+        allow_recursion -= 1
         orig_expr = expr = expr.strip()
         if not expr:
             return None
@@ -214,7 +215,7 @@ class JSInterpreter:
 
         if expr.startswith('{'):
             inner, outer = self._separate_at_paren(expr, '}')
-            inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion - 1)
+            inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion)
             if not outer or should_abort:
                 return inner
             else:
@@ -241,15 +242,15 @@ class JSInterpreter:
                 try_expr, expr = self._separate_at_paren(expr[m.end():], '}')
             else:
                 try_expr, expr = expr[m.end() - 1:], ''
-            ret, should_abort = self.interpret_statement(try_expr, local_vars, allow_recursion - 1)
+            ret, should_abort = self.interpret_statement(try_expr, local_vars, allow_recursion)
             if should_abort:
                 return ret
-            return self.interpret_statement(expr, local_vars, allow_recursion - 1)[0]
+            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
 
         elif m and m.group('catch'):
             # We ignore the catch block
             _, expr = self._separate_at_paren(expr, '}')
-            return self.interpret_statement(expr, local_vars, allow_recursion - 1)[0]
+            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
 
         elif m and m.group('for'):
             constructor, remaining = self._separate_at_paren(expr[m.end() - 1:], ')')
@@ -264,22 +265,22 @@ class JSInterpreter:
                 else:
                     body, expr = remaining, ''
             start, cndn, increment = self._separate(constructor, ';')
-            if self.interpret_statement(start, local_vars, allow_recursion - 1)[1]:
+            if self.interpret_statement(start, local_vars, allow_recursion)[1]:
                 raise self.Exception('Premature return in the initialization of a for loop', constructor)
             while True:
                 if not self.interpret_expression(cndn, local_vars, allow_recursion):
                     break
                 try:
-                    ret, should_abort = self.interpret_statement(body, local_vars, allow_recursion - 1)
+                    ret, should_abort = self.interpret_statement(body, local_vars, allow_recursion)
                     if should_abort:
                         return ret
                 except JS_Break:
                     break
                 except JS_Continue:
                     pass
-                if self.interpret_statement(increment, local_vars, allow_recursion - 1)[1]:
+                if self.interpret_statement(increment, local_vars, allow_recursion)[1]:
                     raise self.Exception('Premature return in the initialization of a for loop', constructor)
-            return self.interpret_statement(expr, local_vars, allow_recursion - 1)[0]
+            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
 
         elif m and m.group('switch'):
             switch_val, remaining = self._separate_at_paren(expr[m.end() - 1:], ')')
@@ -297,14 +298,14 @@ class JSInterpreter:
                     if not matched:
                         continue
                     try:
-                        ret, should_abort = self.interpret_statement(stmt, local_vars, allow_recursion - 1)
+                        ret, should_abort = self.interpret_statement(stmt, local_vars, allow_recursion)
                         if should_abort:
                             return ret
                     except JS_Break:
                         break
                 if matched:
                     break
-            return self.interpret_statement(expr, local_vars, allow_recursion - 1)[0]
+            return self.interpret_statement(expr, local_vars, allow_recursion)[0]
 
         # Comma separated statements
         sub_expressions = list(self._separate(expr))
@@ -386,7 +387,7 @@ class JSInterpreter:
             while op == '-' and len(separated) > 1 and not separated[-1].strip():
                 right_expr = f'-{right_expr}'
                 separated.pop()
-            left_val, should_abort = self.interpret_statement(op.join(separated), local_vars, allow_recursion - 1)
+            left_val, should_abort = self.interpret_statement(op.join(separated), local_vars, allow_recursion)
             if should_abort:
                 raise self.Exception(f'Premature left-side return of {op}', expr)
             return self._operator(op, 0 if left_val is None else left_val,
@@ -488,7 +489,7 @@ class JSInterpreter:
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at-most 2 arguments')
                     f, this = (argvals + [''])[:2]
-                    return [f((item, idx, obj), this=this) for idx, item in enumerate(obj)]
+                    return [f((item, idx, obj), {'this': this}) for idx, item in enumerate(obj)]
                 elif member == 'indexOf':
                     assertion(argvals, 'takes one or more arguments')
                     assertion(len(argvals) <= 2, 'takes at-most 2 arguments')
@@ -498,7 +499,8 @@ class JSInterpreter:
                     except ValueError:
                         return -1
 
-                return obj[int(member) if isinstance(obj, list) else member](argvals)
+                idx = int(member) if isinstance(obj, list) else member
+                return obj[idx](argvals, allow_recursion=allow_recursion)
 
             if remaining:
                 return self.interpret_expression(
@@ -509,13 +511,13 @@ class JSInterpreter:
 
         elif m and m.group('function'):
             fname = m.group('fname')
-            argvals = [self.interpret_expression(v, local_vars, allow_recursion - 1)
+            argvals = [self.interpret_expression(v, local_vars, allow_recursion)
                        for v in self._separate(m.group('args'))]
             if fname in local_vars:
-                return local_vars[fname](argvals)
+                return local_vars[fname](argvals, allow_recursion=allow_recursion)
             elif fname not in self._functions:
                 self._functions[fname] = self.extract_function(fname)
-            return self._functions[fname](argvals)
+            return self._functions[fname](argvals, allow_recursion=allow_recursion)
 
         raise self.Exception(
             f'Unsupported JS expression {truncate_string(expr, 20, 20) if expr != orig_expr else ""}', orig_expr)
@@ -585,14 +587,14 @@ class JSInterpreter:
     def build_function(self, argnames, code, *global_stack):
         global_stack = list(global_stack) or [{}]
 
-        def resf(args, **kwargs):
+        def resf(args, kwargs={}, allow_recursion=100):
             global_stack[0].update({
                 **dict(itertools.zip_longest(argnames, args, fillvalue=None)),
                 **kwargs
             })
             var_stack = LocalNameSpace(*global_stack)
             for stmt in self._separate(code.replace('\n', ''), ';'):
-                ret, should_abort = self.interpret_statement(stmt, var_stack)
+                ret, should_abort = self.interpret_statement(stmt, var_stack, allow_recursion)
                 if should_abort:
                     break
             return ret
