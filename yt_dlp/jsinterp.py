@@ -2,6 +2,7 @@ import collections
 import contextlib
 import itertools
 import json
+import math
 import operator
 import re
 
@@ -42,6 +43,16 @@ _OPERATORS = {  # None => Defined in JSInterpreter._operator
 
 _MATCHING_PARENS = dict(zip('({[', ')}]'))
 _QUOTES = '\'"'
+
+
+def _ternary(cndn, if_true=True, if_false=False):
+    """Simulate JS's ternary operator (cndn?if_true:if_false)"""
+    if cndn in (False, None, 0, ''):
+        return if_false
+    with contextlib.suppress(TypeError):
+        if math.isnan(cndn):  # NB: NaN cannot be checked by membership
+            return if_false
+    return if_true
 
 
 class JS_Break(ExtractorError):
@@ -122,11 +133,12 @@ class JSInterpreter:
         return separated[0][1:].strip(), separated[1].strip()
 
     def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
-        if op == '||' and left_val or op == '&&' and not left_val:
-            return left_val  # short circuiting
+        if op in ('||', '&&'):
+            if (op == '&&') ^ _ternary(left_val):
+                return left_val  # short circuiting
         elif op == '?':
-            true, false = self._separate(right_expr, ':', 1)
-            return self.interpret_statement(true if left_val else false, local_vars, allow_recursion - 1)
+            return self.interpret_statement(
+                _ternary(left_val, *self._separate(right_expr, ':', 1)), local_vars, allow_recursion - 1)
 
         right_val, should_abort = self.interpret_statement(right_expr, local_vars, allow_recursion - 1)
         if should_abort:
@@ -377,7 +389,8 @@ class JSInterpreter:
             left_val, should_abort = self.interpret_statement(op.join(separated), local_vars, allow_recursion - 1)
             if should_abort:
                 raise self.Exception(f'Premature left-side return of {op}', expr)
-            return self._operator(op, left_val or 0, right_expr, expr, local_vars, allow_recursion)
+            return self._operator(op, 0 if left_val is None else left_val,
+                                  right_expr, expr, local_vars, allow_recursion)
 
         if m and m.group('attribute'):
             variable = m.group('var')
