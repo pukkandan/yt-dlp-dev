@@ -2,7 +2,7 @@
 
 __version__ = '2022.08.18.36'
 
-RELEASE_GIT_HEAD = '48c88e088'
+RELEASE_GIT_HEAD = '92b651d11'
 
 VARIANT = None
 
