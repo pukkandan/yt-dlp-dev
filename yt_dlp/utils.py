@@ -2656,28 +2656,23 @@ def replace_extension(filename, ext, expected_real_ext=None):
         ext)
 
 
-def check_executable(exe, args=[]):
-    """ Checks if the given binary is installed somewhere in PATH, and returns its name.
-    args can be a list of arguments for a short output (like -version) """
-    try:
-        Popen.run([exe] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except OSError:
-        return False
-    return exe
-
-
-def _get_exe_version_output(exe, args, *, to_screen=None):
-    if to_screen:
-        to_screen(f'Checking exe version: {shell_quote([exe] + args)}')
+@functools.cache
+def _get_exe_version_output(exe, args):
     try:
         # STDIN should be redirected too. On UNIX-like systems, ffmpeg triggers
         # SIGTTOU if yt-dlp is run in the background.
         # See https://github.com/ytdl-org/youtube-dl/issues/955#issuecomment-209789656
-        stdout, _, _ = Popen.run([encodeArgument(exe)] + args, text=True,
+        stdout, _, _ = Popen.run((exe, *args), text=True,
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except OSError:
-        return False
+        return None
     return stdout
+
+
+def check_executable(exe, args=[]):
+    """ Checks if the given binary is installed somewhere in PATH, and returns its name.
+    args can be a list of arguments for a short output (like -version) """
+    return False if _get_exe_version_output(exe, tuple(args)) is None else exe
 
 
 def detect_exe_version(output, version_re=None, unrecognized='present'):
@@ -2695,7 +2690,7 @@ def get_exe_version(exe, args=['--version'],
                     version_re=None, unrecognized='present'):
     """ Returns the version of the specified executable,
     or False if the executable is not present """
-    out = _get_exe_version_output(exe, args)
+    out = _get_exe_version_output(exe, tuple(args))
     return detect_exe_version(out, version_re, unrecognized) if out else False
 
 
