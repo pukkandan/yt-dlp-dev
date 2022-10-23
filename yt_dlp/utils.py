@@ -3176,8 +3176,13 @@ def multipart_encode(data, boundary=None):
     return out, content_type
 
 
-def variadic(x, allowed_types=(str, bytes, dict)):
-    return x if isinstance(x, collections.abc.Iterable) and not isinstance(x, allowed_types) else (x,)
+# XXX
+def is_iterable(x, *, allow=collections.abc.Iterable, reject=(str, collections.abc.ByteString)):
+    return isinstance(x, allow) and not isinstance(x, reject)
+
+
+def variadic(x, allowed_types=(str, collections.abc.ByteString, dict)):
+    return x if is_iterable(x, reject=allowed_types) else (x, )
 
 
 def dict_get(d, key_or_keys, default=None, skip_false_values=True):
@@ -5349,7 +5354,6 @@ def traverse_obj(
                             then a list of results is returned instead.
                             A list is always returned if the last path branches and no `default` is given.
     """
-    is_sequence = lambda x: isinstance(x, collections.abc.Sequence) and not isinstance(x, (str, bytes))
     casefold = lambda k: k.casefold() if isinstance(k, str) else k
 
     if isinstance(expected_type, type):
@@ -5372,7 +5376,7 @@ def traverse_obj(
         elif key is ...:
             if isinstance(obj, collections.abc.Mapping):
                 yield from obj.values()
-            elif is_sequence(obj):
+            elif is_iterable(obj):
                 yield from obj
             elif isinstance(obj, re.Match):
                 yield from obj.groups()
@@ -5380,10 +5384,10 @@ def traverse_obj(
                 yield from str(obj)
 
         elif callable(key):
-            if is_sequence(obj):
-                iter_obj = enumerate(obj)
-            elif isinstance(obj, collections.abc.Mapping):
+            if isinstance(obj, collections.abc.Mapping):
                 iter_obj = obj.items()
+            elif is_iterable(obj):
+                iter_obj = enumerate(obj)
             elif isinstance(obj, re.Match):
                 iter_obj = enumerate((obj.group(), *obj.groups()))
             elif traverse_string:
@@ -5420,7 +5424,7 @@ def traverse_obj(
             if not isinstance(key, (int, slice)):
                 return
 
-            if not is_sequence(obj):
+            if not is_iterable(obj, allow=collections.abc.Sequence):
                 if not traverse_string:
                     return
                 obj = str(obj)
