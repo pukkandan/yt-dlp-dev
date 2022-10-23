@@ -37,7 +37,6 @@ import ssl
 import struct
 import subprocess
 import sys
-import tempfile
 import time
 import traceback
 import types
@@ -48,7 +47,7 @@ import urllib.request
 import xml.etree.ElementTree
 import zlib
 
-from .compat import functools  # isort: split
+from .compat import functools, tempfile  # isort: split
 from .compat import (
     compat_etree_fromstring,
     compat_expanduser,
