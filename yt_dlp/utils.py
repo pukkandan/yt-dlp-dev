@@ -5802,11 +5802,20 @@ def cached_method(f):
     """Cache a method"""
     signature = inspect.signature(f)
 
+    def make_hashable(obj):
+        if isinstance(obj, collections.abc.Mapping):
+            return dict, frozenset((k, make_hashable(v)) for k, v in obj.items())
+        elif is_iterable(obj, allow=collections.abc.Collection):
+            return tuple, tuple(map(make_hashable, obj))
+        elif isinstance(obj, (set, collections.abc.MappingView)):
+            return set, frozenset(map(make_hashable, obj))
+        return type(obj), obj
+
     @functools.wraps(f)
     def wrapper(self, *args, **kwargs):
         bound_args = signature.bind(self, *args, **kwargs)
         bound_args.apply_defaults()
-        key = tuple(bound_args.arguments.values())[1:]
+        key = make_hashable(tuple(bound_args.arguments.values())[1:])
 
         cache = vars(self).setdefault('__cached_method__cache', {}).setdefault(f.__name__, {})
         if key not in cache:
