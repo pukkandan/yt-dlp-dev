@@ -1,4 +1,3 @@
-import collections
 import contextlib
 import itertools
 import json
@@ -6,8 +5,8 @@ import math
 import operator
 import re
 
-from .utils import (
-    NO_DEFAULT,
+from .common import JSI, NestedScope
+from ..utils import (
     ExtractorError,
     js_to_json,
     remove_quotes,
@@ -90,7 +89,7 @@ def _js_ternary(cndn, if_true=True, if_false=False):
 
 
 # Ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-_OPERATORS = {  # None => Defined in JSInterpreter._operator
+_OPERATORS = {  # None => Defined in NativeJSI._operator
     '?': None,
     '??': None,
     '||': None,
@@ -149,18 +148,6 @@ class JS_Throw(ExtractorError):
         ExtractorError.__init__(self, f'Uncaught exception {e}')
 
 
-class LocalNameSpace(collections.ChainMap):
-    def __setitem__(self, key, value):
-        for scope in self.maps:
-            if key in scope:
-                scope[key] = value
-                return
-        self.maps[0][key] = value
-
-    def __delitem__(self, key):
-        raise NotImplementedError('Deleting is not supported')
-
-
 class Debugger:
     import sys
     ENABLED = False and 'pytest' in sys.modules
@@ -172,11 +159,11 @@ class Debugger:
 
     @classmethod
     def wrap_interpreter(cls, f):
-        def interpret_statement(self, stmt, local_vars, allow_recursion, *args, **kwargs):
+        def interpret_statement(self, stmt, scope, allow_recursion, *args, **kwargs):
             if cls.ENABLED and stmt.strip():
                 cls.write(stmt, level=allow_recursion)
             try:
-                ret, should_ret = f(self, stmt, local_vars, allow_recursion, *args, **kwargs)
+                ret, should_ret = f(self, stmt, scope, allow_recursion, *args, **kwargs)
             except Exception as e:
                 if cls.ENABLED:
                     if isinstance(e, ExtractorError):
@@ -189,7 +176,8 @@ class Debugger:
         return interpret_statement
 
 
-class JSInterpreter:
+class NativeJSI(JSI, register=True):
+    available = True
     __named_object_counter = 0
 
     _RE_FLAGS = {
@@ -205,22 +193,20 @@ class JSInterpreter:
         'y': 4096,  # Perform a "sticky" search that matches starting at the current position in the target string
     }
 
-    _EXC_NAME = '__yt_dlp_exception__'
-
-    def __init__(self, code, objects=None):
-        self.code, self._functions = code, {}
-        self._objects = {} if objects is None else objects
-
     class Exception(ExtractorError):
         def __init__(self, msg, expr=None, *args, **kwargs):
             if expr is not None:
                 msg = f'{msg.rstrip()} in: {truncate_string(expr, 50, 50)}'
             super().__init__(msg, *args, **kwargs)
 
-    def _named_object(self, namespace, obj):
+    @staticmethod
+    def _private_var(name):
+        return f'__yt_dlp_{name}__'
+
+    def _named_object(self, scope, obj):
         self.__named_object_counter += 1
-        name = f'__yt_dlp_jsinterp_obj{self.__named_object_counter}'
-        namespace[name] = obj
+        name = self._private_var(f'obj_{self.__named_object_counter}')
+        scope[name] = obj
         return name
 
     @classmethod
@@ -280,7 +266,7 @@ class JSInterpreter:
             raise cls.Exception(f'No terminating paren {delim}', expr)
         return separated[0][1:].strip(), separated[1].strip()
 
-    def _operator(self, op, left_val, right_expr, expr, local_vars, allow_recursion):
+    def _operator(self, op, left_val, right_expr, expr, scope, allow_recursion):
         if op in ('||', '&&'):
             if (op == '&&') ^ _js_ternary(left_val):
                 return left_val  # short circuiting
@@ -290,7 +276,7 @@ class JSInterpreter:
         elif op == '?':
             right_expr = _js_ternary(left_val, *self._separate(right_expr, ':', 1))
 
-        right_val = self.interpret_expression(right_expr, local_vars, allow_recursion)
+        right_val = self.interpret_expression(right_expr, scope, allow_recursion)
         if not _OPERATORS.get(op):
             return right_val
 
@@ -309,14 +295,18 @@ class JSInterpreter:
                 return JS_Undefined
             raise self.Exception(f'Cannot get index {idx}', repr(obj), cause=e)
 
-    def _dump(self, obj, namespace):
+    def _dump(self, obj, scope):
         try:
             return json.dumps(obj)
         except TypeError:
-            return self._named_object(namespace, obj)
+            return self._named_object(scope, obj)
+
+    @staticmethod
+    def _split_args(argcode):
+        return [x.strip() for x in argcode.split(',')]
 
     @Debugger.wrap_interpreter
-    def interpret_statement(self, stmt, local_vars, allow_recursion=100):
+    def interpret_statement(self, stmt, scope, allow_recursion=100):
         if allow_recursion < 0:
             raise self.Exception('Recursion limit reached')
         allow_recursion -= 1
@@ -326,7 +316,7 @@ class JSInterpreter:
         expr = stmt = sub_statements.pop().strip()
 
         for sub_stmt in sub_statements:
-            ret, should_return = self.interpret_statement(sub_stmt, local_vars, allow_recursion)
+            ret, should_return = self.interpret_statement(sub_stmt, scope, allow_recursion)
             if should_return:
                 return ret, should_return
 
@@ -334,7 +324,7 @@ class JSInterpreter:
         if m:
             expr = stmt[len(m.group(0)):].strip()
             if m.group('throw'):
-                raise JS_Throw(self.interpret_expression(expr, local_vars, allow_recursion))
+                raise JS_Throw(self.interpret_expression(expr, scope, allow_recursion))
             should_return = not m.group('var')
         if not expr:
             return None, should_return
@@ -348,22 +338,22 @@ class JSInterpreter:
                 inner = json.loads(js_to_json(f'{inner}{expr[0]}', strict=True))
             if not outer:
                 return inner, should_return
-            expr = self._named_object(local_vars, inner) + outer
+            expr = self._named_object(scope, inner) + outer
 
         if expr.startswith('new '):
             obj = expr[4:]
             if obj.startswith('Date('):
                 left, right = self._separate_at_paren(obj[4:])
                 expr = unified_timestamp(
-                    self.interpret_expression(left, local_vars, allow_recursion), False)
+                    self.interpret_expression(left, scope, allow_recursion), False)
                 if not expr:
                     raise self.Exception(f'Failed to parse date {left!r}', expr)
-                expr = self._dump(int(expr * 1000), local_vars) + right
+                expr = self._dump(int(expr * 1000), scope) + right
             else:
                 raise self.Exception(f'Unsupported object {obj}', expr)
 
         if expr.startswith('void '):
-            left = self.interpret_expression(expr[5:], local_vars, allow_recursion)
+            left = self.interpret_expression(expr[5:], scope, allow_recursion)
             return None, should_return
 
         if expr.startswith('{'):
@@ -372,31 +362,31 @@ class JSInterpreter:
             sub_expressions = [list(self._separate(sub_expr.strip(), ':', 1)) for sub_expr in self._separate(inner)]
             if all(len(sub_expr) == 2 for sub_expr in sub_expressions):
                 def dict_item(key, val):
-                    val = self.interpret_expression(val, local_vars, allow_recursion)
+                    val = self.interpret_expression(val, scope, allow_recursion)
                     if re.match(_NAME_RE, key):
                         return key, val
-                    return self.interpret_expression(key, local_vars, allow_recursion), val
+                    return self.interpret_expression(key, scope, allow_recursion), val
 
                 return dict(dict_item(k, v) for k, v in sub_expressions), should_return
 
-            inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion)
+            inner, should_abort = self.interpret_statement(inner, scope, allow_recursion)
             if not outer or should_abort:
                 return inner, should_abort or should_return
             else:
-                expr = self._dump(inner, local_vars) + outer
+                expr = self._dump(inner, scope) + outer
 
         if expr.startswith('('):
             inner, outer = self._separate_at_paren(expr)
-            inner, should_abort = self.interpret_statement(inner, local_vars, allow_recursion)
+            inner, should_abort = self.interpret_statement(inner, scope, allow_recursion)
             if not outer or should_abort:
                 return inner, should_abort or should_return
             else:
-                expr = self._dump(inner, local_vars) + outer
+                expr = self._dump(inner, scope) + outer
 
         if expr.startswith('['):
             inner, outer = self._separate_at_paren(expr)
-            name = self._named_object(local_vars, [
-                self.interpret_expression(item, local_vars, allow_recursion)
+            name = self._named_object(scope, [
+                self.interpret_expression(item, scope, allow_recursion)
                 for item in self._separate(inner)])
             expr = name + outer
 
@@ -410,7 +400,7 @@ class JSInterpreter:
             try_expr, expr = self._separate_at_paren(expr[m.end() - 1:])
             err = None
             try:
-                ret, should_abort = self.interpret_statement(try_expr, local_vars, allow_recursion)
+                ret, should_abort = self.interpret_statement(try_expr, scope, allow_recursion)
                 if should_abort:
                     return ret, True
             except Exception as e:
@@ -425,13 +415,13 @@ class JSInterpreter:
                     catch_vars = {}
                     if m.group('err'):
                         catch_vars[m.group('err')] = err.error if isinstance(err, JS_Throw) else err
-                    catch_vars = local_vars.new_child(catch_vars)
+                    catch_vars = scope.new_child(catch_vars)
                     err, pending = None, self.interpret_statement(sub_expr, catch_vars, allow_recursion)
 
             m = re.match(r'finally\s*\{', expr)
             if m:
                 sub_expr, expr = self._separate_at_paren(expr[m.end() - 1:])
-                ret, should_abort = self.interpret_statement(sub_expr, local_vars, allow_recursion)
+                ret, should_abort = self.interpret_statement(sub_expr, scope, allow_recursion)
                 if should_abort:
                     return ret, True
 
@@ -455,23 +445,23 @@ class JSInterpreter:
                 else:
                     body, expr = remaining, ''
             start, cndn, increment = self._separate(constructor, ';')
-            self.interpret_expression(start, local_vars, allow_recursion)
+            self.interpret_expression(start, scope, allow_recursion)
             while True:
-                if not _js_ternary(self.interpret_expression(cndn, local_vars, allow_recursion)):
+                if not _js_ternary(self.interpret_expression(cndn, scope, allow_recursion)):
                     break
                 try:
-                    ret, should_abort = self.interpret_statement(body, local_vars, allow_recursion)
+                    ret, should_abort = self.interpret_statement(body, scope, allow_recursion)
                     if should_abort:
                         return ret, True
                 except JS_Break:
                     break
                 except JS_Continue:
                     pass
-                self.interpret_expression(increment, local_vars, allow_recursion)
+                self.interpret_expression(increment, scope, allow_recursion)
 
         elif md.get('switch'):
             switch_val, remaining = self._separate_at_paren(expr[m.end() - 1:])
-            switch_val = self.interpret_expression(switch_val, local_vars, allow_recursion)
+            switch_val = self.interpret_expression(switch_val, scope, allow_recursion)
             body, expr = self._separate_at_paren(remaining, '}')
             items = body.replace('default:', 'case default:').split('case ')[1:]
             for default in (False, True):
@@ -482,11 +472,11 @@ class JSInterpreter:
                         matched = matched or case == 'default'
                     elif not matched:
                         matched = (case != 'default'
-                                   and switch_val == self.interpret_expression(case, local_vars, allow_recursion))
+                                   and switch_val == self.interpret_expression(case, scope, allow_recursion))
                     if not matched:
                         continue
                     try:
-                        ret, should_abort = self.interpret_statement(stmt, local_vars, allow_recursion)
+                        ret, should_abort = self.interpret_statement(stmt, scope, allow_recursion)
                         if should_abort:
                             return ret
                     except JS_Break:
@@ -495,14 +485,14 @@ class JSInterpreter:
                     break
 
         if md:
-            ret, should_abort = self.interpret_statement(expr, local_vars, allow_recursion)
+            ret, should_abort = self.interpret_statement(expr, scope, allow_recursion)
             return ret, should_abort or should_return
 
         # Comma separated statements
         sub_expressions = list(self._separate(expr))
         if len(sub_expressions) > 1:
             for sub_expr in sub_expressions:
-                ret, should_abort = self.interpret_statement(sub_expr, local_vars, allow_recursion)
+                ret, should_abort = self.interpret_statement(sub_expr, scope, allow_recursion)
                 if should_abort:
                     return ret, True
             return ret, False
@@ -513,11 +503,11 @@ class JSInterpreter:
             var = m.group('var1') or m.group('var2')
             start, end = m.span()
             sign = m.group('pre_sign') or m.group('post_sign')
-            ret = local_vars[var]
-            local_vars[var] += 1 if sign[0] == '+' else -1
+            ret = scope[var]
+            scope[var] += 1 if sign[0] == '+' else -1
             if m.group('pre_sign'):
-                ret = local_vars[var]
-            expr = expr[:start] + self._dump(ret, local_vars) + expr[end:]
+                ret = scope[var]
+            expr = expr[:start] + self._dump(ret, scope) + expr[end:]
 
         if not expr:
             return None, should_return
@@ -537,21 +527,21 @@ class JSInterpreter:
                 (?P<fname>{_NAME_RE})\((?P<args>.*)\)$
             )''', expr)
         if m and m.group('assign'):
-            left_val = local_vars.get(m.group('out'))
+            left_val = scope.get(m.group('out'))
 
             if not m.group('index'):
-                local_vars[m.group('out')] = self._operator(
-                    m.group('op'), left_val, m.group('expr'), expr, local_vars, allow_recursion)
-                return local_vars[m.group('out')], should_return
+                scope[m.group('out')] = self._operator(
+                    m.group('op'), left_val, m.group('expr'), expr, scope, allow_recursion)
+                return scope[m.group('out')], should_return
             elif left_val in (None, JS_Undefined):
                 raise self.Exception(f'Cannot index undefined variable {m.group("out")}', expr)
 
-            idx = self.interpret_expression(m.group('index'), local_vars, allow_recursion)
+            idx = self.interpret_expression(m.group('index'), scope, allow_recursion)
             if not isinstance(idx, (int, float)):
                 raise self.Exception(f'List index {idx} must be integer', expr)
             idx = int(idx)
             left_val[idx] = self._operator(
-                m.group('op'), self._index(left_val, idx), m.group('expr'), expr, local_vars, allow_recursion)
+                m.group('op'), self._index(left_val, idx), m.group('expr'), expr, scope, allow_recursion)
             return left_val[idx], should_return
 
         elif expr.isdigit():
@@ -567,14 +557,14 @@ class JSInterpreter:
             return float('NaN'), should_return
 
         elif m and m.group('return'):
-            return local_vars.get(m.group('name'), JS_Undefined), should_return
+            return scope.get(m.group('name'), JS_Undefined), should_return
 
         with contextlib.suppress(ValueError):
             return json.loads(js_to_json(expr, strict=True)), should_return
 
         if m and m.group('indexing'):
-            val = local_vars[m.group('in')]
-            idx = self.interpret_expression(m.group('idx'), local_vars, allow_recursion)
+            val = scope[m.group('in')]
+            idx = self.interpret_expression(m.group('idx'), scope, allow_recursion)
             return self._index(val, idx), should_return
 
         for op in _OPERATORS:
@@ -590,13 +580,13 @@ class JSInterpreter:
                     right_expr = f'{separated.pop()}{op}{right_expr}'
             if not separated:
                 continue
-            left_val = self.interpret_expression(op.join(separated), local_vars, allow_recursion)
-            return self._operator(op, left_val, right_expr, expr, local_vars, allow_recursion), should_return
+            left_val = self.interpret_expression(op.join(separated), scope, allow_recursion)
+            return self._operator(op, left_val, right_expr, expr, scope, allow_recursion), should_return
 
         if m and m.group('attribute'):
             variable, member, nullish = m.group('var', 'member', 'nullish')
             if not member:
-                member = self.interpret_expression(m.group('member2'), local_vars, allow_recursion)
+                member = self.interpret_expression(m.group('member2'), scope, allow_recursion)
             arg_str = expr[m.end():]
             if arg_str.startswith('('):
                 arg_str, remaining = self._separate_at_paren(arg_str)
@@ -611,23 +601,20 @@ class JSInterpreter:
             def eval_method():
                 if (variable, member) == ('console', 'debug'):
                     if Debugger.ENABLED:
-                        Debugger.write(self.interpret_expression(f'[{arg_str}]', local_vars, allow_recursion))
+                        Debugger.write(self.interpret_expression(f'[{arg_str}]', scope, allow_recursion))
                     return
 
                 types = {
                     'String': str,
                     'Math': float,
                 }
-                obj = local_vars.get(variable, types.get(variable, NO_DEFAULT))
-                if obj is NO_DEFAULT:
-                    if variable not in self._objects:
-                        try:
-                            self._objects[variable] = self.extract_object(variable)
-                        except self.Exception:
-                            if not nullish:
-                                raise
-                    obj = self._objects.get(variable, JS_Undefined)
-
+                if variable not in types:
+                    try:
+                        self._extract_object(variable, scope)
+                    except self.Exception:
+                        if not nullish:
+                            raise
+                obj = scope.get(variable, types.get(variable, JS_Undefined))
                 if nullish and obj is JS_Undefined:
                     return JS_Undefined
 
@@ -637,7 +624,7 @@ class JSInterpreter:
 
                 # Function call
                 argvals = [
-                    self.interpret_expression(v, local_vars, allow_recursion)
+                    self.interpret_expression(v, scope, allow_recursion)
                     for v in self._separate(arg_str)]
 
                 if obj == str:
@@ -722,59 +709,81 @@ class JSInterpreter:
 
             if remaining:
                 ret, should_abort = self.interpret_statement(
-                    self._named_object(local_vars, eval_method()) + remaining,
-                    local_vars, allow_recursion)
+                    self._named_object(scope, eval_method()) + remaining,
+                    scope, allow_recursion)
                 return ret, should_return or should_abort
             else:
                 return eval_method(), should_return
 
         elif m and m.group('function'):
             fname = m.group('fname')
-            argvals = [self.interpret_expression(v, local_vars, allow_recursion)
+            argvals = [self.interpret_expression(v, scope, allow_recursion)
                        for v in self._separate(m.group('args'))]
-            if fname in local_vars:
-                return local_vars[fname](argvals, allow_recursion=allow_recursion), should_return
-            elif fname not in self._functions:
-                self._functions[fname] = self.extract_function(fname)
-            return self._functions[fname](argvals, allow_recursion=allow_recursion), should_return
+            if fname not in scope:
+                scope.maps[-1][fname] = self._build_function(
+                    *self.extract_function_code(fname, scope[self._private_var('full_code')]),
+                    scope)
+            return scope[fname](argvals, allow_recursion=allow_recursion), should_return
 
         raise self.Exception(
             f'Unsupported JS expression {truncate_string(expr, 20, 20) if expr != stmt else ""}', stmt)
 
-    def interpret_expression(self, expr, local_vars, allow_recursion):
-        ret, should_return = self.interpret_statement(expr, local_vars, allow_recursion)
+    def interpret_expression(self, expr, scope, allow_recursion):
+        ret, should_return = self.interpret_statement(expr, scope, allow_recursion)
         if should_return:
             raise self.Exception('Cannot return from an expression', expr)
         return ret
 
-    def extract_object(self, objname):
+    def _extract_object(self, objname, scope):
+        if objname in scope:
+            return
+
         _FUNC_NAME_RE = r'''(?:[a-zA-Z$0-9]+|"[a-zA-Z$0-9]+"|'[a-zA-Z$0-9]+')'''
-        obj = {}
-        obj_m = re.search(
+        scope.maps[-1][objname] = obj = {}
+        mobj = re.search(
             r'''(?x)
                 (?<!this\.)%s\s*=\s*{\s*
                     (?P<fields>(%s\s*:\s*function\s*\(.*?\)\s*{.*?}(?:,\s*)?)*)
                 }\s*;
             ''' % (re.escape(objname), _FUNC_NAME_RE),
-            self.code)
-        if not obj_m:
+            scope[self._private_var('full_code')])
+        if not mobj:
             raise self.Exception(f'Could not find object {objname}')
-        fields = obj_m.group('fields')
+        fields = mobj.group('fields')
+
         # Currently, it only supports function definitions
-        fields_m = re.finditer(
+        mobj = re.finditer(
             r'''(?x)
                 (?P<key>%s)\s*:\s*function\s*\((?P<args>(?:%s|,)*)\){(?P<code>[^}]+)}
             ''' % (_FUNC_NAME_RE, _NAME_RE),
             fields)
-        for f in fields_m:
+        for f in mobj:
             argnames = f.group('args').split(',')
-            obj[remove_quotes(f.group('key'))] = self.build_function(argnames, f.group('code'))
+            obj[remove_quotes(f.group('key'))] = self._build_function(f.group('code'), argnames, scope)
 
-        return obj
+    def _build_function(self, code, argnames, scope):
+        scope = scope.new_child()
+        code = code.replace('\n', ' ')
+        while True:
+            mobj = re.search(r'function\((?P<args>[^)]*)\)\s*{', code)
+            if not mobj:
+                break
+            start, body_start = mobj.span()
+            body, remaining = self._separate_at_paren(code[body_start - 1:])
+            name = self._named_object(scope, self._build_function(
+                body, self._split_args(mobj.group('args')), scope))
+            code = code[:start] + name + remaining
 
-    def extract_function_code(self, funcname):
-        """ @returns argnames, code """
-        func_m = re.search(
+        def wrapper(args, kwargs={}, allow_recursion=100):
+            scope.update(kwargs)
+            scope.update(itertools.zip_longest(argnames, args, fillvalue=None))
+            ret, should_abort = self.interpret_statement(code, scope, allow_recursion - 1)
+            if should_abort:
+                return ret
+        return wrapper
+
+    def extract_function_code(self, name, full_code):
+        mobj = re.search(
             r'''(?xs)
                 (?:
                     function\s+%(name)s|
@@ -782,42 +791,14 @@ class JSInterpreter:
                     (?:var|const|let)\s+%(name)s\s*=\s*function
                 )\s*
                 \((?P<args>[^)]*)\)\s*
-                (?P<code>{.+})''' % {'name': re.escape(funcname)},
-            self.code)
-        code, _ = self._separate_at_paren(func_m.group('code'))
-        if func_m is None:
-            raise self.Exception(f'Could not find JS function "{funcname}"')
-        return [x.strip() for x in func_m.group('args').split(',')], code
+                (?P<code>{.+})''' % {'name': re.escape(name)},
+            full_code)
+        if not mobj:
+            raise self.Exception(f'Could not find JS function "{name}"')
 
-    def extract_function(self, funcname):
-        return self.extract_function_from_code(*self.extract_function_code(funcname))
+        func_code, _ = self._separate_at_paren(mobj.group('code'))
+        return func_code, self._split_args(mobj.group('args'))
 
-    def extract_function_from_code(self, argnames, code, *global_stack):
-        local_vars = {}
-        while True:
-            mobj = re.search(r'function\((?P<args>[^)]*)\)\s*{', code)
-            if mobj is None:
-                break
-            start, body_start = mobj.span()
-            body, remaining = self._separate_at_paren(code[body_start - 1:])
-            name = self._named_object(local_vars, self.extract_function_from_code(
-                [x.strip() for x in mobj.group('args').split(',')],
-                body, local_vars, *global_stack))
-            code = code[:start] + name + remaining
-        return self.build_function(argnames, code, local_vars, *global_stack)
-
-    def call_function(self, funcname, *args):
-        return self.extract_function(funcname)(args)
-
-    def build_function(self, argnames, code, *global_stack):
-        global_stack = list(global_stack) or [{}]
-        argnames = tuple(argnames)
-
-        def resf(args, kwargs={}, allow_recursion=100):
-            global_stack[0].update(itertools.zip_longest(argnames, args, fillvalue=None))
-            global_stack[0].update(kwargs)
-            var_stack = LocalNameSpace(*global_stack)
-            ret, should_abort = self.interpret_statement(code.replace('\n', ' '), var_stack, allow_recursion - 1)
-            if should_abort:
-                return ret
-        return resf
+    def build_function(self, code, argnames, *, full_code=None, timeout=None):
+        scope = NestedScope({self._private_var('full_code'): full_code or code})
+        return self._build_function(code, argnames, scope)
