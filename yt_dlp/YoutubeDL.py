@@ -30,7 +30,7 @@ from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
 from .downloader.rtmp import rtmpdump_version
 from .extractor import gen_extractor_classes, get_info_extractor
 from .extractor.common import UnsupportedURLIE
-from .extractor.openload import PhantomJSwrapper
+from .jsinterp import JS_INTERPRETERS
 from .minicurses import format_text
 from .postprocessor import _PLUGIN_CLASSES as plugin_postprocessors
 from .postprocessor import (
@@ -3743,8 +3743,8 @@ class YoutubeDL:
         if ffmpeg_features:
             exe_versions['ffmpeg'] += ' (%s)' % ','.join(sorted(ffmpeg_features))
 
+        exe_versions.update({jsi.JSI_NAME: getattr(jsi, 'version', None) for jsi in JS_INTERPRETERS})
         exe_versions['rtmpdump'] = rtmpdump_version()
-        exe_versions['phantomjs'] = PhantomJSwrapper._version()
         exe_str = ', '.join(
             f'{exe} {v}' for exe, v in sorted(exe_versions.items()) if v
         ) or 'none'

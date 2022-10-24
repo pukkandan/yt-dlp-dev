@@ -109,6 +109,52 @@ class JSI:
         return super().__init_subclass__(**kwargs)
 
 
+class ExternalJSI(JSI):
+    _VERSION_OPT = '--version'
+    _VERSION_RE = r'([\d.]+)'
+
+    @classproperty
+    def EXE_NAME(cls):
+        return cls.JSI_NAME
+
+    # TODO: Support custom CLI args
+    def _make_cmd(self, jsfile):
+        raise NotImplementedError('Must be implemented by subclasses')
+
+    @classproperty
+    def version(cls):
+        return get_exe_version(cls.EXE_NAME, args=[cls._VERSION_OPT], version_re=cls._VERSION_RE)
+
+    # TODO: Support custom location
+    @classproperty
+    def available(cls):
+        return bool(cls.version)
+
+    @staticmethod
+    def new_temp_file():
+        return tempfile.NamedTemporaryFile(
+            prefix='yt_dlp_', mode='w', encoding='utf-8', delete_on_close=False)
+
+    def execute(self, jscode, *, timeout=10):
+        """Execute JS and return stdout"""
+        with self.new_temp_file() as tmp:
+            tmp.write(jscode)
+            tmp.close()
+
+            cmd = self._make_cmd(tmp.name)
+            self.logger.debug(f'command line: {shell_quote(cmd)}')
+            stdout, stderr, returncode = Popen.run(
+                cmd, timeout=timeout, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if returncode:
+            raise Exception(f'{self.JSI_NAME} failed with returncode {returncode}:\n{stderr.strip()}')
+        return stdout
+
+    def build_function(self, code, argnames, *, timeout=10, full_code=None):
+        return lambda args: json.loads(self.execute(
+            self._function_code(code, dict(zip(argnames, args))), timeout=timeout).strip())
+
+
 class YDLLogger:  # TODO: Generalize with cookies.py
     def __init__(self, jsi):
         self.jsi = jsi
@@ -144,3 +190,63 @@ class NestedScope(collections.ChainMap):
 
     def __delitem__(self, key):
         raise NotImplementedError('Deleting is not supported')
+
+
+class TempCookieFile:
+    def __init__(self, cookiejar, url):
+        self.cookiejar = cookiejar
+        self.url = url
+        self.file = ExternalJSI.new_temp_file()
+
+    def __enter__(self):
+        self.file.__enter__()
+        self.file.write(json.dumps([self.cookie_to_dict(c, self.url) for c in self.cookiejar]))
+        self.file.close()
+        return self
+
+    def __exit__(self, *args):
+        with open(self.file.name, encoding='utf-8') as f:
+            for cookie in json.loads(f.read()):
+                self.cookiejar.set_cookie(self.dict_to_cookie(cookie))
+        self.file.__exit__(*args)
+
+    @staticmethod
+    def cookie_to_dict(cookie, url=None):
+        domain = cookie.domain if cookie.domain_specified else urllib.parse.urlparse(url).netloc if url else None
+        cookie_dict = filter_dict({
+            'name': cookie.name,
+            'value': cookie.value,
+            'domain': domain,
+            'path': cookie.path if cookie.path_specified else '/',
+            'port': cookie.port if cookie.port_specified else None,
+            'expires': cookie.expires,
+            'secure': cookie.secure,
+            'discard': cookie.discard,
+        })
+        with contextlib.suppress(TypeError):
+            if (cookie.has_nonstandard_attr('httpOnly')
+                    or cookie.has_nonstandard_attr('httponly')
+                    or cookie.has_nonstandard_attr('HttpOnly')):
+                cookie_dict['httponly'] = True
+        return cookie_dict
+
+    @staticmethod
+    def dict_to_cookie(cookie):
+        return http.cookiejar.Cookie(
+            version=0,
+            name=cookie['name'],
+            value=cookie['value'],
+            domain=cookie['domain'],
+            domain_specified=bool(cookie['domain']),
+            domain_initial_dot=cookie['domain'].startswith('.'),
+            path=cookie.get('path', '/'),
+            path_specified=True,
+            port=cookie.get('port'),
+            port_specified=bool(cookie.get('port')),
+            expires=cookie.get('expires'),
+            secure=cookie.get('secure'),
+            discard=cookie.get('discard'),
+            comment=None,
+            comment_url=None,
+            rest={'httpOnly': None} if cookie.get('httponly') else {},
+        )
