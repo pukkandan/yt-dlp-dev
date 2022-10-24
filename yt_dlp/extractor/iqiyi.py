@@ -598,7 +598,7 @@ class IqIE(InfoExtractor):
             'cmd5x_func': self._extract_cmd5x_function(webpage, video_id),
         }
         self.to_screen(f'{video_id}: Executing signature code (this may take a couple minutes)')
-        dash_paths = self.jsinterp.run(js_code, url=url, timeout=120).first().return_value
+        dash_paths = self.jsinterp.get_first(self.jsinterp.run(js_code, url=url, timeout=120)).return_value
 
         formats, subtitles = [], {}
         initial_format_data = self._download_json(

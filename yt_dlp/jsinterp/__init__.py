@@ -3,9 +3,10 @@ import traceback
 
 from . import native, phantomjs  # noqa: F401
 from .common import JS_INTERPRETERS, JSI
-from ..utils import DispatchedFunction, cached_method
+from ..utils import cached_method
 
 
+# TODO: update docstrings
 class JSDispatcher:
     def __init__(self, ydl, interpreters):
         self.ydl = ydl
@@ -18,18 +19,35 @@ class JSDispatcher:
     def _instance(self, name):
         return self._interpreters[name](self.ydl)
 
-    @staticmethod
-    def _validate_result(func_name, result):
-        logger = result.object.logger
-        if result.error:
-            logger.info(f'Unable to {func_name}: {result.error}')
-            logger.debug(''.join(traceback.format_exception(result.error)).strip(), only_once=True)
-        return result
-
     def dispatch(self, protocol):
-        assert protocol.__qualname__ == f'JSI.{protocol.__name__}', 'Must be a method of JSI'
-        return DispatchedFunction(map(self._instance, self._interpreters), protocol,
-                                  validators=[functools.partial(self._validate_result, protocol.__name__)])
+        func_name = protocol.__name__
+        assert protocol.__qualname__ == f'JSI.{func_name}', 'Must be a method of JSI'
+
+        def wrapper(*args, **kwargs):
+            for jsi in map(self._instance, self._interpreters.keys()):
+                try:
+                    yield jsi, getattr(jsi, func_name)(*args, **kwargs), None
+                except NotImplementedError:
+                    continue
+                except Exception as e:
+                    jsi.logger.info(f'Unable to {func_name}: {e}')
+                    jsi.logger.debug(''.join(traceback.format_exception(e)).strip(), only_once=True)
+                    yield jsi, None, e
+        return wrapper
+
+    def get_first(self, generator, validator=lambda *args: args):
+        last_error = None
+        for jsi, ret, err in generator:
+            result = validator(jsi, ret, err)
+            if not result:
+                continue
+            _, ret, err = result
+            if not err:
+                return ret
+            last_error, err.__cause__ = err, last_error
+        if last_error:
+            raise last_error
+        raise NotImplementedError('No interpreters support this operation')
 
     def _dispatched(protocol):
         def wrapper(self, *args, **kwargs):
@@ -52,9 +70,15 @@ class JSDispatcher:
 
     @cached_method
     def evaluate_function(self, name, code, args):
-        """Evaluates a pure function and returns its result"""
-        func_code, argnames = self.extract_function_code(name, code).first()
-        return self.run(func_code, dict(zip(argnames, args)), full_code=code).first().return_value
+        """
+        Evaluates a pure function
+        @returns DispatchedFunction that gives the result of the function
+        """
+        func_code, argnames = self.get_first(self.extract_function_code(name, code))
+        for jsi, ret, err in self.run(func_code, dict(zip(argnames, args)), full_code=code):
+            if err:
+                yield jsi, None, err
+            yield jsi, ret.return_value, None
 
 
 __all__ = ['JSDispatcher', 'JSI', 'JS_INTERPRETERS']

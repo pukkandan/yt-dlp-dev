@@ -49,7 +49,7 @@ class PornHubBaseIE(InfoExtractor):
                    if isinstance(url_or_request, urllib.request.Request)
                    else url_or_request)
             self.to_screen('Executing JS on webpage')
-            self.jsinterp.run(url=url, html=webpage).first()
+            self.jsinterp.get_first(self.jsinterp.run(url=url, html=webpage))
             webpage, urlh = dl(*args, **kwargs)
 
         return webpage, urlh
