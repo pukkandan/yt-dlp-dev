@@ -6,7 +6,6 @@ import re
 import urllib.request
 
 from .common import InfoExtractor
-from .openload import PhantomJSwrapper
 from ..compat import compat_HTTPError, compat_str
 from ..utils import (
     NO_DEFAULT,
@@ -49,8 +48,8 @@ class PornHubBaseIE(InfoExtractor):
             url = (url_or_request.get_full_url()
                    if isinstance(url_or_request, urllib.request.Request)
                    else url_or_request)
-            phantom = PhantomJSwrapper(self, required_version='2.0')
-            phantom.get(url, html=webpage)
+            self.to_screen('Executing JS on webpage')
+            self.jsinterp.run(url=url, html=webpage).first()
             webpage, urlh = dl(*args, **kwargs)
 
         return webpage, urlh

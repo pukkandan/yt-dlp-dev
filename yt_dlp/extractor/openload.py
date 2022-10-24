@@ -7,7 +7,7 @@ from ..utils import (
     is_outdated_version,
 )
 
-# deprecation_warning('"yt_dlp.extractor.openload" is deprecated')
+deprecation_warning('"yt_dlp.extractor.openload" is deprecated')
 
 cookie_to_dict = TempCookieFile.cookie_to_dict
 
