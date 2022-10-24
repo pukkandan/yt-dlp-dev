@@ -20,7 +20,7 @@ class TestNativeJSI(unittest.TestCase):
         self.jsi = JSDispatcher(FakeYDL(), [NativeJSI])
 
     def call(self, code, name, *args):
-        return self.jsi.evaluate_function(name, code, args).first()
+        return self.jsi.evaluate_function(name, code, args)
 
     def test_basic(self):
         self.assertEqual(self.call('function x(){;}', 'x'), None)

@@ -20,7 +20,7 @@ class JSDispatcher:
 
     @staticmethod
     def _validate_result(func_name, result):
-        logger = result.objects[-1].logger
+        logger = result.object.logger
         if result.error:
             logger.info(f'Unable to {func_name}: {result.error}')
             logger.debug(''.join(traceback.format_exception(result.error)).strip(), only_once=True)
@@ -52,13 +52,9 @@ class JSDispatcher:
 
     @cached_method
     def evaluate_function(self, name, code, args):
-        """
-        Evaluates a pure function
-        @returns DispatchedFunction that gives the result of the function
-        """
-        func = self.dispatch(JSI.extract_function_code).chain(
-            JSI.run, lambda ret: ((ret[0], dict(zip(ret[1], args))), {'full_code': code}))
-        return func(name, code).transform(lambda x: x.return_value)
+        """Evaluates a pure function and returns its result"""
+        func_code, argnames = self.extract_function_code(name, code).first()
+        return self.run(func_code, dict(zip(argnames, args)), full_code=code).first().return_value
 
 
 __all__ = ['JSDispatcher', 'JSI', 'JS_INTERPRETERS']

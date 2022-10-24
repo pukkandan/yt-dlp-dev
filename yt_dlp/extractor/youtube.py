@@ -2783,7 +2783,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
              r'\bc\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*(?P<sig>[a-zA-Z0-9$]+)\('),
             jscode, 'Initial JS player signature function name', group='sig')
 
-        return lambda string: self.jsinterp.evaluate_function(funcname, jscode, [string]).first()
+        return lambda string: self.jsinterp.evaluate_function(funcname, jscode, [string])
 
     def _cached(self, func, *cache_id):
         def inner(*args, **kwargs):
