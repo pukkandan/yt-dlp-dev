@@ -5960,6 +5960,85 @@ def orderedSet_from_options(options, alias_dict, *, use_regex=False, start=None)
     return orderedSet(requested)
 
 
+# TODO: Re-think the API
+class DispatchedFunction:
+    Result = collections.namedtuple('DispatchedFunction_Result', ('objects', 'value', 'error'))
+    args = None
+    __iterated = False
+
+    def __init__(self, objects, protocol, *, validators=()):
+        self.objects = LazyList(objects)
+        self.protocols = [(protocol, [])]
+        self._post_validators, self._validators = validators, []
+
+    def chain(self, protocol, transform=None):
+        assert not self._validators, 'Cannot chain after validation'
+        if transform:
+            self.transform(transform)
+        self.protocols.append((protocol, []))
+        return self
+
+    def validate(self, f):
+        self._validators.append(f)
+        return self
+
+    def transform(self, f):
+        self.protocols[-1][1].append(f)
+        return self
+
+    def __call__(self, *args, **kwargs):
+        self.args, self.kwargs = args, kwargs
+        return self
+
+    @property
+    def validators(self):
+        yield from self._validators
+        yield from self._post_validators
+
+    def _iter(self, args, kwargs, current, upcoming=None, *remaining):
+        for o in self.objects:
+            protocol, transforms = current
+            try:
+                res, err = getattr(o, protocol.__name__)(*args, **kwargs), None
+            except NotImplementedError:
+                continue
+            except Exception as e:
+                res, err = None, e
+            else:
+                for f in transforms:
+                    res = f(res)
+            if upcoming and not err:
+                args, kwargs = res
+                for inner in self._iter(args, kwargs, upcoming, *remaining):
+                    inner.objects[:0] = [o]
+                    yield inner
+            else:
+                yield self.Result([o], res, err)
+
+    def __iter__(self):
+        self.__iterated = True
+        if self.args is None:
+            raise ValueError('DispatchedFunction must be called before iteration')
+        for result in self._iter(self.args, self.kwargs, *self.protocols):
+            for f in self.validators:
+                result = f(result)
+            if result:
+                yield result
+
+    def __del__(self):  # Sanity check
+        assert self.__iterated, 'Unused DispatchedFunction instance'
+
+    def first(self):
+        last_error = None
+        for _, ret, err in self:
+            if not err:
+                return ret
+            last_error, err.__cause__ = err, last_error
+        if last_error:
+            raise last_error
+        raise NotImplementedError('No objects support this operation')
+
+
 # Deprecated
 has_certifi = bool(certifi)
 has_websockets = bool(websockets)
