@@ -5963,6 +5963,15 @@ def orderedSet_from_options(options, alias_dict, *, use_regex=False, start=None)
 # TODO: Re-think the API
 # TODO: docstrings
 class DispatchedFunction:
+    """
+    Dispatch a function call to multiple objects. Object that raise a `NotImplementedError`, are ignored.
+    Iterating the instance yields each result wrapped in `DispatchedFunction.Result`
+    Usage:
+        f = DispatchedFunction(objects, protocol)
+        for obj, err, ret in f(args, kwargs):
+            ...
+    """
+
     Result = collections.namedtuple('DispatchedFunction_Result', ('objects', 'value', 'error'))
     args = None
     __iterated = False
@@ -5980,6 +5989,7 @@ class DispatchedFunction:
         return self
 
     def validate(self, f):
+        """Validate and transform the DispatchedFunction.Result"""
         self._validators.append(f)
         return self
 
@@ -6030,6 +6040,7 @@ class DispatchedFunction:
         assert self.__iterated, 'Unused DispatchedFunction instance'
 
     def first(self):
+        """Dispatch the function and return the first successfull result"""
         last_error = None
         for _, ret, err in self:
             if not err:
