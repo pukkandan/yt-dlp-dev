@@ -7,8 +7,8 @@ from ..utils import DispatchedFunction, cached_method
 
 
 class JSDispatcher:
-    def __init__(self, ie, interpreters):
-        self.ie = ie
+    def __init__(self, ydl, interpreters):
+        self.ydl = ydl
         # TODO: Make lazy
         self._interpreters = {jsi.JSI_NAME: jsi for jsi in interpreters if jsi.available}
         for jsi in interpreters:
@@ -16,7 +16,7 @@ class JSDispatcher:
 
     @cached_method
     def _instance(self, name):
-        return self._interpreters[name](self.ie)
+        return self._interpreters[name](self.ydl)
 
     @staticmethod
     def _validate_result(func_name, result):

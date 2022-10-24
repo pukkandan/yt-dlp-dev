@@ -25,7 +25,6 @@ from ..compat import compat_etree_fromstring, compat_expanduser, compat_os_name
 from ..cookies import LenientSimpleCookie
 from ..downloader import FileDownloader
 from ..downloader.f4m import get_base_url, remove_encrypted_media
-from ..jsinterp import JS_INTERPRETERS, JSDispatcher
 from ..utils import (
     IDENTITY,
     JSON_LD_RE,
@@ -731,11 +730,9 @@ class InfoExtractor:
     def cookiejar(self):
         return self._downloader.cookiejar
 
-    @functools.cached_property
+    @property
     def jsinterp(self):
-        # XXX: Is one instance per IE the correct approach?
-        # TODO: Let user select which JSI to use
-        return JSDispatcher(self, JS_INTERPRETERS)
+        return self._downloader.jsinterp
 
     def _initialize_pre_login(self):
         """ Initialization before login. Redefine in subclasses."""

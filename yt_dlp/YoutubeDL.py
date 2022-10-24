@@ -3,7 +3,6 @@ import contextlib
 import datetime
 import errno
 import fileinput
-import functools
 import io
 import itertools
 import json
@@ -23,14 +22,14 @@ import urllib.request
 from string import ascii_letters
 
 from .cache import Cache
-from .compat import tempfile  # isort:split
+from .compat import functools, tempfile  # isort: split
 from .compat import compat_os_name, compat_shlex_quote
 from .cookies import load_cookies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
 from .downloader.rtmp import rtmpdump_version
 from .extractor import gen_extractor_classes, get_info_extractor
 from .extractor.common import UnsupportedURLIE
-from .jsinterp import JS_INTERPRETERS
+from .jsinterp import JS_INTERPRETERS, JSDispatcher
 from .minicurses import format_text
 from .postprocessor import _PLUGIN_CLASSES as plugin_postprocessors
 from .postprocessor import (
@@ -828,6 +827,11 @@ class YoutubeDL:
         res = ''.join(self._output_channel.readline().decode()
                       for _ in range(line_count))
         return res[:-len('\n')]
+
+    @functools.cached_property
+    def jsinterp(self):
+        # TODO: Let user select which JSI to use
+        return JSDispatcher(self, JS_INTERPRETERS)
 
     def _write_string(self, message, out=None, only_once=False):
         if only_once:

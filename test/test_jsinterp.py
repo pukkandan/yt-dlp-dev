@@ -11,14 +11,13 @@ import math
 import re
 
 from test.helper import FakeYDL
-from yt_dlp.extractor.common import UnsupportedURLIE
 from yt_dlp.jsinterp import JSDispatcher
 from yt_dlp.jsinterp.native import JS_Undefined, NativeJSI
 
 
 class TestNativeJSI(unittest.TestCase):
     def setUp(self):
-        self.jsi = JSDispatcher(UnsupportedURLIE(FakeYDL()), [NativeJSI])
+        self.jsi = JSDispatcher(FakeYDL(), [NativeJSI])
 
     def call(self, code, name, *args):
         return self.jsi.evaluate_function(name, code, args).first()

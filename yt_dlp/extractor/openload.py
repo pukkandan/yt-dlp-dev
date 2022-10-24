@@ -3,7 +3,6 @@ from ..utils import (
     ExtractorError,
     deprecation_warning,
     format_field,
-    get_exe_version,
     is_outdated_version,
 )
 
@@ -22,14 +21,11 @@ class PhantomJSwrapper(PhantomJSJSI):
 
     @staticmethod
     def _version():
-        return get_exe_version('phantomjs', version_re=r'([0-9.]+)')
-
-    @property
-    def extractor(self):
-        return self.ie
+        return PhantomJSJSI.version
 
     def __init__(self, extractor, required_version=None, timeout=10_000):
-        super().__init__(extractor)
+        self.extractor = extractor
+        super().__init__(extractor._downloader)
         if not self.available:
             raise ExtractorError(f'PhantomJS not found, {self.INSTALL_HINT}', expected=True)
 
@@ -46,13 +42,13 @@ class PhantomJSwrapper(PhantomJSJSI):
         if 'saveAndExit();' not in jscode:
             raise ExtractorError('`saveAndExit();` not found in `jscode`')
         if not html:
-            html = self.ie._download_webpage(url, video_id, note=note, headers=headers)
-        self.ie.to_screen(f'{format_field(video_id, None, "%s: ")}{note2}')
+            html = self.extractor._download_webpage(url, video_id, note=note, headers=headers)
+        self.extractor.to_screen(f'{format_field(video_id, None, "%s: ")}{note2}')
         return super().run_with_dom(jscode, url, html, timeout=self.options['timeout'])
 
     def execute(self, jscode, video_id=None, *, note='Executing JS', **kwargs):
         """Execute JS and return stdout"""
-        self.ie.to_screen(f'{format_field(video_id, None, "%s: ")}{note}')
+        self.extractor.to_screen(f'{format_field(video_id, None, "%s: ")}{note}')
         try:
             return super().execute(jscode, **kwargs)
         except Exception as e:

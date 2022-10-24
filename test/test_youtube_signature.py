@@ -206,8 +206,9 @@ def signature(jscode, sig_input):
 
 
 def n_sig(jscode, sig_input):
-    jsi = JSDispatcher(YoutubeIE(FakeYDL()), [NativeJSI])
-    funcname = jsi.ie._extract_n_function_name(jscode)
+    jsi = JSDispatcher(FakeYDL(), [NativeJSI])
+    ie = YoutubeIE(jsi.ydl)
+    funcname = ie._extract_n_function_name(jscode)
     return jsi.evaluate_function(funcname, jscode, [sig_input]).first()
 
 

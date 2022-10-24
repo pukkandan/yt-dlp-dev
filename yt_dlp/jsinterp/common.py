@@ -24,8 +24,8 @@ class JSI:
         'JSI_Result', ('return_value', 'html', 'stdout'),
         defaults=(None, '<!DOCTYPE html>', ''))
 
-    def __init__(self, ie):
-        self.ie = ie
+    def __init__(self, ydl):
+        self.ydl = ydl
         self.logger = YDLLogger(self)
 
     def extract_function_code(self, name, full_code):
@@ -168,21 +168,17 @@ class YDLLogger:  # TODO: Generalize with cookies.py
     def __init__(self, jsi):
         self.jsi = jsi
 
-    @property
-    def ydl(self):
-        return self.jsi.ie._downloader
-
     def info(self, message, **kwargs):
-        self.ydl.to_screen(f'[JSI:{self.jsi.JSI_NAME}] {message}', **kwargs)
+        self.jsi.ydl.to_screen(f'[JSI:{self.jsi.JSI_NAME}] {message}', **kwargs)
 
     def debug(self, message, **kwargs):
-        self.ydl.write_debug(f'[JSI:{self.jsi.JSI_NAME}] {message}', **kwargs)
+        self.jsi.ydl.write_debug(f'[JSI:{self.jsi.JSI_NAME}] {message}', **kwargs)
 
     def warning(self, message, **kwargs):
-        self.ydl.report_warning(message, **kwargs)
+        self.jsi.ydl.report_warning(message, **kwargs)
 
     def error(self, message, **kwargs):
-        self.ydl.report_error(message, **kwargs)
+        self.jsi.ydl.report_error(message, **kwargs)
 
 
 class NestedScope(collections.ChainMap):

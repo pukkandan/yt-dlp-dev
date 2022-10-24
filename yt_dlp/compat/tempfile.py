@@ -1,6 +1,6 @@
 # flake8: noqa: F405
-from tempfile import *
 import inspect
+from tempfile import *
 
 from .compat_utils import passthrough_module
 

@@ -65,13 +65,13 @@ class PhantomJSJSI(ExternalJSI, register=True):
         return [self.EXE_NAME, '--ssl-protocol=any', jsfile]
 
     def run_with_dom(self, code, url, html, timeout=10):
-        with TempCookieFile(self.ie.cookiejar, url) as cookiejar, self.new_temp_file() as html_file:
+        with TempCookieFile(self.ydl.cookiejar, url) as cookiejar, self.new_temp_file() as html_file:
             html_file.write(html)
             html_file.close()
 
             stdout = self.execute(self._PAGE_TEMPLATE.format_map({
                 'url': json.dumps(url),
-                'ua': json.dumps(self.ie.get_param('http_headers')['User-Agent']),
+                'ua': json.dumps(self.ydl.params['http_headers']['User-Agent']),
                 'jscode': code,
                 'cookie_file': json.dumps(cookiejar.file.name),
                 'html_file': json.dumps(html_file.name),
