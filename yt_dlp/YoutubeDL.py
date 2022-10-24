@@ -15,7 +15,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import tokenize
 import traceback
@@ -24,6 +23,7 @@ import urllib.request
 from string import ascii_letters
 
 from .cache import Cache
+from .compat import tempfile  # isort:split
 from .compat import compat_os_name, compat_shlex_quote
 from .cookies import load_cookies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
@@ -1950,18 +1950,12 @@ class YoutubeDL:
             path = self.get_output_path('temp')
             if not self._ensure_dir_exists(f'{path}/'):
                 continue
-            temp_file = tempfile.NamedTemporaryFile(suffix='.tmp', delete=False, dir=path or None)
-            temp_file.close()
-            try:
-                success, _ = self.dl(temp_file.name, f, test=True)
-            except (DownloadError, OSError, ValueError) + network_exceptions:
-                success = False
-            finally:
-                if os.path.exists(temp_file.name):
-                    try:
-                        os.remove(temp_file.name)
-                    except OSError:
-                        self.report_warning('Unable to delete temporary file "%s"' % temp_file.name)
+            with tempfile.NamedTemporaryFile(prefix='yt_dlp_', delete_on_close=False) as temp_file:
+                temp_file.close()
+                try:
+                    success, _ = self.dl(temp_file.name, f, test=True)
+                except (DownloadError, OSError, ValueError) + network_exceptions:
+                    success = False
             if success:
                 yield f
             else:
