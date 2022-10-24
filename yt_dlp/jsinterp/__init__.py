@@ -63,6 +63,7 @@ __all__ = ['JSDispatcher', 'JSI', 'JS_INTERPRETERS']
 from ..compat.compat_utils import passthrough_module
 from ..utils import deprecation_warning
 
-passthrough_module(__name__, '._legacy')
+passthrough_module(__name__, '._legacy', callback=lambda attr: deprecation_warning(
+    f'{__name__}.{attr} is deprecated', stacklevel=3))
 
 del passthrough_module

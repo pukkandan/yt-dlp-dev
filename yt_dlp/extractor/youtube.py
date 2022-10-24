@@ -18,9 +18,7 @@ import urllib.error
 import urllib.parse
 
 from .common import InfoExtractor, SearchInfoExtractor
-from .openload import PhantomJSwrapper
 from ..compat import functools
-from ..jsinterp import JSInterpreter
 from ..utils import (
     NO_DEFAULT,
     ExtractorError,
@@ -2785,9 +2783,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
              r'\bc\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*(?P<sig>[a-zA-Z0-9$]+)\('),
             jscode, 'Initial JS player signature function name', group='sig')
 
-        jsi = JSInterpreter(jscode)
-        initial_function = jsi.extract_function(funcname)
-        return lambda s: initial_function([s])
+        return lambda string: self.jsinterp.evaluate_function(funcname, jscode, [string]).first()
 
     def _cached(self, func, *cache_id):
         def inner(*args, **kwargs):
@@ -2820,30 +2816,13 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         player_url = urljoin('https://www.youtube.com', player_url)
 
         try:
-            jsi, player_id, func_code = self._extract_n_function_code(video_id, player_url)
+            player_id, func_code = self._extract_n_function_code(video_id, player_url)
         except ExtractorError as e:
             raise ExtractorError('Unable to extract nsig function code', cause=e)
         if self.get_param('youtube_print_sig_code'):
-            self.to_screen(f'Extracted nsig function from {player_id}:\n{func_code[1]}\n')
+            self.to_screen(f'Extracted nsig function from {player_id}:\n{func_code[0]}\n')
 
-        try:
-            extract_nsig = self._cached(self._extract_n_function_from_code, 'nsig func', player_url)
-            ret = extract_nsig(jsi, func_code)(s)
-        except JSInterpreter.Exception as e:
-            try:
-                jsi = PhantomJSwrapper(self, timeout=5000)
-            except ExtractorError:
-                raise e
-            self.report_warning(
-                f'Native nsig extraction failed: Trying with PhantomJS\n'
-                f'         n = {s} ; player = {player_url}', video_id)
-            self.write_debug(e, only_once=True)
-
-            args, func_body = func_code
-            ret = jsi.execute(
-                f'console.log(function({", ".join(args)}) {{ {func_body} }}({s!r}));',
-                video_id=video_id, note='Executing signature code').strip()
-
+        ret = self._extract_n_function_from_code(*func_code)(s)
         self.write_debug(f'Decrypted nsig {s} => {ret}')
         return ret
 
@@ -2860,46 +2839,38 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
     def _extract_n_function_code(self, video_id, player_url):
         player_id = self._extract_player_info(player_url)
-        func_code = self.cache.load('youtube-nsig', player_id, min_ver='2022.09.1')
+        argnames, func_code = self.cache.load(
+            'youtube-nsig', player_id, min_ver='2022.09.1', default=(None, None))
         jscode = func_code or self._load_player(video_id, player_url)
-        jsi = JSInterpreter(jscode)
 
         if func_code:
-            return jsi, player_id, func_code
+            return player_id, (func_code, argnames, jscode)
 
         func_name = self._extract_n_function_name(jscode)
 
         # For redundancy
-        func_code = self._search_regex(
+        func_code, argnames = self._search_regex(
             r'''(?xs)%s\s*=\s*function\s*\((?P<var>[\w$]+)\)\s*
                      # NB: The end of the regex is intentionally kept strict
-                     {(?P<code>.+?}\s*return\ [\w$]+.join\(""\))};''' % func_name,
-            jscode, 'nsig function', group=('var', 'code'), default=None)
+                     {(?P<code>.+?}\s*return\ [\w$]+.join\(""\))};''' % re.escape(func_name),
+            jscode, 'nsig function', group=('code', 'var'), default=(None, None))
         if func_code:
-            func_code = ([func_code[0]], func_code[1])
+            argnames = [argnames]
         else:
             self.write_debug('Extracting nsig function with jsinterp')
-            func_code = jsi.extract_function_code(func_name)
+            func_code, argnames = self.jsinterp.extract_function_code(func_name, jscode).first()
 
-        self.cache.store('youtube-nsig', player_id, func_code)
-        return jsi, player_id, func_code
+        self.cache.store('youtube-nsig', player_id, (argnames, func_code))
+        return player_id, (func_code, argnames, jscode)
 
-    def _extract_n_function_from_code(self, jsi, func_code):
-        func = jsi.extract_function_from_code(*func_code)
+    def _extract_n_function_from_code(self, func_code, argnames, full_code):
+        def validate_nsig(result):
+            if not result.error and result.value.return_value.startswith('enhanced_except_'):
+                return result._replace(error=Exception('Signature function returned an exception'))
+            return result
 
-        def extract_nsig(s):
-            try:
-                ret = func([s])
-            except JSInterpreter.Exception:
-                raise
-            except Exception as e:
-                raise JSInterpreter.Exception(traceback.format_exc(), cause=e)
-
-            if ret.startswith('enhanced_except_'):
-                raise JSInterpreter.Exception('Signature function returned an exception')
-            return ret
-
-        return extract_nsig
+        return lambda s: self.jsinterp.run(
+            func_code, {argnames[0]: s}, full_code=full_code).validate(validate_nsig).first().return_value
 
     def _extract_signature_timestamp(self, video_id, player_url, ytcfg=None, fatal=False):
         """
@@ -3491,13 +3462,10 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                         'n': decrypt_nsig(query['n'][0], video_id, player_url)
                     })
                 except ExtractorError as e:
-                    phantomjs_hint = ''
-                    if isinstance(e, JSInterpreter.Exception):
-                        phantomjs_hint = (f'         Install {self._downloader._format_err("PhantomJS", self._downloader.Styles.EMPHASIS)} '
-                                          f'to workaround the issue. {PhantomJSwrapper.INSTALL_HINT}\n')
+                    # TODO: Give hint to install deno/pjs?
                     if player_url:
                         self.report_warning(
-                            f'nsig extraction failed: You may experience throttling for some formats\n{phantomjs_hint}'
+                            f'nsig extraction failed: You may experience throttling for some formats\n'
                             f'         n = {query["n"][0]} ; player = {player_url}', video_id=video_id, only_once=True)
                         self.write_debug(e, only_once=True)
                     else:
