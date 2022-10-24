@@ -18,22 +18,28 @@ from ..utils import (
 
 JS_INTERPRETERS = []
 
-# XXX: Bad name
-Result = collections.namedtuple('Result', ('return_value', 'html', 'stdout'),
-                                defaults=(None, '<!DOCTYPE html>', ''))
-
 
 class JSI:
+    Result = collections.namedtuple(
+        'JSI_Result', ('return_value', 'html', 'stdout'),
+        defaults=(None, '<!DOCTYPE html>', ''))
+
     def __init__(self, ie):
         self.ie = ie
         self.logger = YDLLogger(self)
 
     def extract_function_code(self, name, full_code):
-        """@returns (function_code, arg_names)"""
+        """
+        Extracts the code of function with name `name` from `full_code`
+        @returns (function_code, arg_names)
+        """
         raise NotImplementedError('Must be implemented by subclasses')
 
     def build_function(self, code, argnames, *, full_code=None, timeout=10):
-        """@returns  A callable function(args, kwargs={})"""
+        """
+        Builds a callable function from `code` and `argnames`
+        @returns  A callable function(args)
+        """
         raise NotImplementedError('Must be implemented by subclasses')
 
     def run_with_dom(self, code, url, html, *, timeout=10):
@@ -73,13 +79,16 @@ class JSI:
         return f'console.log(JSON.stringify({code}));'
 
     def run(self, func_code=None, func_args={}, *, full_code=None, html=None, url=None, timeout=10):
-        """@returns  Result(return_value, html, stdout)"""
+        """
+        Runs given code in the interpreter. If `html` or `url` is given, the code is executed with DOM.
+        @returns  JSI.Result
+        """
         assert func_code or full_code or html, 'Nothing to do without code and html'
         if html and not url:
             url = 'about:invalid'
-        html = html or Result._field_defaults['html']
+        html = html or JSI.Result._field_defaults['html']
         if not url:
-            return Result(
+            return JSI.Result(
                 return_value=self.__run_function(func_code, func_args, full_code, timeout))
 
         if func_code:
@@ -92,7 +101,7 @@ class JSI:
 
         html, stdout = self.run_with_dom(full_code, url, html, timeout=timeout)
         ret = json.loads(stdout.strip()) if func_code else None
-        return Result(ret, html, stdout)
+        return JSI.Result(ret, html, stdout)
 
     @classproperty
     def JSI_NAME(cls):

@@ -160,6 +160,7 @@ The same applies for changes to the documentation, code style, or overarching ch
 
 
 ## Adding support for a new site
+<!-- TODO: Add note about JSI -->
 
 If you want to add support for a new site, first of all **make sure** this site is **not dedicated to [copyright infringement](#is-the-website-primarily-used-for-piracy)**. yt-dlp does **not support** such sites thus pull requests adding support for them **will be rejected**.
 

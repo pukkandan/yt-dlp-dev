@@ -5961,6 +5961,7 @@ def orderedSet_from_options(options, alias_dict, *, use_regex=False, start=None)
 
 
 # TODO: Re-think the API
+# TODO: docstrings
 class DispatchedFunction:
     Result = collections.namedtuple('DispatchedFunction_Result', ('objects', 'value', 'error'))
     args = None
