@@ -2783,7 +2783,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
              r'\bc\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*(?P<sig>[a-zA-Z0-9$]+)\('),
             jscode, 'Initial JS player signature function name', group='sig')
 
-        return lambda string: self.jsinterp.get_first(self.jsinterp.evaluate_function(funcname, jscode, [string]))
+        return lambda string: self.jsinterp.evaluate_function(funcname, jscode, [string])
 
     def _cached(self, func, *cache_id):
         def inner(*args, **kwargs):
@@ -2858,7 +2858,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             argnames = [argnames]
         else:
             self.write_debug('Extracting nsig function with jsinterp')
-            func_code, argnames = self.jsinterp.get_first(self.jsinterp.extract_function_code(func_name, jscode))
+            func_code, argnames = self.jsinterp.extract_function_code(func_name, jscode)
 
         self.cache.store('youtube-nsig', player_id, (argnames, func_code))
         return player_id, (func_code, argnames, jscode)
@@ -2869,8 +2869,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 error = Exception('Signature function returned an exception')
             return jsi, result, error
 
-        return lambda s: self.jsinterp.get_first(self.jsinterp.run(
-            func_code, {argnames[0]: s}, full_code=full_code), validate_nsig).return_value
+        return lambda s: self.jsinterp.run(func_code, {argnames[0]: s}, full_code=full_code,
+                                           validate=validate_nsig).return_value
 
     def _extract_signature_timestamp(self, video_id, player_url, ytcfg=None, fatal=False):
         """
