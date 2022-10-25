@@ -1,7 +1,7 @@
 import functools
 import traceback
 
-from . import native, phantomjs  # noqa: F401
+from . import deno, native, phantomjs  # noqa: F401
 from .common import JS_INTERPRETERS, JSI
 from ..utils import cached_method
 
