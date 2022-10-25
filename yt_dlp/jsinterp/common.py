@@ -23,6 +23,7 @@ class JSI:
     Result = collections.namedtuple(
         'JSI_Result', ('return_value', 'html', 'stdout'),
         defaults=(None, '<!DOCTYPE html>', ''))
+    _JS_SAVE_AND_EXIT = 'await saveAndExit();'
 
     def __init__(self, ydl):
         self.ydl = ydl
@@ -45,24 +46,18 @@ class JSI:
     def run_with_dom(self, code, url, html, *, timeout=10):
         """
         `html` is loaded with location = `url` and `code` is executed in `page.onLoadFinished`.
-        `saveAndExit();` exits the interpreter, and is mandatory in `code`.
+        `await saveAndExit();` exits the interpreter, and is mandatory in `code`.
 
         @returns  (final html of the page, stdout of the executed code)
 
         It is possible to wait for some element on the webpage, e.g.
-            var check = function() {
-              var elementFound = page.evaluate(function() {
-                return document.querySelector('#b.done') !== null;
-              });
-              if(elementFound)
-                saveAndExit();
-              else
-                window.setTimeout(check, 500);
+            var check = async function() {
+              var elementFound = await page.evaluate(() => document.querySelector('#b.done') !== null);
+              if (elementFound) await saveAndExit();
+              else window.setTimeout(check, 500);
             }
-            page.evaluate(function(){
-              document.querySelector('#a').click();
-            });
-            check();
+            await page.evaluate(() => document.querySelector('#a').click());
+            await check();
         """
         raise NotImplementedError('Must be implemented by subclasses')
 
@@ -75,8 +70,11 @@ class JSI:
     def _function_code(body, args, use_page=False):
         arg_string = json.dumps(tuple(args.values()))[1:-1]
         body = f'function({", ".join(args.keys())}) {{\n{body}\n}}'
-        code = f'page.evaluate({join_nonempty(body, arg_string, delim=", ")})' if use_page else f'{body}({arg_string})'
-        return f'console.log(JSON.stringify({code}));'
+        if use_page:
+            code = f'await page.evaluate({join_nonempty(body, arg_string, delim=", ")})'
+        else:
+            code = f'{body}({arg_string})'
+        return f'console.log(JSON.stringify({code}));\n'
 
     def run(self, func_code=None, func_args={}, *, full_code=None, html=None, url=None, timeout=10):
         """
@@ -93,10 +91,10 @@ class JSI:
 
         if func_code:
             assert not full_code, 'Cannot specify both func_code and full_code'
-            full_code = self._function_code(func_code, func_args, True) + '\nsaveAndExit();'
+            full_code = self._function_code(func_code, func_args, True) + self._JS_SAVE_AND_EXIT
         else:
-            full_code = full_code or 'saveAndExit();'
-            assert 'saveAndExit();' in full_code, 'saveAndExit(); must be present in full_code'
+            full_code = full_code or self._JS_SAVE_AND_EXIT
+            assert self._JS_SAVE_AND_EXIT in full_code, f'{self._JS_SAVE_AND_EXIT} must be present in full_code'
             assert not func_args, 'Cannot specify func_args without func_code'
 
         html, stdout = self.run_with_dom(full_code, url, html, timeout=timeout)
@@ -122,12 +120,14 @@ class ExternalJSI(JSI):
     _VERSION_OPT = '--version'
     _VERSION_RE = r'([\d.]+)'
 
+    _PAGE_TEMPLATE = None  # Redefine if the interpreter supports DOM
+
     @classproperty
     def EXE_NAME(cls):
         return cls.JSI_NAME
 
     # TODO: Support custom CLI args
-    def _make_cmd(self, jsfile):
+    def _make_cmd(self, jsfile, with_dom=False):
         raise NotImplementedError('Must be implemented by subclasses')
 
     @classproperty
@@ -144,24 +144,51 @@ class ExternalJSI(JSI):
         return tempfile.NamedTemporaryFile(
             prefix='yt_dlp_', mode='w', encoding='utf-8', delete_on_close=False)
 
-    def execute(self, jscode, *, timeout=10):
+    class Exception(Exception):
+        def __init__(self, jsi, returncode, msg):
+            self.returncode, self.msg = returncode, msg
+            super().__init__(f'{jsi.JSI_NAME} failed with returncode {returncode}:\n{msg}')
+
+    def execute(self, jscode, *, timeout=10, **kwargs):
         """Execute JS and return stdout"""
         with self.new_temp_file() as tmp:
             tmp.write(jscode)
             tmp.close()
 
-            cmd = self._make_cmd(tmp.name)
+            cmd = tuple(self._make_cmd(tmp.name, **kwargs))
             self.logger.debug(f'command line: {shell_quote(cmd)}')
             stdout, stderr, returncode = Popen.run(
                 cmd, timeout=timeout, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if returncode:
-            raise Exception(f'{self.JSI_NAME} failed with returncode {returncode}:\n{stderr.strip()}')
+            raise self.Exception(self, returncode, stderr.strip())
         return stdout
 
     def build_function(self, code, argnames, *, timeout=10, full_code=None):
         return lambda args: json.loads(self.execute(
             self._function_code(code, dict(zip(argnames, args))), timeout=timeout).strip())
+
+    def run_with_dom(self, code, url, html, timeout=10):
+        if not self._PAGE_TEMPLATE:
+            raise NotImplementedError('Not supported by this JSI')
+
+        with TempCookieFile(self.ydl.cookiejar, url) as cookiejar, self.new_temp_file() as html_file:
+            html_file.write(html)
+            html_file.close()
+
+            stdout = self.execute(self._PAGE_TEMPLATE.format_map({
+                'url': json.dumps(url),
+                'ua': json.dumps(self.ydl.params['http_headers']['User-Agent']),
+                'jscode': code,
+                'cookie_file': json.dumps(cookiejar.file.name),
+                'html_file': json.dumps(html_file.name),
+                'timeout': timeout * 1000,
+                'debug': json.dumps(self._DEBUG),
+            }), timeout=timeout, with_dom=True)
+
+            with open(html_file.name, encoding='utf-8') as f:
+                html = f.read()
+            return html, stdout
 
 
 class YDLLogger:  # TODO: Generalize with cookies.py

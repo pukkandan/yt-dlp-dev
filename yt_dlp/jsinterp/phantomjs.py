@@ -1,4 +1,5 @@
 import json
+import re
 
 from .common import ExternalJSI, TempCookieFile
 from ..utils import classproperty, is_outdated_version
@@ -57,27 +58,10 @@ class PhantomJSJSI(ExternalJSI, register=True):
         return not is_outdated_version(cls.version, '2.0', False)
 
     def execute(self, jscode, *args, **kwargs):
+        jscode = re.sub(r'\b(async|await)\s+', '', jscode)
         if 'phantom.exit();' not in jscode:
             jscode += ';\nphantom.exit();'
         return super().execute(self._BASE_JS + jscode, *args, **kwargs)
 
-    def _make_cmd(self, jsfile):
+    def _make_cmd(self, jsfile, with_dom=False):
         return [self.EXE_NAME, '--ssl-protocol=any', jsfile]
-
-    def run_with_dom(self, code, url, html, timeout=10):
-        with TempCookieFile(self.ydl.cookiejar, url) as cookiejar, self.new_temp_file() as html_file:
-            html_file.write(html)
-            html_file.close()
-
-            stdout = self.execute(self._PAGE_TEMPLATE.format_map({
-                'url': json.dumps(url),
-                'ua': json.dumps(self.ydl.params['http_headers']['User-Agent']),
-                'jscode': code,
-                'cookie_file': json.dumps(cookiejar.file.name),
-                'html_file': json.dumps(html_file.name),
-                'timeout': timeout * 1000,
-            }), timeout=timeout)
-
-            with open(html_file.name, encoding='utf-8') as f:
-                html = f.read()
-            return html, stdout
