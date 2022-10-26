@@ -8,6 +8,7 @@ class DenoJSI(ExternalJSI, register=True):
     _PAGE_TEMPLATE = R'''
         import puppeteer from "https://deno.land/x/puppeteer/mod.ts";
         const browser = await puppeteer.launch({{
+            headless: !{debug},
             args: ["--disable-web-security"],  // Bypass CORS so we can set URL
         }})
         const page = await browser.newPage();
@@ -20,6 +21,7 @@ class DenoJSI(ExternalJSI, register=True):
         }}
         window.setTimeout((async () => await saveAndExit(1)), {timeout});
         page.on("close", (async () => await saveAndExit(1)));
+        page.resourceTimeout = {timeout};
 
         await page.setRequestInterception(true);
         page.on("request", request => request.abort());  // block all requests

@@ -26,22 +26,25 @@ class PhantomJSJSI(ExternalJSI, register=True):
         var fs = require('fs');
         var read = {{ mode: 'r', charset: 'utf-8' }};
         var write = {{ mode: 'w', charset: 'utf-8' }};
-        JSON.parse(fs.read({cookie_file}, read)).forEach(function(x) {{
-            phantom.addCookie(x);
-        }});
+
+        function saveAndExit() {{
+            fs.write({html_file}, page.content, write);
+            fs.write({cookie_file}, JSON.stringify(phantom.cookies), write);
+            phantom.exit();
+        }};
+
         page.settings.resourceTimeout = {timeout};
-        page.settings.userAgent = {ua};
         page.onLoadStarted = function() {{
             page.evaluate(function() {{
                 delete window._phantom;
                 delete window.callPhantom;
             }});
         }};
-        var saveAndExit = function() {{
-            fs.write({html_file}, page.content, write);
-            fs.write({cookie_file}, JSON.stringify(phantom.cookies), write);
-            phantom.exit();
-        }};
+
+        JSON.parse(fs.read({cookie_file}, read)).forEach(function(x) {{
+            phantom.addCookie(x);
+        }});
+        page.settings.userAgent = {ua};
         page.onLoadFinished = function(status) {{
             if(page.url === "") {{
                 page.setContent(fs.read({html_file}, read), {url});

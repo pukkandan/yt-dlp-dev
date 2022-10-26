@@ -23,6 +23,7 @@ class JSI:
     Result = collections.namedtuple(
         'JSI_Result', ('return_value', 'html', 'stdout'),
         defaults=(None, '<!DOCTYPE html>', ''))
+    _DEBUG = False
     _JS_SAVE_AND_EXIT = 'await saveAndExit();'
 
     def __init__(self, ydl):

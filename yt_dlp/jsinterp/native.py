@@ -149,9 +149,6 @@ class JS_Throw(ExtractorError):
 
 
 class Debugger:
-    import sys
-    ENABLED = False and 'pytest' in sys.modules
-
     @staticmethod
     def write(*args, level=100):
         write_string(f'[debug] JS: {"  " * (100 - level)}'
@@ -160,17 +157,17 @@ class Debugger:
     @classmethod
     def wrap_interpreter(cls, f):
         def interpret_statement(self, stmt, scope, allow_recursion, *args, **kwargs):
-            if cls.ENABLED and stmt.strip():
+            if self._DEBUG and stmt.strip():
                 cls.write(stmt, level=allow_recursion)
             try:
                 ret, should_ret = f(self, stmt, scope, allow_recursion, *args, **kwargs)
             except Exception as e:
-                if cls.ENABLED:
+                if self._DEBUG:
                     if isinstance(e, ExtractorError):
                         e = e.orig_msg
                     cls.write('=> Raises:', e, '<-|', stmt, level=allow_recursion)
                 raise
-            if cls.ENABLED and stmt.strip():
+            if self._DEBUG and stmt.strip():
                 cls.write(['->', '=>'][should_ret], repr(ret), '<-|', stmt, level=allow_recursion)
             return ret, should_ret
         return interpret_statement
