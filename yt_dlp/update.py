@@ -19,6 +19,7 @@ from .utils import (
     system_identifier,
     traverse_obj,
     version_tuple,
+    remove_end,
 )
 from .version import UPDATE_HINT, VARIANT, __version__
 
@@ -35,12 +36,13 @@ def _get_variant_and_executable_path():
             return 'py2exe', path
         if sys._MEIPASS == os.path.dirname(path):
             return f'{sys.platform}_dir', path
-        if sys.platform == 'darwin' and version_tuple(platform.mac_ver()[0]) < (10, 15):
-            return 'darwin_legacy_exe', path
-        machine = platform.machine().lower()
-        if machine == 'aarch64' or machine == 'armv7l':
-            return f'{sys.platform}_{machine}_exe', path
-        return f'{sys.platform}_exe', path
+        if sys.platform == 'darwin':
+            machine = '_legacy' if version_tuple(platform.mac_ver()[0]) < (10, 15) else ''
+        else:
+            machine = f'_{platform.machine().lower()}'
+            if machine[1:] in ('x86', 'x86_64', 'amd64', 'i386', 'i686'):
+                machine = '32' if platform.architecture()[0][:2] == '32' else '64'
+        return f'{remove_end(sys.platform, "32")}{machine}_exe', path
 
     path = os.path.dirname(__file__)
     if isinstance(__loader__, zipimporter):
@@ -71,7 +73,8 @@ def current_git_head():
 _FILE_SUFFIXES = {
     'zip': '',
     'py2exe': '_min.exe',
-    'win32_exe': '.exe',
+    'win64_exe': '.exe',
+    'win32_exe': '_x86.exe',
     'darwin_exe': '_macos',
     'darwin_legacy_exe': '_macos_legacy',
     'linux_exe': '_linux',
@@ -166,11 +169,7 @@ class Updater:
     @functools.cached_property
     def release_name(self):
         """The release filename"""
-        label = _FILE_SUFFIXES[detect_variant()]
-        machine = platform.machine().lower()
-        if machine != 'aarch64' and machine != 'armv7l' and platform.architecture()[0][:2] == '32':
-            label = f'_x86{label}'
-        return f'yt-dlp{label}'
+        return f'yt-dlp{_FILE_SUFFIXES[detect_variant()]}'
 
     @functools.cached_property
     def release_hash(self):
