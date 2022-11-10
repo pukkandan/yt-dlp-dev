@@ -141,18 +141,21 @@ jobs:
           - aarch64
       steps:
       - uses: actions/checkout@v3
+        with:
+          path: ./repo
       - name: Virtualized Install, Prepare & Build
         uses: yt-dlp/run-on-arch-action@v2
         with:
           githubToken: ${{ github.token }}  # To cache image
           arch: ${{ matrix.architecture }}
           distro: ubuntu18.04  # Standalone executable should be built on minimum supported OS
-          dockerRunArgs: --volume "${PWD}:/repo"
+          dockerRunArgs: --volume "${PWD}/repo:/repo"
           install: |  # Installing Python 3.10 from the Deadsnakes repo raises errors
             apt update
             apt -y install zlib1g-dev python3.8 python3.8-dev python3.8-distutils python3-pip
 
           run: |
+            cd repo
             python3.8 -m pip install Pyinstaller -r requirements.txt
             python3.8 devscripts/update-version.py ${{ needs.prepare.outputs.version_suffix }}
             python3.8 devscripts/make_lazy_extractors.py

@@ -15,11 +15,11 @@ from .utils import (
     Popen,
     cached_method,
     deprecation_warning,
+    remove_end,
     shell_quote,
     system_identifier,
     traverse_obj,
     version_tuple,
-    remove_end,
 )
 from .version import UPDATE_HINT, VARIANT, __version__
 
