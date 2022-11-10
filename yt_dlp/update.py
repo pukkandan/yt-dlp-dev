@@ -40,6 +40,7 @@ def _get_variant_and_executable_path():
             machine = '_legacy' if version_tuple(platform.mac_ver()[0]) < (10, 15) else ''
         else:
             machine = f'_{platform.machine().lower()}'
+            # Ref: https://en.wikipedia.org/wiki/Uname#Examples
             if machine[1:] in ('x86', 'x86_64', 'amd64', 'i386', 'i686'):
                 machine = '32' if platform.architecture()[0][:2] == '32' else '64'
         return f'{remove_end(sys.platform, "32")}{machine}_exe', path
