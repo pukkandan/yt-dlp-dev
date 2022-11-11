@@ -157,8 +157,6 @@ jobs:
           apt update
           apt -y install zlib1g-dev python3.8 python3.8-dev python3.8-distutils python3-pip
           python3.8 -m pip install -U pip setuptools wheel
-          # Cannot access requirements.txt from the repo directory at this stage
-          python3.8 -m pip install -U Pyinstaller mutagen pycryptodomex websockets brotli certifi
 
         run: |
           cd repo
@@ -184,8 +182,7 @@ jobs:
     - name: Install Requirements
       run: |
           brew install coreutils
-          /usr/bin/python3 -m pip install -U --user pip setuptools  # Do not install wheel
-          /usr/bin/python3 -m pip install -U --user Pyinstaller -r requirements.txt
+          /usr/bin/python3 -m pip install -U --user pip Pyinstaller -r requirements.txt
 
     - name: Prepare
       run: |
@@ -226,8 +223,7 @@ jobs:
     - name: Install Requirements
       run: |
           brew install coreutils
-          python3 -m pip install -U --user pip setuptools wheel
-          python3 -m pip install -U --user Pyinstaller -r requirements.txt
+          python3 -m pip install -U --user pip Pyinstaller -r requirements.txt
 
     - name: Prepare
       run: |
