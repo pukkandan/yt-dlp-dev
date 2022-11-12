@@ -3695,7 +3695,7 @@ class InfoExtractor:
             t['name'] = cls.ie_key()
         return tests
 
-    @classproperty
+    @classproperty(use_cache=True)
     def age_limit(cls):
         """Get age limit from the testcases"""
         return max(traverse_obj(

@@ -5839,7 +5839,7 @@ def cached_method(f):
         bound_args.apply_defaults()
         key = tuple(bound_args.arguments.values())[1:]
 
-        cache = vars(self).setdefault('__cached_method__cache', {}).setdefault(f.__name__, {})
+        cache = vars(self).setdefault('_cached_method__cache', {}).setdefault(f.__name__, {})
         if key not in cache:
             cache[key] = f(self, *args, **kwargs)
         return cache[key]
@@ -5848,13 +5848,22 @@ def cached_method(f):
 
 class classproperty:
     """property access for class methods"""
+    def __new__(cls, func=None, *args, **kwargs):
+        if not func:
+            return functools.partial(cls, *args, **kwargs)
+        return super().__new__(cls)
 
-    def __init__(self, func):
+    def __init__(self, func, *, use_cache=False):
         functools.update_wrapper(self, func)
         self.func = func
+        self.use_cache, self.cache = use_cache, {}
 
     def __get__(self, _, cls):
-        return self.func(cls)
+        if not self.use_cache:
+            return self.func(cls)
+        elif cls not in self.cache:
+            self.cache[cls] = self.func(cls)
+        return self.cache[cls]
 
 
 class Namespace(types.SimpleNamespace):
