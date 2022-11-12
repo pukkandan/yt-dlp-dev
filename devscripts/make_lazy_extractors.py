@@ -14,10 +14,12 @@ from devscripts.utils import get_filename_args, read_file, write_file
 
 NO_ATTR = object()
 STATIC_CLASS_PROPERTIES = [
-    'IE_NAME', 'IE_DESC', 'SEARCH_KEY', '_VALID_URL', '_WORKING', '_ENABLED', '_NETRC_MACHINE', 'age_limit'
+    'IE_NAME', 'IE_DESC', 'SEARCH_KEY', '_VALID_URL', '_WORKING', '_ENABLED', '_NETRC_MACHINE',
+    'age_limit', '_TYPE'
 ]
 CLASS_METHODS = [
-    'ie_key', 'working', 'description', 'suitable', '_match_valid_url', '_match_id', 'get_temp_id', 'is_suitable'
+    'ie_key', 'working', 'description', 'suitable', '_match_valid_url', '_match_id', 'get_temp_id',
+    'is_suitable', 'is_single_video'
 ]
 IE_TEMPLATE = '''
 class {name}({bases}):
