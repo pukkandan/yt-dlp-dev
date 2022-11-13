@@ -6,7 +6,7 @@ from ..utils import (
     traverse_obj,
     unescapeHTML,
     unified_timestamp,
-    urljoin
+    urljoin,
 )
 
 

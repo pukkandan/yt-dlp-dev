@@ -1,8 +1,5 @@
 from .ard import ARDMediathekBaseIE
-from ..utils import (
-    ExtractorError,
-    get_element_by_attribute,
-)
+from ..utils import ExtractorError, get_element_by_attribute
 
 
 class SRMediathekIE(ARDMediathekBaseIE):

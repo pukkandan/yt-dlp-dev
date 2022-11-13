@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    js_to_json,
-    mimetype2ext,
-    ExtractorError,
-)
+from ..utils import ExtractorError, int_or_none, js_to_json, mimetype2ext
 
 
 class ImgurIE(InfoExtractor):

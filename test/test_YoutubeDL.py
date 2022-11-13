@@ -882,12 +882,12 @@ class TestYoutubeDL(unittest.TestCase):
 
         class SimplePP(PostProcessor):
             def run(self, info):
-                with open(audiofile, 'wt') as f:
+                with open(audiofile, 'w') as f:
                     f.write('EXAMPLE')
                 return [info['filepath']], info
 
         def run_pp(params, PP):
-            with open(filename, 'wt') as f:
+            with open(filename, 'w') as f:
                 f.write('EXAMPLE')
             ydl = YoutubeDL(params)
             ydl.add_post_processor(PP())
@@ -906,7 +906,7 @@ class TestYoutubeDL(unittest.TestCase):
 
         class ModifierPP(PostProcessor):
             def run(self, info):
-                with open(info['filepath'], 'wt') as f:
+                with open(info['filepath'], 'w') as f:
                     f.write('MODIFIED')
                 return [], info
 

@@ -1,24 +1,20 @@
 import base64
 import functools
-import re
 import itertools
+import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_HTTPError,
-    compat_str,
-    compat_urlparse,
-)
+from ..compat import compat_HTTPError, compat_str, compat_urlparse
 from ..utils import (
+    ExtractorError,
+    HEADRequest,
+    OnDemandPagedList,
     clean_html,
     determine_ext,
-    ExtractorError,
     get_element_by_class,
-    HEADRequest,
-    js_to_json,
     int_or_none,
+    js_to_json,
     merge_dicts,
-    OnDemandPagedList,
     parse_filesize,
     parse_iso8601,
     parse_qs,
@@ -29,8 +25,8 @@ from ..utils import (
     unified_timestamp,
     unsmuggle_url,
     urlencode_postdata,
-    urljoin,
     urlhandle_detect_ext,
+    urljoin,
 )
 
 

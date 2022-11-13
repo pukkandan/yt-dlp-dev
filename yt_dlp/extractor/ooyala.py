@@ -2,10 +2,7 @@ import base64
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_b64decode,
-    compat_str,
-)
+from ..compat import compat_b64decode, compat_str
 from ..utils import (
     determine_ext,
     float_or_none,

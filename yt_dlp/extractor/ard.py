@@ -3,9 +3,10 @@ import re
 
 from .common import InfoExtractor
 from .generic import GenericIE
+from ..compat import compat_etree_fromstring
 from ..utils import (
-    determine_ext,
     ExtractorError,
+    determine_ext,
     int_or_none,
     parse_duration,
     qualities,
@@ -17,7 +18,6 @@ from ..utils import (
     url_or_none,
     xpath_text,
 )
-from ..compat import compat_etree_fromstring
 
 
 class ARDMediathekBaseIE(InfoExtractor):

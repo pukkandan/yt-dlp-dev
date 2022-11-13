@@ -6,9 +6,7 @@ import re
 import time
 
 from .common import InfoExtractor, SearchInfoExtractor
-from ..compat import (
-    compat_HTTPError,
-)
+from ..compat import compat_HTTPError
 from ..utils import (
     ExtractorError,
     OnDemandPagedList,

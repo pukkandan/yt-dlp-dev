@@ -1,8 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    remove_start,
-)
+from ..utils import int_or_none, remove_start
 
 
 class RozhlasIE(InfoExtractor):

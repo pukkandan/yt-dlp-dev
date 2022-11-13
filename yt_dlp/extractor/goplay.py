@@ -7,11 +7,7 @@ import json
 import os
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    traverse_obj,
-    unescapeHTML,
-)
+from ..utils import ExtractorError, traverse_obj, unescapeHTML
 
 
 class GoPlayIE(InfoExtractor):

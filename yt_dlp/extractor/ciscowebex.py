@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    try_get,
-    unified_timestamp,
-)
+from ..utils import int_or_none, try_get, unified_timestamp
 
 
 class CiscoWebexIE(InfoExtractor):

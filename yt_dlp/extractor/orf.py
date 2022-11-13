@@ -3,16 +3,16 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
+    HEADRequest,
+    InAdvancePagedList,
     clean_html,
     determine_ext,
     float_or_none,
-    HEADRequest,
-    InAdvancePagedList,
     int_or_none,
     join_nonempty,
+    make_archive_id,
     orderedSet,
     remove_end,
-    make_archive_id,
     smuggle_url,
     strip_jsonp,
     try_call,

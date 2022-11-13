@@ -1,7 +1,7 @@
 from .common import InfoExtractor
 from ..utils import (
-    encode_base_n,
     ExtractorError,
+    encode_base_n,
     int_or_none,
     merge_dicts,
     parse_duration,

@@ -2,9 +2,9 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
+    HEADRequest,
     determine_ext,
     float_or_none,
-    HEADRequest,
     int_or_none,
     parse_duration,
     unified_strdate,

@@ -1,9 +1,6 @@
 from .dplay import DPlayIE
 from ..compat import compat_urlparse
-from ..utils import (
-    ExtractorError,
-    extract_attributes,
-)
+from ..utils import ExtractorError, extract_attributes
 
 
 class Tele5IE(DPlayIE):

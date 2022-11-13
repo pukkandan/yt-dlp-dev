@@ -1,7 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import int_or_none, format_field
+from ..utils import format_field, int_or_none
 
 
 class LastFMPlaylistBaseIE(InfoExtractor):

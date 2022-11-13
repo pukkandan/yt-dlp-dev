@@ -1,12 +1,8 @@
-from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    traverse_obj,
-    unescapeHTML,
-)
-
 import itertools
 from urllib.parse import urlencode
+
+from .common import InfoExtractor
+from ..utils import clean_html, traverse_obj, unescapeHTML
 
 
 class RadioKapitalBaseIE(InfoExtractor):

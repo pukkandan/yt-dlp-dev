@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    traverse_obj,
-    float_or_none,
-    int_or_none
-)
+from ..utils import float_or_none, int_or_none, traverse_obj
 
 
 class CallinIE(InfoExtractor):

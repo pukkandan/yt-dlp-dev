@@ -6,8 +6,8 @@ from ..utils import (
     int_or_none,
     js_to_json,
     sanitized_Request,
-    urlencode_postdata,
     traverse_obj,
+    urlencode_postdata,
 )
 
 

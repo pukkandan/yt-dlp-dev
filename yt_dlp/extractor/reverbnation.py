@@ -1,8 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    qualities,
-    str_or_none,
-)
+from ..utils import qualities, str_or_none
 
 
 class ReverbNationIE(InfoExtractor):

@@ -1,12 +1,10 @@
 import itertools
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
+from ..compat import compat_str
 from ..utils import (
-    determine_ext,
     bool_or_none,
+    determine_ext,
     int_or_none,
     parse_qs,
     try_get,

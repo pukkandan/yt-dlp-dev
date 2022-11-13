@@ -1,8 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    int_or_none,
-)
+from ..utils import clean_html, int_or_none
 
 
 class TVCIE(InfoExtractor):

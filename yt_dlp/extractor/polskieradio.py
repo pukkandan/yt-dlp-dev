@@ -4,21 +4,17 @@ import math
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_unquote,
-    compat_urlparse
-)
+from ..compat import compat_str, compat_urllib_parse_unquote, compat_urlparse
 from ..utils import (
-    extract_attributes,
     ExtractorError,
     InAdvancePagedList,
+    extract_attributes,
     int_or_none,
     js_to_json,
     parse_iso8601,
     strip_or_none,
-    unified_timestamp,
     unescapeHTML,
+    unified_timestamp,
     url_or_none,
 )
 

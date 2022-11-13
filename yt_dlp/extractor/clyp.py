@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    parse_qs,
-    unified_timestamp,
-)
+from ..utils import float_or_none, parse_qs, unified_timestamp
 
 
 class ClypIE(InfoExtractor):

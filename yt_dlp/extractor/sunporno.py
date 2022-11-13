@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    parse_duration,
-    int_or_none,
-    qualities,
-    determine_ext,
-)
+from ..utils import determine_ext, int_or_none, parse_duration, qualities
 
 
 class SunPornoIE(InfoExtractor):

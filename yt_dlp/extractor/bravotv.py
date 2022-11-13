@@ -2,12 +2,12 @@ import re
 
 from .adobepass import AdobePassIE
 from ..utils import (
-    smuggle_url,
-    update_url_query,
-    int_or_none,
-    float_or_none,
-    try_get,
     dict_get,
+    float_or_none,
+    int_or_none,
+    smuggle_url,
+    try_get,
+    update_url_query,
 )
 
 

@@ -1,11 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    int_or_none,
-    traverse_obj,
-    try_get,
-    urljoin,
-)
+from ..utils import int_or_none, traverse_obj, try_get, urljoin
 
 
 class MxplayerIE(InfoExtractor):

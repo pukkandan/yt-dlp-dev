@@ -1,9 +1,6 @@
 from .common import InfoExtractor
 from .fox import FOXIE
-from ..utils import (
-    smuggle_url,
-    url_basename,
-)
+from ..utils import smuggle_url, url_basename
 
 
 class NationalGeographicVideoIE(InfoExtractor):

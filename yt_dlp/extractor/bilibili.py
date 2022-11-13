@@ -896,12 +896,12 @@ class BiliIntlBaseIE(InfoExtractor):
 
     def _perform_login(self, username, password):
         try:
-            from Cryptodome.PublicKey import RSA
             from Cryptodome.Cipher import PKCS1_v1_5
+            from Cryptodome.PublicKey import RSA
         except ImportError:
             try:
-                from Crypto.PublicKey import RSA
                 from Crypto.Cipher import PKCS1_v1_5
+                from Crypto.PublicKey import RSA
             except ImportError:
                 raise ExtractorError('pycryptodomex not found. Please install', expected=True)
 

@@ -6,7 +6,7 @@ from ..utils import (
     parse_qs,
     qualities,
     unified_strdate,
-    xpath_text
+    xpath_text,
 )
 
 

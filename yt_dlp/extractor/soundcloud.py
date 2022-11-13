@@ -1,33 +1,28 @@
 import itertools
-import re
 import json
-# import random
+import re
 
-from .common import (
-    InfoExtractor,
-    SearchInfoExtractor
-)
-from ..compat import (
-    compat_HTTPError,
-    compat_str,
-)
+from .common import InfoExtractor, SearchInfoExtractor
+from ..compat import compat_HTTPError, compat_str
 from ..utils import (
-    error_to_compat_str,
-    ExtractorError,
-    float_or_none,
-    HEADRequest,
-    int_or_none,
     KNOWN_EXTENSIONS,
+    ExtractorError,
+    HEADRequest,
+    error_to_compat_str,
+    float_or_none,
+    int_or_none,
     mimetype2ext,
     parse_qs,
+    sanitized_Request,
     str_or_none,
     try_get,
     unified_timestamp,
     update_url_query,
     url_or_none,
     urlhandle_detect_ext,
-    sanitized_Request,
 )
+
+# import random
 
 
 class SoundcloudEmbedIE(InfoExtractor):

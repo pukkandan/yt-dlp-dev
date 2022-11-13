@@ -1,6 +1,5 @@
 import json
 
-
 from .common import InfoExtractor
 from .gigya import GigyaBaseIE
 from ..compat import compat_HTTPError
@@ -15,7 +14,7 @@ from ..utils import (
     str_or_none,
     strip_or_none,
     url_or_none,
-    urlencode_postdata
+    urlencode_postdata,
 )
 
 

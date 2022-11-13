@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-
-from ..utils import (
-    parse_duration,
-    js_to_json,
-)
+from ..utils import js_to_json, parse_duration
 
 
 class EUScreenIE(InfoExtractor):

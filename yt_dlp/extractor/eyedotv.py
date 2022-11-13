@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    xpath_text,
-    parse_duration,
-    ExtractorError,
-)
+from ..utils import ExtractorError, parse_duration, xpath_text
 
 
 class EyedoTVIE(InfoExtractor):

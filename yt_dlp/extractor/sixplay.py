@@ -1,14 +1,6 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    parse_qs,
-    try_get,
-    qualities,
-)
+from ..compat import compat_str
+from ..utils import determine_ext, int_or_none, parse_qs, qualities, try_get
 
 
 class SixPlayIE(InfoExtractor):

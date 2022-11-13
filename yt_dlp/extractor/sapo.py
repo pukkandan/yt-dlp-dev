@@ -1,10 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    parse_duration,
-    unified_strdate,
-)
+from ..utils import parse_duration, unified_strdate
 
 
 class SapoIE(InfoExtractor):

@@ -3,10 +3,7 @@ import json
 from .common import InfoExtractor
 from .youtube import YoutubeIE
 from ..compat import compat_b64decode
-from ..utils import (
-    clean_html,
-    ExtractorError
-)
+from ..utils import ExtractorError, clean_html
 
 
 class ChilloutzoneIE(InfoExtractor):

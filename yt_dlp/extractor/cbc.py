@@ -1,13 +1,12 @@
-import re
-import json
 import base64
+import json
+import re
 import time
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
+from ..compat import compat_str
 from ..utils import (
+    ExtractorError,
     int_or_none,
     join_nonempty,
     js_to_json,
@@ -15,7 +14,6 @@ from ..utils import (
     smuggle_url,
     strip_or_none,
     try_get,
-    ExtractorError,
 )
 
 

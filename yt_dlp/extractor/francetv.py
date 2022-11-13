@@ -1,12 +1,12 @@
 from .common import InfoExtractor
+from .dailymotion import DailymotionIE
 from ..utils import (
-    determine_ext,
     ExtractorError,
+    determine_ext,
     format_field,
     parse_iso8601,
     parse_qs,
 )
-from .dailymotion import DailymotionIE
 
 
 class FranceTVBaseInfoExtractor(InfoExtractor):

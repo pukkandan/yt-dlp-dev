@@ -4,15 +4,15 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import (
+    ExtractorError,
     clean_html,
     determine_ext,
-    ExtractorError,
     dict_get,
     int_or_none,
     merge_dicts,
-    parse_qs,
     parse_age_limit,
     parse_iso8601,
+    parse_qs,
     str_or_none,
     try_get,
     url_or_none,
@@ -234,8 +234,7 @@ class ERTFlixIE(ERTFlixBaseIE):
                     'season_number': int_or_none(episode_group.get('SeasonNumber')),
                 }
                 try:
-                    episodes = [(int(ep['EpisodeNumber']), ep) for ep in episodes]
-                    episodes.sort()
+                    episodes = sorted([(int(ep['EpisodeNumber']), ep) for ep in episodes])
                 except (KeyError, ValueError):
                     episodes = enumerate(episodes, 1)
                 for n, episode in episodes:

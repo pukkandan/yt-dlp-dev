@@ -1,7 +1,5 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
+from ..compat import compat_str
 from ..utils import (
     ExtractorError,
     float_or_none,

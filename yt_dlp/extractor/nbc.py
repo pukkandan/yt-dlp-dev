@@ -2,16 +2,16 @@ import base64
 import json
 import re
 
+from .adobepass import AdobePassIE
 from .common import InfoExtractor
 from .theplatform import ThePlatformIE
-from .adobepass import AdobePassIE
 from ..compat import compat_urllib_parse_unquote
 from ..utils import (
     ExtractorError,
+    RegexNotFoundError,
     int_or_none,
     parse_age_limit,
     parse_duration,
-    RegexNotFoundError,
     smuggle_url,
     str_or_none,
     traverse_obj,

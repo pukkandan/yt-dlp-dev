@@ -1,10 +1,6 @@
 from .amp import AMPIE
 from .common import InfoExtractor
-from ..utils import (
-    parse_duration,
-    parse_iso8601,
-    try_get,
-)
+from ..utils import parse_duration, parse_iso8601, try_get
 
 
 class AbcNewsVideoIE(AMPIE):

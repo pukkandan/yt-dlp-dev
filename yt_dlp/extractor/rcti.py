@@ -5,11 +5,11 @@ import time
 from .common import InfoExtractor
 from ..compat import compat_HTTPError
 from ..utils import (
-    dict_get,
     ExtractorError,
+    dict_get,
     strip_or_none,
     traverse_obj,
-    try_get
+    try_get,
 )
 
 

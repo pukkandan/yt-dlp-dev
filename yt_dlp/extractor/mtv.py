@@ -4,13 +4,13 @@ from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import (
     ExtractorError,
+    HEADRequest,
+    RegexNotFoundError,
     find_xpath_attr,
     fix_xml_ampersands,
     float_or_none,
-    HEADRequest,
     int_or_none,
     join_nonempty,
-    RegexNotFoundError,
     sanitized_Request,
     strip_or_none,
     timeconvert,

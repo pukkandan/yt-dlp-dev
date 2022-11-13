@@ -1,13 +1,7 @@
 from .common import InfoExtractor
-from ..compat import compat_str
-from ..utils import (
-    format_field,
-    float_or_none,
-    int_or_none,
-    try_get,
-)
-
 from .videomore import VideomoreIE
+from ..compat import compat_str
+from ..utils import float_or_none, format_field, int_or_none, try_get
 
 
 class CarambaTVIE(InfoExtractor):

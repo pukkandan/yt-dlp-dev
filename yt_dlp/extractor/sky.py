@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    extract_attributes,
-    smuggle_url,
-    strip_or_none,
-    urljoin,
-)
+from ..utils import extract_attributes, smuggle_url, strip_or_none, urljoin
 
 
 class SkyBaseIE(InfoExtractor):

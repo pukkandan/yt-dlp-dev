@@ -6,15 +6,12 @@ import random
 
 from .common import InfoExtractor
 from ..aes import aes_cbc_decrypt_bytes, unpad_pkcs7
-from ..compat import (
-    compat_HTTPError,
-    compat_b64decode,
-)
+from ..compat import compat_b64decode, compat_HTTPError
 from ..utils import (
+    ExtractorError,
     ass_subtitles_timecode,
     bytes_to_intlist,
     bytes_to_long,
-    ExtractorError,
     float_or_none,
     int_or_none,
     intlist_to_bytes,

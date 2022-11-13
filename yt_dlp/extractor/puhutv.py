@@ -1,12 +1,9 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_HTTPError,
-    compat_str,
-)
+from ..compat import compat_HTTPError, compat_str
 from ..utils import (
     ExtractorError,
-    int_or_none,
     float_or_none,
+    int_or_none,
     parse_resolution,
     str_or_none,
     try_get,
