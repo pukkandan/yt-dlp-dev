@@ -31,6 +31,8 @@ jobs:
       run: |
         python devscripts/update-version.py ${{ steps.version_suffix.outputs.version_suffix }}
         make issuetemplates
+        python -m pip pip install pre-commit
+        pre-commit autoupdate
 
     - name: Push to release
       id: push_release

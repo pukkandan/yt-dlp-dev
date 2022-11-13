@@ -49,7 +49,7 @@ except ImportError:
 
 secretstorage = None
 try:
-    import secretstorage
+    import secretstorage  # noqa
     _SECRETSTORAGE_UNAVAILABLE_REASON = None
 except ImportError:
     _SECRETSTORAGE_UNAVAILABLE_REASON = (
