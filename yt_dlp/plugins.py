@@ -14,7 +14,6 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from .compat import functools  # isort: split
-from .globals import plugin_dirs
 from .compat import compat_expanduser
 from .utils import (
     get_executable_path,
@@ -81,7 +80,7 @@ class PluginFinder(importlib.abc.MetaPathFinder):
     def search_locations(self, fullname):
         candidate_locations = itertools.chain.from_iterable(
             default_plugin_locations() if candidate is ... else Path(candidate).iterdir()
-            for candidate in plugin_dirs.get()
+            for candidate in _plugin_dirs
         )
 
         parts = Path(*fullname.split('.'))
@@ -116,6 +115,7 @@ class PluginFinder(importlib.abc.MetaPathFinder):
 
 
 def directories():
+    assert _plugin_dirs is not None, 'Call yt_dlp.plugins.initialize() first'
     spec = importlib.util.find_spec(PACKAGE_NAME)
     return spec.submodule_search_locations if spec else []
 
@@ -137,6 +137,8 @@ def load_module(module, module_name, suffix):
 
 
 def load_plugins(name, suffix):
+    if _plugin_dirs is None:
+        initialize()
     classes = {}
 
     for finder, module_name, _ in iter_modules(name):
@@ -158,7 +160,7 @@ def load_plugins(name, suffix):
             continue
         classes.update(load_module(module, module_name, suffix))
 
-    if ... not in plugin_dirs.get():
+    if ... not in _plugin_dirs:
         return classes
 
     # Compat: old plugin system using __init__.py
@@ -175,6 +177,14 @@ def load_plugins(name, suffix):
     return classes
 
 
-sys.meta_path.insert(0, PluginFinder(f'{PACKAGE_NAME}.extractor', f'{PACKAGE_NAME}.postprocessor'))
+_plugin_dirs = None
+
+
+def initialize(dirs=(..., )):
+    global _plugin_dirs
+    assert _plugin_dirs is None, 'yt_dlp.plugins.initialize() can only be called once'
+    _plugin_dirs = tuple(dirs)
+    sys.meta_path.insert(0, PluginFinder(f'{PACKAGE_NAME}.extractor', f'{PACKAGE_NAME}.postprocessor'))
+
 
 __all__ = ['directories', 'load_plugins', 'PACKAGE_NAME', 'COMPAT_PACKAGE_NAME']

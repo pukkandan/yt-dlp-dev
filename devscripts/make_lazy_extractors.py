@@ -11,7 +11,7 @@ from inspect import getsource
 
 from devscripts.utils import get_filename_args, read_file, write_file
 from yt_dlp.extractor.common import InfoExtractor, SearchInfoExtractor
-from yt_dlp.globals import plugin_dirs
+from yt_dlp import plugins
 
 NO_ATTR = object()
 STATIC_CLASS_PROPERTIES = [
@@ -39,7 +39,8 @@ def main():
     if os.path.exists(lazy_extractors_filename):
         os.remove(lazy_extractors_filename)
 
-    plugin_dirs.set(())
+    plugins.initialize([])
+
     from yt_dlp.extractor.extractors import _ALL_CLASSES
 
     DummyInfoExtractor = type('InfoExtractor', (InfoExtractor,), {'IE_NAME': NO_ATTR})

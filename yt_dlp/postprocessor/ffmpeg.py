@@ -1,4 +1,5 @@
 import collections
+import contextvars
 import itertools
 import json
 import os
@@ -83,7 +84,7 @@ class FFmpegPostProcessorError(PostProcessingError):
 
 
 class FFmpegPostProcessor(PostProcessor):
-    from ..globals import ffmpeg_location as _ffmpeg_location
+    _ffmpeg_location = contextvars.ContextVar('ffmpeg_location', default=None)
 
     def __init__(self, downloader=None):
         PostProcessor.__init__(self, downloader)

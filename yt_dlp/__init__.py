@@ -14,16 +14,17 @@ import os
 import re
 import sys
 
+from . import plugins
 from .compat import compat_shlex_quote
 from .cookies import SUPPORTED_BROWSERS, SUPPORTED_KEYRINGS
 from .downloader.external import get_external_downloader
 from .extractor import list_extractor_classes
 from .extractor.adobepass import MSO_INFO
-from .globals import ffmpeg_location, plugin_dirs
 from .options import parseOpts
 from .postprocessor.ffmpeg import (
     FFmpegExtractAudioPP,
     FFmpegMergerPP,
+    FFmpegPostProcessor,
     FFmpegSubtitlesConvertorPP,
     FFmpegThumbnailsConvertorPP,
     FFmpegVideoConvertorPP,
@@ -928,9 +929,9 @@ def _real_main(argv=None):
     # We may need ffmpeg_location without having access to the YoutubeDL instance
     # See https://github.com/yt-dlp/yt-dlp/issues/2191
     if opts.ffmpeg_location:
-        ffmpeg_location.set(opts.ffmpeg_location)
+        FFmpegPostProcessor._ffmpeg_location.set(opts.ffmpeg_location)
 
-    plugin_dirs.set(opts.plugin_dirs)
+    plugins.initialize(opts.plugin_dirs)
 
     with YoutubeDL(ydl_opts) as ydl:
         pre_process = opts.update_self or opts.rm_cachedir
