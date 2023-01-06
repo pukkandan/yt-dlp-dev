@@ -25,17 +25,18 @@ from string import ascii_letters
 
 from .cache import Cache
 from .compat import compat_os_name, compat_shlex_quote
+from .compat.compat_utils import get_package_info
 from .cookies import load_cookies
+from .dependencies import available_dependencies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
 from .downloader.rtmp import rtmpdump_version
 from .extractor import gen_extractor_classes, get_info_extractor
 from .extractor.common import UnsupportedURLIE
 from .extractor.openload import PhantomJSwrapper
 from .minicurses import format_text
-from .plugins import directories as plugin_directories
-from .postprocessor import _PLUGIN_CLASSES as plugin_pps
-from .postprocessor import (
-    EmbedThumbnailPP,
+from .postprocessor import get_postprocessor
+from .postprocessor.embedthumbnail import EmbedThumbnailPP
+from .postprocessor.ffmpeg import (
     FFmpegFixupDuplicateMoovPP,
     FFmpegFixupDurationPP,
     FFmpegFixupM3u8PP,
@@ -45,10 +46,9 @@ from .postprocessor import (
     FFmpegMergerPP,
     FFmpegPostProcessor,
     FFmpegVideoConvertorPP,
-    MoveFilesAfterDownloadPP,
-    get_postprocessor,
 )
 from .postprocessor.ffmpeg import resolve_mapping as resolve_recode_mapping
+from .postprocessor.movefilesafterdownload import MoveFilesAfterDownloadPP
 from .update import REPOSITORY, current_git_head, detect_variant
 from .utils import (
     DEFAULT_OUTTMPL,
@@ -3736,11 +3736,12 @@ class YoutubeDL:
         from . import _IN_CLI  # Must be delayed import
 
         # These imports can be slow. So import them only as needed
+        # Also, plugin imports be done only after setting globals
         from .extractor.extractors import _LAZY_LOADER
-        from .extractor.extractors import (
-            _PLUGIN_CLASSES as plugin_ies,
-            _PLUGIN_OVERRIDES as plugin_ie_overrides
-        )
+        from .extractor.extractors import _PLUGIN_CLASSES as plugin_ies
+        from .extractor.extractors import _PLUGIN_OVERRIDES as plugin_ie_overrides
+        from .plugins import directories as plugin_directories
+        from .postprocessor import _PLUGIN_CLASSES as plugin_pps
 
         def get_encoding(stream):
             ret = str(getattr(stream, 'encoding', 'missing (%s)' % type(stream).__name__))
@@ -3804,9 +3805,6 @@ class YoutubeDL:
         ) or 'none'
         write_debug('exe versions: %s' % exe_str)
 
-        from .compat.compat_utils import get_package_info
-        from .dependencies import available_dependencies
-
         write_debug('Optional libraries: %s' % (', '.join(sorted({
             join_nonempty(*get_package_info(m)) for m in available_dependencies.values()
         })) or 'none'))
@@ -3828,7 +3826,6 @@ class YoutubeDL:
             if not display_list:
                 continue
             write_debug(f'{plugin_type} Plugins: {", ".join(sorted(display_list))}')
-
         plugin_dirs = plugin_directories()
         if plugin_dirs:
             write_debug(f'Plugin directories: {plugin_dirs}')

@@ -2,7 +2,6 @@
 
 # Allow direct execution
 import os
-import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,6 +10,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from inspect import getsource
 
 from devscripts.utils import get_filename_args, read_file, write_file
+from yt_dlp.extractor.common import InfoExtractor, SearchInfoExtractor
+from yt_dlp.globals import plugin_dirs
 
 NO_ATTR = object()
 STATIC_CLASS_PROPERTIES = [
@@ -38,13 +39,8 @@ def main():
     if os.path.exists(lazy_extractors_filename):
         os.remove(lazy_extractors_filename)
 
-    _ALL_CLASSES = get_all_ies()  # Must be before import
-
-    import yt_dlp.plugins
-    from yt_dlp.extractor.common import InfoExtractor, SearchInfoExtractor
-
-    # Filter out plugins
-    _ALL_CLASSES = [cls for cls in _ALL_CLASSES if not cls.__module__.startswith(f'{yt_dlp.plugins.PACKAGE_NAME}.')]
+    plugin_dirs.set(())
+    from yt_dlp.extractor.extractors import _ALL_CLASSES
 
     DummyInfoExtractor = type('InfoExtractor', (InfoExtractor,), {'IE_NAME': NO_ATTR})
     module_src = '\n'.join((
@@ -56,20 +52,6 @@ def main():
     ))
 
     write_file(lazy_extractors_filename, f'{module_src}\n')
-
-
-def get_all_ies():
-    PLUGINS_DIRNAME = 'ytdlp_plugins'
-    BLOCKED_DIRNAME = f'{PLUGINS_DIRNAME}_blocked'
-    if os.path.exists(PLUGINS_DIRNAME):
-        # os.rename cannot be used, e.g. in Docker. See https://github.com/yt-dlp/yt-dlp/pull/4958
-        shutil.move(PLUGINS_DIRNAME, BLOCKED_DIRNAME)
-    try:
-        from yt_dlp.extractor.extractors import _ALL_CLASSES
-    finally:
-        if os.path.exists(BLOCKED_DIRNAME):
-            shutil.move(BLOCKED_DIRNAME, PLUGINS_DIRNAME)
-    return _ALL_CLASSES
 
 
 def extra_ie_code(ie, base=None):

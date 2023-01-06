@@ -19,18 +19,17 @@ from .cookies import SUPPORTED_BROWSERS, SUPPORTED_KEYRINGS
 from .downloader.external import get_external_downloader
 from .extractor import list_extractor_classes
 from .extractor.adobepass import MSO_INFO
+from .globals import ffmpeg_location, plugin_dirs
 from .options import parseOpts
-from .postprocessor import (
+from .postprocessor.ffmpeg import (
     FFmpegExtractAudioPP,
     FFmpegMergerPP,
-    FFmpegPostProcessor,
     FFmpegSubtitlesConvertorPP,
     FFmpegThumbnailsConvertorPP,
     FFmpegVideoConvertorPP,
     FFmpegVideoRemuxerPP,
-    MetadataFromFieldPP,
-    MetadataParserPP,
 )
+from .postprocessor.metadataparser import MetadataFromFieldPP, MetadataParserPP
 from .update import Updater
 from .utils import (
     NO_DEFAULT,
@@ -394,6 +393,10 @@ def validate_options(opts):
     }
 
     # Other options
+    opts.plugin_dirs = opts.plugin_dirs or []
+    if 'no-default' not in opts.plugin_dirs:
+        opts.plugin_dirs.append(...)
+
     if opts.playlist_items is not None:
         try:
             tuple(PlaylistEntries.parse_playlist_items(opts.playlist_items))
@@ -925,7 +928,9 @@ def _real_main(argv=None):
     # We may need ffmpeg_location without having access to the YoutubeDL instance
     # See https://github.com/yt-dlp/yt-dlp/issues/2191
     if opts.ffmpeg_location:
-        FFmpegPostProcessor._ffmpeg_location.set(opts.ffmpeg_location)
+        ffmpeg_location.set(opts.ffmpeg_location)
+
+    plugin_dirs.set(opts.plugin_dirs)
 
     with YoutubeDL(ydl_opts) as ydl:
         pre_process = opts.update_self or opts.rm_cachedir

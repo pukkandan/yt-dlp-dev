@@ -14,6 +14,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from .compat import functools  # isort: split
+from .globals import plugin_dirs
 from .compat import compat_expanduser
 from .utils import (
     get_executable_path,
@@ -40,6 +41,30 @@ def dirs_in_zip(archive):
             Path(file).parents for file in zip.namelist()))
 
 
+def default_plugin_locations():
+    def _get_package_paths(*root_paths, containing_folder='plugins'):
+        for config_dir in map(Path, root_paths):
+            plugin_dir = config_dir / containing_folder
+            if not plugin_dir.is_dir():
+                continue
+            yield from plugin_dir.iterdir()
+
+    # Load from yt-dlp config folders
+    yield from _get_package_paths(
+        *get_user_config_dirs('yt-dlp'), *get_system_config_dirs('yt-dlp'),
+        containing_folder='plugins')
+
+    # Load from yt-dlp-plugins folders
+    yield from _get_package_paths(
+        get_executable_path(),
+        compat_expanduser('~'),
+        '/etc',
+        os.getenv('XDG_CONFIG_HOME') or compat_expanduser('~/.config'),
+        containing_folder='yt-dlp-plugins')
+
+    yield from map(Path, sys.path)  # PYTHONPATH
+
+
 class PluginFinder(importlib.abc.MetaPathFinder):
     """
     This class provides one or multiple namespace packages.
@@ -54,33 +79,14 @@ class PluginFinder(importlib.abc.MetaPathFinder):
             for name in packages))
 
     def search_locations(self, fullname):
-        candidate_locations = []
-
-        def _get_package_paths(*root_paths, containing_folder='plugins'):
-            for config_dir in map(Path, root_paths):
-                plugin_dir = config_dir / containing_folder
-                if not plugin_dir.is_dir():
-                    continue
-                yield from plugin_dir.iterdir()
-
-        # Load from yt-dlp config folders
-        candidate_locations.extend(_get_package_paths(
-            *get_user_config_dirs('yt-dlp'), *get_system_config_dirs('yt-dlp'),
-            containing_folder='plugins'))
-
-        # Load from yt-dlp-plugins folders
-        candidate_locations.extend(_get_package_paths(
-            get_executable_path(),
-            compat_expanduser('~'),
-            '/etc',
-            os.getenv('XDG_CONFIG_HOME') or compat_expanduser('~/.config'),
-            containing_folder='yt-dlp-plugins'))
-
-        candidate_locations.extend(map(Path, sys.path))  # PYTHONPATH
+        candidate_locations = itertools.chain.from_iterable(
+            default_plugin_locations() if candidate is ... else Path(candidate).iterdir()
+            for candidate in plugin_dirs.get()
+        )
 
         parts = Path(*fullname.split('.'))
         locations = set()
-        for path in dict.fromkeys(candidate_locations):
+        for path in set(candidate_locations):
             candidate = path / parts
             if candidate.is_dir():
                 locations.add(str(candidate))
@@ -151,6 +157,9 @@ def load_plugins(name, suffix):
             write_string(f'Error while importing module {module_name!r}\n{traceback.format_exc(limit=-1)}')
             continue
         classes.update(load_module(module, module_name, suffix))
+
+    if ... not in plugin_dirs.get():
+        return classes
 
     # Compat: old plugin system using __init__.py
     # Note: plugins imported this way do not show up in directories()

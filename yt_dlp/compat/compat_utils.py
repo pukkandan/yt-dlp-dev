@@ -30,7 +30,7 @@ def _is_package(module):
     return True
 
 
-def passthrough_module(parent, child, allowed_attributes=None, *, callback=lambda _: None):
+def passthrough_module(parent, child, allowed_attributes=(None, ), *, callback=lambda _: None):
     parent_module = importlib.import_module(parent)
     child_module = None  # Import child module only as needed
 
@@ -47,11 +47,11 @@ def passthrough_module(parent, child, allowed_attributes=None, *, callback=lambd
             return ret
 
         def __from_child(self, attr):
-            if allowed_attributes is None:
+            if attr not in allowed_attributes:
                 if attr.startswith('__') and attr.endswith('__'):
                     return _NO_ATTRIBUTE
-            elif attr not in allowed_attributes:
-                return _NO_ATTRIBUTE
+                elif None not in allowed_attributes:
+                    return _NO_ATTRIBUTE
 
             nonlocal child_module
             child_module = child_module or importlib.import_module(child, parent)
