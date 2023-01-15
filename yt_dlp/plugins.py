@@ -34,9 +34,15 @@ class PluginLoader(importlib.abc.Loader):
 
 @functools.cache
 def dirs_in_zip(archive):
-    with ZipFile(archive) as zip:
-        return set(itertools.chain.from_iterable(
-            Path(file).parents for file in zip.namelist()))
+    try:
+        with ZipFile(archive) as zip_:
+            return set(itertools.chain.from_iterable(
+                Path(file).parents for file in zip_.namelist()))
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        write_string(f'WARNING: Could not read zip file {archive}: {e}\n')
+    return set()
 
 
 class PluginFinder(importlib.abc.MetaPathFinder):
@@ -83,9 +89,8 @@ class PluginFinder(importlib.abc.MetaPathFinder):
             if candidate.is_dir():
                 yield candidate
             elif path.suffix in ('.zip', '.egg', '.whl'):
-                with contextlib.suppress(FileNotFoundError):
-                    if parts in dirs_in_zip(path):
-                        yield candidate
+                if parts in dirs_in_zip(path):
+                    yield candidate
 
     def find_spec(self, fullname, path=None, target=None):
         if fullname not in self.packages:
