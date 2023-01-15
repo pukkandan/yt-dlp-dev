@@ -74,6 +74,8 @@ class PluginFinder(importlib.abc.MetaPathFinder):
             containing_folder='yt-dlp-plugins'))
 
         candidate_locations.extend(map(Path, sys.path))  # PYTHONPATH
+        with contextlib.suppress(ValueError):  # Added when running __main__.py directly
+            candidate_locations.remove(Path(__file__).parent)
 
         parts = Path(*fullname.split('.'))
         locations = set()
