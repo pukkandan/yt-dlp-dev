@@ -42,7 +42,6 @@ class EnhancedModule(types.ModuleType):
         return vars(self).get('__bool__', lambda: True)()
 
     def __getattribute__(self, attr):
-        print(attr)
         try:
             ret = super().__getattribute__(attr)
         except AttributeError:

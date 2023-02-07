@@ -18,7 +18,6 @@ from yt_dlp.compat import (
     compat_urllib_parse_unquote,
     compat_urllib_parse_urlencode,
 )
-from yt_dlp.dependencies import Cryptodome
 
 
 class TestCompat(unittest.TestCase):
@@ -32,7 +31,6 @@ class TestCompat(unittest.TestCase):
         # TODO: Test submodule
         # compat.asyncio.events  # Must not raise error
 
-        self.assertIsNotNone(Cryptodome.Cipher)
         with self.assertWarns(DeprecationWarning):
             compat.compat_pycrypto_AES  # Must not raise error
 

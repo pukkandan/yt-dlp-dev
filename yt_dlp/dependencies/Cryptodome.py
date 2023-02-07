@@ -1,5 +1,6 @@
-import functools
+import importlib
 
+from ..compat import functools
 from ..compat.compat_utils import EnhancedModule, passthrough_module
 
 EnhancedModule(__name__)
@@ -11,21 +12,20 @@ except ImportError:
         import Crypto as _parent
     except (ImportError, SyntaxError):  # Old Crypto gives SyntaxError in newer Python
         _parent = EnhancedModule('Cryptodome')
-        _parent.__bool__ = lambda: False
+        __bool__ = lambda: False
 
 
+@functools.cache
 def __getattr__(name):
-    if name in ('Cipher', 'Hash', 'Protocol', 'PublicKey', 'Util', 'Signature', 'IO', 'Math'):
-        return passthrough_module(f'{__name__}.{name}', f'{_parent.__name__}.{name}')
-    return getattr(_parent, name)
-
-
-def __bool__():
-    return bool(_parent)
+    try:
+        submodule = importlib.import_module(f'.{name}', _parent.__name__)
+    except ImportError:
+        return getattr(_parent, name)
+    return passthrough_module(f'{__name__}.{name}', submodule)
 
 
 @property
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _yt_dlp__identifier():
     if _parent.__name__ == 'Crypto':
         from Crypto.Cipher import AES
