@@ -3,6 +3,7 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_parse_qs
 from ..utils import (
+    traverse_obj,
     determine_ext,
     ExtractorError,
     get_element_by_class,
@@ -163,7 +164,12 @@ class GoogleDriveIE(InfoExtractor):
         video_id = self._match_id(url)
         video_info = compat_parse_qs(self._download_webpage(
             'https://drive.google.com/get_video_info',
-            video_id, query={'docid': video_id}))
+            video_id, 'Downloading video webpage', query={'docid': video_id}))
+
+        if traverse_obj(video_info, ('reason', 0)) == 'Video no longer exists.':
+            video_info = compat_parse_qs(self._download_webpage(
+                'https://drive.google.com/get_audio_info',
+                video_id, 'Downloading audio webpage', query={'docid': video_id}))
 
         def get_value(key):
             return try_get(video_info, lambda x: x[key][0])
