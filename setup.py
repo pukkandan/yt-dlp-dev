@@ -134,14 +134,14 @@ def main():
         params = build_params()
 
     setup(
-        name='yt-dlp',
+        name='yt-dlp-test',
         version=VERSION,
-        maintainer='pukkandan',
-        maintainer_email='pukkandan.ytdlp@gmail.com',
+        maintainer='bashonly',
+        maintainer_email='bashonly@bashonly.com',
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         long_description_content_type='text/markdown',
-        url='https://github.com/yt-dlp/yt-dlp',
+        url='https://github.com/Grub4K/yt-dlp',
         packages=packages(),
         install_requires=REQUIREMENTS,
         python_requires='>=3.7',
