@@ -129,7 +129,9 @@ class Updater:
         self.ydl = ydl
 
         self.target_channel, sep, self.target_tag = (target or CHANNEL).rpartition('@')
-        if not sep and self.target_tag in UPDATE_SOURCES:  # stable => stable@latest
+        # TODO: Add to docs
+        # stable => stable@latest
+        if not sep and ('/' in self.target_tag or self.target_tag in UPDATE_SOURCES):
             self.target_channel, self.target_tag = self.target_tag, None
         elif not self.target_channel:
             self.target_channel = CHANNEL
@@ -139,7 +141,13 @@ class Updater:
         elif self.target_tag != 'latest':
             self.target_tag = f'tags/{self.target_tag}'
 
-    @property
+        if '/' in self.target_channel:
+            self._target_repo = self.target_channel
+            if self.target_channel not in UPDATE_SOURCES.values():
+                self.ydl.report_warning('You are updating to a custom repository. Scary message')  # TODO
+                self.restart = self._blocked_restart
+
+    @functools.cached_property
     def _target_repo(self):
         try:
             return UPDATE_SOURCES[self.target_channel]
@@ -371,6 +379,11 @@ class Updater:
         self.ydl.write_debug(f'Restarting: {shell_quote(self.cmd)}')
         _, _, returncode = Popen.run(self.cmd)
         return returncode
+
+    def _blocked_restart(self):
+        self._report_error('Automatically restarting into custom builds is disabled for security reasons. '
+                           'Restart yt-dlp to use the updated version', expected=True)
+        return self.ydl._download_retcode
 
 
 def run_update(ydl):
