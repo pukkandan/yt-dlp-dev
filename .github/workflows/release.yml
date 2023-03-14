@@ -83,7 +83,7 @@ jobs:
           make pypi-files
           python devscripts/set-variant.py pip -M "You installed yt-dlp with pip or using the wheel from PyPi; Use that to update"
           python setup.py sdist bdist_wheel
-          twine upload dist/*
+          twine upload --repository testpypi dist/*
 
       - name: Checkout Homebrew repository
         env:
