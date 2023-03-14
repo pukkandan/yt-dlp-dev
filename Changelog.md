@@ -4,6 +4,11 @@
 # To create a release, dispatch the https://github.com/yt-dlp/yt-dlp/actions/workflows/release.yml workflow on master
 -->
 
+### 2023.03.14.1
+
+#### Core changes
+- [Preinstall wheels](https://github.com/yt-dlp/yt-dlp/commit/ed9ac6f78e5407483789d125503ab63ea6e98b9b) by [pukkandan](https://github.com/pukkandan)
+
 ### 2023.03.14
 
 #### Core changes
