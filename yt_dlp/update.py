@@ -26,8 +26,8 @@ from .utils import (
 from .version import CHANNEL, UPDATE_HINT, VARIANT, __version__
 
 UPDATE_SOURCES = {
-    'stable': 'yt-dlp/yt-dlp',
-    'nightly': 'yt-dlp/yt-dlp-nightly-builds',
+    'stable': 'Grub4K/yt-dlp',
+    'nightly': 'Grub4K/yt-dlp-nightly-builds',
 }
 REPOSITORY = UPDATE_SOURCES['stable']
 
