@@ -200,12 +200,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      # NB: In order to create a universal2 application, the version of python3 in /usr/bin has to be used
+      # NB: universal2 does not work with setup-python
       - name: Install Requirements
         run: |
           brew install coreutils
           python3 -m pip install -U --user pip setuptools wheel
-          # We need to ignore wheels otherwise we break universal2 builds
+          # NB: univeral2 does not work with brotli binary
           python3 -m pip install -U --user --no-binary :all: Pyinstaller -r requirements.txt
 
       - name: Prepare
