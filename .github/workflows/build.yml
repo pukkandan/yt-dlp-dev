@@ -192,7 +192,8 @@ jobs:
       - name: Install Requirements
         run: |
           brew install coreutils
-          /usr/bin/python3 -m pip install -U --user pip Pyinstaller==5.8 -r requirements.txt
+          /usr/bin/python3 -m pip install -U --user pip setuptools wheel
+          /usr/bin/python3 -m pip install -U --user Pyinstaller==5.8 -r requirements.txt
 
       - name: Prepare
         run: |
@@ -232,7 +233,8 @@ jobs:
       - name: Install Requirements
         run: |
           brew install coreutils
-          python3 -m pip install -U --user pip Pyinstaller -r requirements.txt
+          python3 -m pip install -U --user pip setuptools wheel
+          python3 -m pip install -U --user Pyinstaller -r requirements.txt
 
       - name: Prepare
         run: |
