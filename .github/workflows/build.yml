@@ -191,11 +191,11 @@ jobs:
 
             if ${{ vars.VERIFY_UPDATE_TO && 'true' || 'false' }}; then
               arch="${{ (matrix.architecture == 'armv7' && 'armv7l') || matrix.architecture }}"
-              chmod +x ./repo/dist/yt-dlp_linux_${arch}
-              cp ./repo/dist/yt-dlp_linux_${arch} ./repo/dist/yt-dlp_linux_${arch}_downgraded
-              version="$(./repo/dist/yt-dlp_linux_${arch} --version)"
-              ./repo/dist/yt-dlp_linux_${arch}_downgraded -v --update-to stable@latest
-              downgraded_version="$(./repo/dist/yt-dlp_linux_${arch}_downgraded --version)"
+              chmod +x ./dist/yt-dlp_linux_${arch}
+              cp ./dist/yt-dlp_linux_${arch} ./dist/yt-dlp_linux_${arch}_downgraded
+              version="$(./dist/yt-dlp_linux_${arch} --version)"
+              ./dist/yt-dlp_linux_${arch}_downgraded -v --update-to stable@latest
+              downgraded_version="$(./dist/yt-dlp_linux_${arch}_downgraded --version)"
               [[ "$version" != "$downgraded_version" ]]
             fi
 
@@ -325,10 +325,10 @@ jobs:
         if: vars.VERIFY_UPDATE_TO
         run: |
           foreach ($name in @("yt-dlp","yt-dlp_min")) {
-            Copy-Item ./dist/${name}.exe ./dist/${name}_downgraded.exe
-            $version = & ./dist/${name}.exe --version
-            ./dist/${name}_downgraded.exe -v --update-to stable@latest
-            $downgraded_version = & ./dist/${name}_downgraded.exe --version
+            Copy-Item "./dist/${name}.exe" "./dist/${name}_downgraded.exe"
+            $version = & "./dist/${name}.exe" --version
+            & "./dist/${name}_downgraded.exe" -v --update-to stable@latest
+            $downgraded_version = & "./dist/${name}_downgraded.exe" --version
             if ($version -ne $downgraded_version) {
               exit 1
             }
@@ -369,10 +369,10 @@ jobs:
         if: vars.VERIFY_UPDATE_TO
         run: |
           foreach ($name in @("yt-dlp_x86")) {
-            Copy-Item ./dist/${name}.exe ./dist/${name}_downgraded.exe
-            $version = & ./dist/${name}.exe --version
-            ./dist/${name}_downgraded.exe -v --update-to stable@latest
-            $downgraded_version = & ./dist/${name}_downgraded.exe --version
+            Copy-Item "./dist/${name}.exe" "./dist/${name}_downgraded.exe"
+            $version = & "./dist/${name}.exe" --version
+            & "./dist/${name}_downgraded.exe" -v --update-to stable@latest
+            $downgraded_version = & "./dist/${name}_downgraded.exe" --version
             if ($version -ne $downgraded_version) {
               exit 1
             }

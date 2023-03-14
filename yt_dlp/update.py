@@ -259,8 +259,8 @@ class Updater:
             self.ydl.to_screen((
                 f'Available version: {self._label(self.target_channel, self.latest_version)}, ' if self.target_tag == 'latest' else ''
             ) + f'Current version: {self._label(CHANNEL, self.current_version)}')
-        except network_exceptions:
-            return self._report_network_error('obtain version info', delim='; Please try again later or')
+        except network_exceptions as e:
+            return self._report_network_error(f'obtain version info ({e})', delim='; Please try again later or')
 
         if not is_non_updateable():
             self.ydl.to_screen(f'Current Build Hash: {_sha256_file(self.filename)}')
