@@ -192,8 +192,9 @@ jobs:
       - name: Install Requirements
         run: |
           brew install coreutils
-          /usr/bin/python3 -m pip install -U --user pip setuptools # wheel breaks universal2
-          /usr/bin/python3 -m pip install -U --user Pyinstaller==5.8 -r requirements.txt
+          /usr/bin/python3 -m pip install -U --user pip setuptools wheel
+          # We need to ignore wheels otherwise we break universal2 builds
+          /usr/bin/python3 -m pip install -U --user --no-binary :all: Pyinstaller -r requirements.txt
 
       - name: Prepare
         run: |

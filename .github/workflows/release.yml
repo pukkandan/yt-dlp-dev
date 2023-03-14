@@ -92,7 +92,7 @@ jobs:
         if: env.BREW_TOKEN != '' && env.PYPI_TOKEN != ''
         uses: actions/checkout@v3
         with:
-          repository: yt-dlp/homebrew-taps
+          repository: bashonly/testbrew-taps
           path: taps
           ssh-key: ${{ secrets.BREW_TOKEN }}
 
