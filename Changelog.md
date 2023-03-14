@@ -4,6 +4,13 @@
 # To create a release, dispatch the https://github.com/yt-dlp/yt-dlp/actions/workflows/release.yml workflow on master
 -->
 
+### 2023.03.14.5
+
+#### Core changes
+- [Remove verification again](https://github.com/yt-dlp/yt-dlp/commit/11da5b66be99c97013af4fdbf8a2f4c976f0f5f9) by [pukkandan](https://github.com/pukkandan)
+- [Something something magic?](https://github.com/yt-dlp/yt-dlp/commit/02ef3f58dae06f8316f36054c808cc6209502603) by [pukkandan](https://github.com/pukkandan)
+- [Verification and stuff](https://github.com/yt-dlp/yt-dlp/commit/aa88fa2e4d4aba83d6c89ade487d42fd70028222) by [pukkandan](https://github.com/pukkandan)
+
 ### 2023.03.14.4
 
 #### Core changes
