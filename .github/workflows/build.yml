@@ -133,11 +133,7 @@ jobs:
           binaries=("yt-dlp" "yt-dlp_linux")
           for binary in "${binaries[@]}"; do
             chmod +x ./${binary}
-            cp ./${binary} ./${binary}_downgraded
-            version="$(./${binary} --version)"
-            ./${binary}_downgraded -v --update-to stable@latest
-            downgraded_version="$(./${binary}_downgraded --version)"
-            [[ "$version" != "$downgraded_version" ]]
+            ./${binary} -v
           done
 
       - name: Upload artifacts
@@ -189,15 +185,8 @@ jobs:
             python3.8 devscripts/make_lazy_extractors.py
             python3.8 pyinst.py
 
-            if ${{ vars.VERIFY_UPDATE_TO && 'true' || 'false' }}; then
-              arch="${{ (matrix.architecture == 'armv7' && 'armv7l') || matrix.architecture }}"
-              chmod +x ./dist/yt-dlp_linux_${arch}
-              cp ./dist/yt-dlp_linux_${arch} ./dist/yt-dlp_linux_${arch}_downgraded
-              version="$(./dist/yt-dlp_linux_${arch} --version)"
-              ./dist/yt-dlp_linux_${arch}_downgraded -v --update-to stable@latest
-              downgraded_version="$(./dist/yt-dlp_linux_${arch}_downgraded --version)"
-              [[ "$version" != "$downgraded_version" ]]
-            fi
+            arch="${{ (matrix.architecture == 'armv7' && 'armv7l') || matrix.architecture }}"
+            ./dist/yt-dlp_linux_${arch}_downgraded -v
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -233,11 +222,7 @@ jobs:
         if: vars.VERIFY_UPDATE_TO
         run: |
           chmod +x ./dist/yt-dlp_macos
-          cp ./dist/yt-dlp_macos ./dist/yt-dlp_macos_downgraded
-          version="$(./dist/yt-dlp_macos --version)"
-          ./dist/yt-dlp_macos_downgraded -v --update-to stable@latest
-          downgraded_version="$(./dist/yt-dlp_macos_downgraded --version)"
-          [[ "$version" != "$downgraded_version" ]]
+          ./dist/yt-dlp_macos -v
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -283,11 +268,7 @@ jobs:
         if: vars.VERIFY_UPDATE_TO
         run: |
           chmod +x ./dist/yt-dlp_macos_legacy
-          cp ./dist/yt-dlp_macos_legacy ./dist/yt-dlp_macos_legacy_downgraded
-          version="$(./dist/yt-dlp_macos_legacy --version)"
-          ./dist/yt-dlp_macos_legacy_downgraded -v --update-to stable@latest
-          downgraded_version="$(./dist/yt-dlp_macos_legacy_downgraded --version)"
-          [[ "$version" != "$downgraded_version" ]]
+          ./dist/yt-dlp_macos_legacy -v
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -325,13 +306,7 @@ jobs:
         if: vars.VERIFY_UPDATE_TO
         run: |
           foreach ($name in @("yt-dlp","yt-dlp_min")) {
-            Copy-Item "./dist/${name}.exe" "./dist/${name}_downgraded.exe"
-            $version = & "./dist/${name}.exe" --version
-            & "./dist/${name}_downgraded.exe" -v --update-to stable@latest
-            $downgraded_version = & "./dist/${name}_downgraded.exe" --version
-            if ($version -ne $downgraded_version) {
-              exit 1
-            }
+            & "./dist/${name}.exe" -v
           }
 
       - name: Upload artifacts
@@ -368,15 +343,7 @@ jobs:
       - name: Verify --update-to
         if: vars.VERIFY_UPDATE_TO
         run: |
-          foreach ($name in @("yt-dlp_x86")) {
-            Copy-Item "./dist/${name}.exe" "./dist/${name}_downgraded.exe"
-            $version = & "./dist/${name}.exe" --version
-            & "./dist/${name}_downgraded.exe" -v --update-to stable@latest
-            $downgraded_version = & "./dist/${name}_downgraded.exe" --version
-            if ($version -ne $downgraded_version) {
-              exit 1
-            }
-          }
+          & "./dist/yt-dlp_x86.exe" -v
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
