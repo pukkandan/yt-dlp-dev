@@ -157,7 +157,7 @@ class Updater:
                 f'Valid channels are {", ".join(UPDATE_SOURCES)}', True)
 
     def _version_compare(self, a, b, channel=CHANNEL):
-        if channel != self.target_channel:
+        if self._exact and channel != self.target_channel:  # TODO: Fix docs
             return False
 
         if _VERSION_RE.fullmatch(f'{a}.{b}'):
