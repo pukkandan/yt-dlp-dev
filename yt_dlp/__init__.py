@@ -22,16 +22,15 @@ from .extractor import list_extractor_classes
 from .extractor.adobepass import MSO_INFO
 from .globals import IN_CLI, ffmpeg_location
 from .options import parseOpts
-from .postprocessor import (
+from .postprocessor.ffmpeg import (
     FFmpegExtractAudioPP,
     FFmpegMergerPP,
     FFmpegSubtitlesConvertorPP,
     FFmpegThumbnailsConvertorPP,
     FFmpegVideoConvertorPP,
     FFmpegVideoRemuxerPP,
-    MetadataFromFieldPP,
-    MetadataParserPP,
 )
+from .postprocessor.metadataparser import MetadataFromFieldPP, MetadataParserPP
 from .update import Updater
 from .utils import (
     NO_DEFAULT,
