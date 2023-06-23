@@ -23,14 +23,18 @@ import traceback
 import unicodedata
 
 from .cache import Cache
+
 from .compat import urllib  # isort: split
 from .compat import compat_os_name, compat_shlex_quote
+from .compat.compat_utils import get_package_info
 from .cookies import load_cookies
+from .dependencies import available_dependencies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
 from .downloader.rtmp import rtmpdump_version
 from .extractor import gen_extractor_classes, get_info_extractor
 from .extractor.common import UnsupportedURLIE
 from .extractor.openload import PhantomJSwrapper
+from .globals import IN_CLI, LAZY_EXTRACTORS
 from .minicurses import format_text
 from .plugins import directories as plugin_directories
 from .postprocessor import _PLUGIN_CLASSES as plugin_pps
@@ -3789,14 +3793,10 @@ class YoutubeDL:
         if not self.params.get('verbose'):
             return
 
-        from . import _IN_CLI  # Must be delayed import
-
         # These imports can be slow. So import them only as needed
-        from .extractor.extractors import _LAZY_LOADER
-        from .extractor.extractors import (
-            _PLUGIN_CLASSES as plugin_ies,
+        from .extractor.extractors import _PLUGIN_CLASSES as plugin_ies
+        from .extractor.extractors import \
             _PLUGIN_OVERRIDES as plugin_ie_overrides
-        )
 
         def get_encoding(stream):
             ret = str(getattr(stream, 'encoding', 'missing (%s)' % type(stream).__name__))
@@ -3836,17 +3836,17 @@ class YoutubeDL:
             f'{CHANNEL}@{__version__}',
             f'[{RELEASE_GIT_HEAD[:9]}]' if RELEASE_GIT_HEAD else '',
             '' if source == 'unknown' else f'({source})',
-            '' if _IN_CLI else 'API' if klass == YoutubeDL else f'API:{self.__module__}.{klass.__qualname__}',
+            '' if IN_CLI.get() else 'API' if klass == YoutubeDL else f'API:{self.__module__}.{klass.__qualname__}',
             delim=' '))
 
-        if not _IN_CLI:
+        if not IN_CLI.get():
             write_debug(f'params: {self.params}')
 
-        if not _LAZY_LOADER:
-            if os.environ.get('YTDLP_NO_LAZY_EXTRACTORS'):
-                write_debug('Lazy loading extractors is forcibly disabled')
-            else:
-                write_debug('Lazy loading extractors is disabled')
+        lazy_extractors = LAZY_EXTRACTORS.get()
+        if lazy_extractors is None:
+            write_debug('Lazy loading extractors is disabled')
+        elif not lazy_extractors:
+            write_debug('Lazy loading extractors is forcibly disabled')
         if self.params['compat_opts']:
             write_debug('Compatibility options: %s' % ', '.join(self.params['compat_opts']))
 
@@ -3865,9 +3865,6 @@ class YoutubeDL:
             f'{exe} {v}' for exe, v in sorted(exe_versions.items()) if v
         ) or 'none'
         write_debug('exe versions: %s' % exe_str)
-
-        from .compat.compat_utils import get_package_info
-        from .dependencies import available_dependencies
 
         write_debug('Optional libraries: %s' % (', '.join(sorted({
             join_nonempty(*get_package_info(m)) for m in available_dependencies.values()
