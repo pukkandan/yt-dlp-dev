@@ -31,11 +31,22 @@ from .cookies import load_cookies
 from .dependencies import available_dependencies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name
 from .downloader.rtmp import rtmpdump_version
-from .extractor import gen_extractor_classes, get_info_extractor
+from .extractor import (
+    gen_extractor_classes,
+    get_info_extractor,
+    import_extractors,
+)
 from .extractor.common import UnsupportedURLIE
 from .extractor.openload import PhantomJSwrapper
-from .globals import IN_CLI, LAZY_EXTRACTORS
+from .globals import (
+    IN_CLI,
+    LAZY_EXTRACTORS,
+    plugin_ies,
+    plugin_overrides,
+    plugin_pps,
+)
 from .minicurses import format_text
+from .plugins import directories as plugin_directories
 from .postprocessor import get_postprocessor
 from .postprocessor.embedthumbnail import EmbedThumbnailPP
 from .postprocessor.ffmpeg import (
@@ -3791,12 +3802,6 @@ class YoutubeDL:
         if not self.params.get('verbose'):
             return
 
-        # Delay extractor/plugin imports
-        from .extractor.extractors import _PLUGIN_CLASSES as plugin_ies
-        from .extractor.extractors import _PLUGIN_OVERRIDES as plugin_overrides
-        from .plugins import directories as plugin_directories
-        from .postprocessor import _PLUGIN_CLASSES as plugin_pps
-
         def get_encoding(stream):
             ret = str(getattr(stream, 'encoding', 'missing (%s)' % type(stream).__name__))
             additional_info = []
@@ -3841,6 +3846,7 @@ class YoutubeDL:
         if not IN_CLI.get():
             write_debug(f'params: {self.params}')
 
+        import_extractors()
         lazy_extractors = LAZY_EXTRACTORS.get()
         if lazy_extractors is None:
             write_debug('Lazy loading extractors is disabled')
@@ -3879,10 +3885,10 @@ class YoutubeDL:
         for plugin_type, plugins in (('Extractor', plugin_ies), ('Post-Processor', plugin_pps)):
             display_list = [
                 klass.__name__ if klass.__name__ == name else f'{klass.__name__} as {name}'
-                for name, klass in plugins.items()]
+                for name, klass in plugins.get().items()]
             if plugin_type == 'Extractor':
                 display_list.extend(f'{plugins[-1].IE_NAME.partition("+")[2]} ({parent.__name__})'
-                                    for parent, plugins in plugin_overrides.items())
+                                    for parent, plugins in plugin_overrides.get().items())
             if not display_list:
                 continue
             write_debug(f'{plugin_type} Plugins: {", ".join(sorted(display_list))}')

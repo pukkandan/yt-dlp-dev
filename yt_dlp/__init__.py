@@ -20,8 +20,9 @@ from .cookies import SUPPORTED_BROWSERS, SUPPORTED_KEYRINGS
 from .downloader.external import get_external_downloader
 from .extractor import list_extractor_classes
 from .extractor.adobepass import MSO_INFO
-from .globals import ffmpeg_location, plugin_dirs, IN_CLI
+from .globals import IN_CLI, ffmpeg_location, plugin_dirs
 from .options import parseOpts
+from .plugins import load_all_plugin_types
 from .postprocessor.ffmpeg import (
     FFmpegExtractAudioPP,
     FFmpegMergerPP,
@@ -960,7 +961,9 @@ def _real_main(argv=None):
     if opts.ffmpeg_location:
         ffmpeg_location.set(opts.ffmpeg_location)
 
+    # load all plugins into the global lookup
     plugin_dirs.set(opts.plugin_dirs)
+    load_all_plugin_types()
 
     with YoutubeDL(ydl_opts) as ydl:
         pre_process = opts.update_self or opts.rm_cachedir

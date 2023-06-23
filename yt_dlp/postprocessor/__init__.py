@@ -1,9 +1,27 @@
-from ..compat.compat_utils import passthrough_module
+from .common import PostProcessor
+from .ffmpeg import FFmpegPostProcessor
+from .postprocessors import *  # noqa: 403
+from ..globals import plugin_pps, postprocessors
+from ..plugins import PACKAGE_NAME
+from ..utils import deprecation_warning
 
-passthrough_module(__name__, '.postprocessors', (..., '__all__'))
-del passthrough_module
+
+def __getattr__(name):
+    lookup = plugin_pps.get()
+    if name in lookup:
+        deprecation_warning(
+            f'Importing a plugin Post-Processor from {__name__} is deprecated. '
+            f'Please import {PACKAGE_NAME}.postprocessor.{name} instead.')
+        return lookup[name]
+
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
 def get_postprocessor(key):
-    from . import postprocessors
-    return getattr(postprocessors, f'{key}PP')
+    return postprocessors.get()[key + 'PP']
+
+
+_default_pps = {name: value for name, value in globals().items() if name.endswith('PP')}
+postprocessors.set(_default_pps)
+
+__all__ = [*_default_pps.keys(), 'PostProcessor', 'FFmpegPostProcessor']

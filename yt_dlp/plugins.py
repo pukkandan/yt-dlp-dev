@@ -1,4 +1,5 @@
 import contextlib
+import enum
 import importlib
 import importlib.abc
 import importlib.machinery
@@ -12,12 +13,21 @@ import zipimport
 from pathlib import Path
 from zipfile import ZipFile
 
+from .globals import (
+    extractors,
+    plugin_dirs,
+    plugin_ies,
+    plugin_overrides,
+    plugin_pps,
+    postprocessors,
+)
+
 from .compat import functools  # isort: split
-from .globals import plugin_dirs
 from .utils import (
     get_executable_path,
     get_system_config_dirs,
     get_user_config_dirs,
+    merge_dicts,
     orderedSet,
     remove_start,
     write_string,
@@ -25,7 +35,17 @@ from .utils import (
 
 PACKAGE_NAME = 'yt_dlp_plugins'
 COMPAT_PACKAGE_NAME = 'ytdlp_plugins'
-_BASE_PACKAGE_PATH = Path(__file__).parent
+
+
+class PluginType(enum.Enum):
+    POSTPROCESSORS = ('postprocessor', 'PP')
+    EXTRACTORS = ('extractor', 'IE')
+
+
+_plugin_type_lookup = {
+    PluginType.POSTPROCESSORS: (postprocessors, plugin_pps),
+    PluginType.EXTRACTORS: (extractors, plugin_ies),
+}
 
 
 class PluginLoader(importlib.abc.Loader):
@@ -142,7 +162,9 @@ def load_module(module, module_name, suffix):
         and obj.__name__ in getattr(module, '__all__', [obj.__name__])))
 
 
-def load_plugins(name, suffix):
+def load_plugins(plugin_type: PluginType):
+    destination, plugin_destination = _plugin_type_lookup[plugin_type]
+    name, suffix = plugin_type.value
     classes = {}
 
     for finder, module_name, _ in iter_modules(name):
@@ -166,23 +188,51 @@ def load_plugins(name, suffix):
             continue
         classes.update(load_module(module, module_name, suffix))
 
-    if ... not in plugin_dirs.get():
-        return classes
-
     # Compat: old plugin system using __init__.py
     # Note: plugins imported this way do not show up in directories()
     # nor are considered part of the yt_dlp_plugins namespace package
-    with contextlib.suppress(FileNotFoundError):
-        spec = importlib.util.spec_from_file_location(
-            name, Path(get_executable_path(), COMPAT_PACKAGE_NAME, name, '__init__.py'))
-        plugins = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = plugins
-        spec.loader.exec_module(plugins)
-        classes.update(load_module(plugins, spec.name, suffix))
+    if ... in plugin_dirs.get((..., )):
+        with contextlib.suppress(FileNotFoundError):
+            spec = importlib.util.spec_from_file_location(
+                name, Path(get_executable_path(), COMPAT_PACKAGE_NAME, name, '__init__.py'))
+            plugins = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = plugins
+            spec.loader.exec_module(plugins)
+            classes.update(load_module(plugins, spec.name, suffix))
 
-    return classes
+    regular_plugins = {}
+    # __init_subclass__ was removed so we manually add overrides
+    for name, klass in classes.items():
+        plugin_name = getattr(klass, '_plugin_name', None)
+        if not plugin_name:
+            regular_plugins[name] = klass
+            continue
+
+        # FIXME: Most likely something wrong here
+        mro = inspect.getmro(klass)
+        super_class = klass.__wrapped__ = mro[mro.index(klass) + 1]
+        klass.PLUGIN_NAME, klass.ie_key = plugin_name, super_class.ie_key
+        klass.IE_NAME = f'{super_class.IE_NAME}+{plugin_name}'
+        while getattr(super_class, '__wrapped__', None):
+            super_class = super_class.__wrapped__
+        setattr(sys.modules[super_class.__module__], super_class.__name__, klass)
+        plugin_overrides.get()[super_class].append(klass)
+
+    # Add the classes into the global plugin lookup
+    plugin_destination.set(regular_plugins)
+    # We want to prepend to the main lookup
+    current = destination.get()
+    result = merge_dicts(regular_plugins, current)
+    destination.set(result)
+
+    return result
+
+
+def load_all_plugin_types():
+    for plugin_type in PluginType:
+        load_plugins(plugin_type)
 
 
 sys.meta_path.insert(0, PluginFinder(f'{PACKAGE_NAME}.extractor', f'{PACKAGE_NAME}.postprocessor'))
 
-__all__ = ['directories', 'load_plugins', 'PACKAGE_NAME', 'COMPAT_PACKAGE_NAME']
+__all__ = ['directories', 'load_plugins', 'load_all_plugin_types', 'PACKAGE_NAME', 'COMPAT_PACKAGE_NAME']
