@@ -461,6 +461,12 @@ def create_parser():
             '"no_color" (use non color terminal sequences). '
             'Can be used multiple times'))
     general.add_option(
+        '--plugin-dirs',
+        metavar='PATH', dest='plugin_dirs', action='append',
+        help=(
+            'Directory to search for plugins. Can be used multiple times to add multiple directories. '
+            'Add "no-default" to disable the default plugin directories'))
+    general.add_option(
         '--compat-options',
         metavar='OPTS', dest='compat_opts', default=set(), type='str',
         action='callback', callback=_set_from_options_callback,

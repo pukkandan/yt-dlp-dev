@@ -20,7 +20,7 @@ from .cookies import SUPPORTED_BROWSERS, SUPPORTED_KEYRINGS
 from .downloader.external import get_external_downloader
 from .extractor import list_extractor_classes
 from .extractor.adobepass import MSO_INFO
-from .globals import IN_CLI, ffmpeg_location
+from .globals import ffmpeg_location, plugin_dirs, IN_CLI
 from .options import parseOpts
 from .postprocessor.ffmpeg import (
     FFmpegExtractAudioPP,
@@ -411,6 +411,10 @@ def validate_options(opts):
     }
 
     # Other options
+    opts.plugin_dirs = opts.plugin_dirs or []
+    if 'no-default' not in opts.plugin_dirs:
+        opts.plugin_dirs.append(...)
+
     if opts.playlist_items is not None:
         try:
             tuple(PlaylistEntries.parse_playlist_items(opts.playlist_items))
@@ -955,6 +959,8 @@ def _real_main(argv=None):
     # See https://github.com/yt-dlp/yt-dlp/issues/2191
     if opts.ffmpeg_location:
         ffmpeg_location.set(opts.ffmpeg_location)
+
+    plugin_dirs.set(opts.plugin_dirs)
 
     with YoutubeDL(ydl_opts) as ydl:
         pre_process = opts.update_self or opts.rm_cachedir

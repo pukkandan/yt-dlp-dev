@@ -13,6 +13,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from .compat import functools  # isort: split
+from .globals import plugin_dirs
 from .utils import (
     get_executable_path,
     get_system_config_dirs,
@@ -87,9 +88,12 @@ class PluginFinder(importlib.abc.MetaPathFinder):
             for name in packages))
 
     def search_locations(self, fullname):
+        candidate_locations = itertools.chain.from_iterable(
+            default_plugin_paths() if candidate is ... else Path(candidate).iterdir()
+            for candidate in plugin_dirs.get())
 
         parts = Path(*fullname.split('.'))
-        for path in orderedSet(default_plugin_locations(), lazy=True):
+        for path in orderedSet(candidate_locations, lazy=True):
             candidate = path / parts
             if candidate.is_dir():
                 yield candidate
@@ -158,6 +162,9 @@ def load_plugins(name, suffix):
             write_string(f'Error while importing module {module_name!r}\n{traceback.format_exc(limit=-1)}')
             continue
         classes.update(load_module(module, module_name, suffix))
+
+    if ... not in plugin_dirs.get():
+        return classes
 
     # Compat: old plugin system using __init__.py
     # Note: plugins imported this way do not show up in directories()

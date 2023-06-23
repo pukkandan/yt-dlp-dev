@@ -6,3 +6,6 @@ IN_CLI = ContextVar('IN_CLI', default=False)
 LAZY_EXTRACTORS = ContextVar('LAZY_EXTRACTORS')
 
 ffmpeg_location = ContextVar('ffmpeg_location', default=None)
+
+# "..." indicates default paths
+plugin_dirs = ContextVar('plugin_dirs', default=(..., ))
