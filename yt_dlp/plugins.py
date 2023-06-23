@@ -19,6 +19,7 @@ from .utils import (
     get_system_config_dirs,
     get_user_config_dirs,
     orderedSet,
+    remove_start,
     write_string,
 )
 
@@ -157,6 +158,8 @@ def load_plugins(name, suffix):
                 spec = finder.find_spec(module_name)
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = module
+                module.__spec__.name = f'yt_dlp{remove_start(module_name, PACKAGE_NAME)}'
+                module.__package__ = module.__spec__.parent
                 spec.loader.exec_module(module)
         except Exception:
             write_string(f'Error while importing module {module_name!r}\n{traceback.format_exc(limit=-1)}')
