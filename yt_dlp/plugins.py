@@ -23,6 +23,7 @@ from .utils import (
 
 PACKAGE_NAME = 'yt_dlp_plugins'
 COMPAT_PACKAGE_NAME = 'ytdlp_plugins'
+_BASE_PACKAGE_PATH = Path(__file__).parent
 
 
 class PluginLoader(importlib.abc.Loader):
@@ -42,7 +43,34 @@ def dirs_in_zip(archive):
         pass
     except Exception as e:
         write_string(f'WARNING: Could not read zip file {archive}: {e}\n')
-    return set()
+    return ()
+
+
+def default_plugin_paths():
+    def _get_package_paths(*root_paths, containing_folder):
+        for config_dir in orderedSet(map(Path, root_paths), lazy=True):
+            with contextlib.suppress(OSError):
+                yield from (config_dir / containing_folder).iterdir()
+
+    # Load from yt-dlp config folders
+    yield from _get_package_paths(
+        *get_user_config_dirs('yt-dlp'),
+        *get_system_config_dirs('yt-dlp'),
+        containing_folder='plugins')
+
+    # Load from yt-dlp-plugins folders
+    yield from _get_package_paths(
+        get_executable_path(),
+        *get_user_config_dirs(''),
+        *get_system_config_dirs(''),
+        containing_folder='yt-dlp-plugins')
+
+    _BASE_PACKAGE_PATH = Path(__file__).parent
+
+    # Load from PYTHONPATH folders
+    for path in map(Path, sys.path):
+        if path != _BASE_PACKAGE_PATH:  # Added when running __main__.py directly
+            yield path
 
 
 class PluginFinder(importlib.abc.MetaPathFinder):
@@ -59,32 +87,9 @@ class PluginFinder(importlib.abc.MetaPathFinder):
             for name in packages))
 
     def search_locations(self, fullname):
-        candidate_locations = []
-
-        def _get_package_paths(*root_paths, containing_folder='plugins'):
-            for config_dir in orderedSet(map(Path, root_paths), lazy=True):
-                with contextlib.suppress(OSError):
-                    yield from (config_dir / containing_folder).iterdir()
-
-        # Load from yt-dlp config folders
-        candidate_locations.extend(_get_package_paths(
-            *get_user_config_dirs('yt-dlp'),
-            *get_system_config_dirs('yt-dlp'),
-            containing_folder='plugins'))
-
-        # Load from yt-dlp-plugins folders
-        candidate_locations.extend(_get_package_paths(
-            get_executable_path(),
-            *get_user_config_dirs(''),
-            *get_system_config_dirs(''),
-            containing_folder='yt-dlp-plugins'))
-
-        candidate_locations.extend(map(Path, sys.path))  # PYTHONPATH
-        with contextlib.suppress(ValueError):  # Added when running __main__.py directly
-            candidate_locations.remove(Path(__file__).parent)
 
         parts = Path(*fullname.split('.'))
-        for path in orderedSet(candidate_locations, lazy=True):
+        for path in orderedSet(default_plugin_locations(), lazy=True):
             candidate = path / parts
             if candidate.is_dir():
                 yield candidate
