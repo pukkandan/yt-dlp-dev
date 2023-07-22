@@ -2,9 +2,8 @@ import urllib.parse
 from abc import ABCMeta, abstractmethod
 
 from .common import InfoExtractor
-from .. import NO_DEFAULT
+from ..networking import HEADRequest
 from ..utils import (
-    HEADRequest,
     ExtractorError,
     determine_ext,
     scale_thumbnails_to_max_format_width,
@@ -155,7 +154,7 @@ class Ant1NewsGrEmbedIE(AntennaWatchGrBaseIE):
         canonical_url = self._request_webpage(
             HEADRequest(url), video_id,
             note='Resolve canonical player URL',
-            errnote='Could not resolve canonical player URL').geturl()
+            errnote='Could not resolve canonical player URL').url
         _, netloc, _, _, query, _ = urllib.parse.urlparse(canonical_url)
         cid = urllib.parse.parse_qs(query)['cid'][0]
 
