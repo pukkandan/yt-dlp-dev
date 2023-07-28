@@ -1036,7 +1036,7 @@ class FakeRH(RequestHandler):
 class FakeRHYDL(FakeYDL):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._request_director = self.build_request_director([FakeRH])
+        self._request_director = self.build_request_director([FakeRH], [])
 
 
 class TestRequestDirector:
@@ -1124,7 +1124,7 @@ class TestRequestDirector:
                 return Response(fp=io.BytesIO(b'supported'), headers={}, url=request.url)
 
         class SomePreference(Preference):
-            def _get_preference(rh, request):
+            def _get_preference(self, rh, request):
                 return (0 if not isinstance(rh, SomeRH)
                         else 100 if 'prefer' in request.headers
                         else -1)
@@ -1141,7 +1141,7 @@ class TestYoutubeDLNetworking:
 
     @staticmethod
     def build_handler(ydl, handler: RequestHandler = FakeRH):
-        return ydl.build_request_director([handler]).handlers.get(handler.RH_KEY)
+        return ydl.build_request_director([handler], []).handlers.get(handler.RH_KEY)
 
     def test_compat_opener(self):
         with FakeYDL() as ydl:

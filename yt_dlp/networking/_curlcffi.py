@@ -219,7 +219,7 @@ class CurlCFFIRH(RequestHandler, InstanceStoreMixin, ImpersonateHandlerMixin):
 
 @register_preference
 class CurlCFFIPreference(Preference):
-    def _get_preference(handler: RequestHandler, request: Request) -> int:
+    def _get_preference(self, handler: RequestHandler, request: Request) -> int:
         if not isinstance(handler, CurlCFFIRH):
             return 0
         elif request.extensions.get('impersonate') or os.environ.get('YT_DLP_PREFER_CCI'):
