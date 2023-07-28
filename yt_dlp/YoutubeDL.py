@@ -34,7 +34,7 @@ from .extractor.common import UnsupportedURLIE
 from .extractor.openload import PhantomJSwrapper
 from .minicurses import format_text
 from .networking import HEADRequest, Request, RequestDirector
-from .networking.common import _REQUEST_HANDLERS
+from .networking.common import _REQUEST_HANDLERS, _RH_PREFERENCES
 from .networking.exceptions import (
     HTTPError,
     NoSupportingHandlers,
@@ -685,8 +685,8 @@ class YoutubeDL:
         self._load_cookies(self.params['http_headers'].get('Cookie'))  # compat
         self.params['http_headers'].pop('Cookie', None)
 
-        self._request_director = self.build_request_director(
-            sorted(_REQUEST_HANDLERS.values(), key=lambda rh: rh.RH_NAME.lower()))
+        self._request_director = self.build_request_director(_REQUEST_HANDLERS.values(), _RH_PREFERENCES)
+
         if auto_init and auto_init != 'no_verbose_header':
             self.print_debug_header()
 
@@ -4078,7 +4078,7 @@ class YoutubeDL:
         except HTTPError as e:  # TODO: Remove in a future release
             raise _CompatHTTPError(e) from e
 
-    def build_request_director(self, handlers):
+    def build_request_director(self, handlers, preferences):
         logger = _YDLLogger(self)
         headers = self.params.get('http_headers').copy()
         proxies = self.proxies.copy()
@@ -4107,6 +4107,7 @@ class YoutubeDL:
                     },
                 }),
             ))
+        director.preferences.update(preferences)
         return director
 
     def encode(self, s):
