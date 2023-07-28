@@ -332,6 +332,7 @@ class RequestHandler(abc.ABC):
     @abc.abstractmethod
     def _send(self, request: Request):
         """Handle a request from start to finish. Redefine in subclasses."""
+        pass
 
     def close(self):
         pass

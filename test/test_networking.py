@@ -461,14 +461,14 @@ class TestHTTPRequestHandler(TestRequestHandlerBase):
                 rh, Request(
                     f'http://127.0.0.1:{self.http_port}/headers',
                     headers={'Cookie': 'test=test'})).read().decode()
-            assert 'Cookie: test=test' in res
+            assert 'cookie: test=test' in res.lower()
 
             # Specified Cookie header should be removed on any redirect
             res = validate_and_send(
                 rh, Request(
                     f'http://127.0.0.1:{self.http_port}/308-to-headers',
-                    headers={'Cookie': 'test=test'})).read().decode()
-            assert 'Cookie: test=test' not in res
+                    headers={'Cookie': 'test=test2'})).read().decode()
+            assert 'cookie: test=test2' not in res.lower()
 
         # Specified Cookie header should override global cookiejar for that request
         cookiejar = http.cookiejar.CookieJar()
@@ -480,9 +480,9 @@ class TestHTTPRequestHandler(TestRequestHandlerBase):
 
         with handler(cookiejar=cookiejar) as rh:
             data = validate_and_send(
-                rh, Request(f'http://127.0.0.1:{self.http_port}/headers', headers={'cookie': 'test=test'})).read()
-            assert b'Cookie: test=ytdlp' not in data
-            assert b'Cookie: test=test' in data
+                rh, Request(f'http://127.0.0.1:{self.http_port}/headers', headers={'cookie': 'test=test3'})).read()
+            assert b'cookie: test=ytdlp' not in data.lower()
+            assert b'cookie: test=test3' in data.lower()
 
     @pytest.mark.parametrize('handler', ['Urllib', 'CurlCFFI'], indirect=True)
     def test_redirect_loop(self, handler):
@@ -505,29 +505,29 @@ class TestHTTPRequestHandler(TestRequestHandlerBase):
 
         with handler(cookiejar=cookiejar) as rh:
             data = validate_and_send(rh, Request(f'http://127.0.0.1:{self.http_port}/headers')).read()
-            assert b'Cookie: test=ytdlp' in data
+            assert b'cookie: test=ytdlp' in data.lower()
 
         # Per request
         with handler() as rh:
             data = validate_and_send(
                 rh, Request(f'http://127.0.0.1:{self.http_port}/headers', extensions={'cookiejar': cookiejar})).read()
-            assert b'Cookie: test=ytdlp' in data
+            assert b'cookie: test=ytdlp' in data.lower()
 
     @pytest.mark.parametrize('handler', ['Urllib', 'CurlCFFI'], indirect=True)
     def test_headers(self, handler):
 
         with handler(headers=HTTPHeaderDict({'test1': 'test', 'test2': 'test2'})) as rh:
             # Global Headers
-            data = validate_and_send(rh, Request(f'http://127.0.0.1:{self.http_port}/headers')).read()
-            assert b'Test1: test' in data
+            data = validate_and_send(rh, Request(f'http://127.0.0.1:{self.http_port}/headers')).read().lower()
+            assert b'test1: test' in data
 
             # Per request headers, merged with global
             data = validate_and_send(rh, Request(
-                f'http://127.0.0.1:{self.http_port}/headers', headers={'test2': 'changed', 'test3': 'test3'})).read()
-            assert b'Test1: test' in data
-            assert b'Test2: changed' in data
-            assert b'Test2: test2' not in data
-            assert b'Test3: test3' in data
+                f'http://127.0.0.1:{self.http_port}/headers', headers={'test2': 'changed', 'test3': 'test3'})).read().lower()
+            assert b'test1: test' in data
+            assert b'test2: changed' in data
+            assert b'test2: test2' not in data
+            assert b'test3: test3' in data
 
     @pytest.mark.parametrize('handler', ['Urllib', 'CurlCFFI'], indirect=True)
     def test_timeout(self, handler):
@@ -608,7 +608,7 @@ class TestHTTPRequestHandler(TestRequestHandlerBase):
             res = validate_and_send(
                 rh, Request(
                     f'http://127.0.0.1:{self.http_port}/content-encoding',
-                    headers={'ytdl-encoding': 'unsupported'}))
+                    headers={'ytdl-encoding': 'unsupported', 'Accept-Encoding': '*'}))
             assert res.headers.get('Content-Encoding') == 'unsupported'
             assert res.read() == b'raw'
 
@@ -1011,7 +1011,7 @@ class TestRequestHandlerValidation:
     def test_invalid_request_type(self):
         rh = self.ValidationRH(logger=FakeLogger())
         for method in (rh.validate, rh.send):
-            with pytest.raises(TypeError, match='Expected an instance of Request'):
+            with pytest.raises(TypeError, match=r'Expected an instance of Request'):
                 method('not a request')
 
 
@@ -1204,7 +1204,7 @@ class TestYoutubeDLNetworking:
                 with pytest.raises(RequestError, match=r'Try using --legacy-server-connect'):
                     ydl.urlopen(f'ssl://{error}')
 
-            with pytest.raises(SSLError, match='testerror'):
+            with pytest.raises(SSLError, match=r'testerror'):
                 ydl.urlopen('ssl://testerror')
 
     @pytest.mark.parametrize('proxy_key,proxy_url,expected', [

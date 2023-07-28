@@ -90,7 +90,7 @@ class TestNetworkingUtils:
         assert make_socks_proxy_opts(socks_proxy) == expected
 
     def test_make_socks_proxy_unknown(self):
-        with pytest.raises(ValueError, match='Unknown SOCKS proxy version: socks'):
+        with pytest.raises(ValueError, match=r'Unknown SOCKS proxy version: socks'):
             make_socks_proxy_opts('socks://127.0.0.1')
 
     @pytest.mark.skipif(not certifi, reason='certifi is not installed')
