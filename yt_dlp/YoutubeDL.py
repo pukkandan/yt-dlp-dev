@@ -4056,6 +4056,11 @@ class YoutubeDL:
         clean_proxies(proxies=req.proxies, headers=req.headers)
         clean_headers(req.headers)
 
+        # XXX: Remove
+        impersonate_debug = os.environ.get('YT_DLP_CCI_IMPERSONATE')
+        if impersonate_debug:
+            req.extensions['impersonate'] = impersonate_debug
+
         try:
             return self._request_director.send(req)
         except NoSupportingHandlers as e:
