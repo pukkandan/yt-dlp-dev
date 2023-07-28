@@ -219,8 +219,9 @@ class CurlCFFIRH(RequestHandler, InstanceStoreMixin, ImpersonateHandlerMixin):
 
 @register_preference(CurlCFFIRH)
 def curl_cffi_preference(handler: RequestHandler, request: Request) -> int:
-    if request.extensions.get('impersonate') or os.environ.get('YT_DLP_PREFER_CCI'):
+    if request.extensions.get('impersonate') or os.environ.get('YT_DLP_PREFER_CCI'):  # FIXME: Remove ENV
         return 1000
+    return -1000
 
 
 # https://curl.se/libcurl/c/libcurl-errors.html
