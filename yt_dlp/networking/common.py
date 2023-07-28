@@ -34,23 +34,32 @@ from ..utils.networking import HTTPHeaderDict
 
 if typing.TYPE_CHECKING:
     RequestData = bytes | Iterable[bytes] | typing.IO | None
-    Preference = typing.Callable[[RequestHandler, Request], int]
 
 _RH_PREFERENCES: set[Preference] = set()
 
 
-def register_preference(*handlers: type[RequestHandler]):
-    assert all(issubclass(handler, RequestHandler) for handler in handlers)
+def register_preference(preference: Preference):
+    _RH_PREFERENCES.add(preference)
+    return preference
 
-    def outer(preference: Preference):
-        @functools.wraps(preference)
-        def inner(handler, *args, **kwargs):
-            if not handlers or isinstance(handler, handlers):
-                return preference(handler, *args, **kwargs)
-            return 0
-        _RH_PREFERENCES.add(inner)
-        return inner
-    return outer
+
+class Preference(abc.ABC):
+    """Preference class
+
+    Used by RequestDirector to determine the order in which RequestHandlers should be tried for a given request.
+    The higher the preference, the higher the priority of the handler.
+
+    Subclasses should implement _get_preference to dynamically generate a preference based off the request and handler.
+
+    The returned preference should be an integer. The default preference is 0.
+    """
+
+    def get_preference(self, handler: RequestHandler, request: Request) -> int:
+        return self._get_preference(handler, request)
+
+    @abc.abstractmethod
+    def _get_preference(self, *args, **kwargs):
+        pass
 
 
 class RequestDirector:
@@ -60,8 +69,6 @@ class RequestDirector:
 
     @param logger: Logger instance.
     @param verbose: Print debug request information to stdout.
-
-    TODO: preferences doc
     """
 
     def __init__(self, logger, verbose=False):
@@ -82,7 +89,7 @@ class RequestDirector:
     def _get_handlers(self, request: Request) -> list[RequestHandler]:
         """Sorts handlers by preference, given a request"""
         preferences = {
-            rh: sum(pref(rh, request) for pref in self.preferences)
+            rh: sum(pref.get_preference(rh, request) for pref in self.preferences)
             for rh in self.handlers.values()
         }
         self._print_verbose('Handler preferences for this request: %s' % ', '.join(

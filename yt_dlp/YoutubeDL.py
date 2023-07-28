@@ -4113,7 +4113,7 @@ class YoutubeDL:
                     },
                 }),
             ))
-        director.preferences.update(preferences)
+        director.preferences.update(pref() for pref in preferences)
         return director
 
     def encode(self, s):

@@ -39,7 +39,7 @@ from yt_dlp.networking import (
     Response,
 )
 from yt_dlp.networking._urllib import UrllibRH
-from yt_dlp.networking.common import _REQUEST_HANDLERS
+from yt_dlp.networking.common import _REQUEST_HANDLERS, Preference
 from yt_dlp.networking.exceptions import (
     CertificateVerifyError,
     HTTPError,
@@ -1123,13 +1123,14 @@ class TestRequestDirector:
             def _send(self, request: Request):
                 return Response(fp=io.BytesIO(b'supported'), headers={}, url=request.url)
 
-        def some_preference(rh, request):
-            return (0 if not isinstance(rh, SomeRH)
-                    else 100 if 'prefer' in request.headers
-                    else -1)
+        class SomePreference(Preference):
+            def _get_preference(rh, request):
+                return (0 if not isinstance(rh, SomeRH)
+                        else 100 if 'prefer' in request.headers
+                        else -1)
 
         director.add_handler(SomeRH(logger=FakeLogger()))
-        director.preferences.add(some_preference)
+        director.preferences.add(SomePreference())
 
         assert director.send(Request('http://')).read() == b''
         assert director.send(Request('http://', headers={'prefer': '1'})).read() == b'supported'

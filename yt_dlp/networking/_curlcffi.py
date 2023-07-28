@@ -6,6 +6,7 @@ from enum import IntEnum
 from ._helper import ImpersonateHandlerMixin, InstanceStoreMixin, select_proxy
 from .common import (
     Features,
+    Preference,
     Request,
     RequestHandler,
     Response,
@@ -216,12 +217,15 @@ class CurlCFFIRH(RequestHandler, InstanceStoreMixin, ImpersonateHandlerMixin):
 
         return response
 
-
-@register_preference(CurlCFFIRH)
-def curl_cffi_preference(handler: RequestHandler, request: Request) -> int:
-    if request.extensions.get('impersonate') or os.environ.get('YT_DLP_PREFER_CCI'):  # FIXME: Remove ENV
-        return 1000
-    return -1000
+@register_preference
+class CurlCFFIPreference(Preference):
+    def _get_preference(handler: RequestHandler, request: Request) -> int:
+        if not isinstance(handler, CurlCFFIRH):
+            return 0
+        elif request.extensions.get('impersonate') or os.environ.get('YT_DLP_PREFER_CCI'):
+            return 1000  # FIXME: Remove ENV
+        else:
+            return -1000
 
 
 # https://curl.se/libcurl/c/libcurl-errors.html
