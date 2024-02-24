@@ -3,21 +3,16 @@ import json
 from .common import InfoExtractor
 from ..networking import Request
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    clean_html,
-    ExtractorError,
-    int_or_none,
-    parse_age_limit,
-    try_get,
-)
+from ..utils import ExtractorError, clean_html, int_or_none, parse_age_limit, try_get
 
 
 class HRTiBaseIE(InfoExtractor):
     """
-        Base Information Extractor for Croatian Radiotelevision
-        video on demand site https://hrti.hrt.hr
-        Reverse engineered from the JavaScript app in app.min.js
+    Base Information Extractor for Croatian Radiotelevision
+    video on demand site https://hrti.hrt.hr
+    Reverse engineered from the JavaScript app in app.min.js
     """
+
     _NETRC_MACHINE = 'hrti'
 
     _APP_LANGUAGE = 'hr'

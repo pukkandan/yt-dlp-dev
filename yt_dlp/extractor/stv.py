@@ -1,12 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    float_or_none,
-    int_or_none,
-    smuggle_url,
-    str_or_none,
-    try_get,
-)
+from ..utils import float_or_none, int_or_none, smuggle_url, str_or_none, try_get
 
 
 class STVPlayerIE(InfoExtractor):
@@ -21,7 +15,7 @@ class STVPlayerIE(InfoExtractor):
             'ext': 'mp4',
             'upload_date': '20170301',
             'title': '60 seconds on set with Laura Norton',
-            'description': "How many questions can Laura - a.k.a Kerry Wyatt - answer in 60 seconds? Let\'s find out!",
+            'description': 'How many questions can Laura - a.k.a Kerry Wyatt - answer in 60 seconds? Let\'s find out!',
             'timestamp': 1488388054,
             'uploader_id': '1486976045',
         },
@@ -47,7 +41,7 @@ class STVPlayerIE(InfoExtractor):
 
         api_path, resp = None, {}
         for k, v in player_api_cache.items():
-            if k.startswith('/episodes/') or k.startswith('/shortform/'):
+            if k.startswith(('/episodes/', '/shortform/')):
                 api_path, resp = k, v
                 break
         else:

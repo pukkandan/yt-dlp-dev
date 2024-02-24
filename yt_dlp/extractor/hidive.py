@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    try_get,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, int_or_none, try_get, url_or_none, urlencode_postdata
 
 
 class HiDiveIE(InfoExtractor):

@@ -35,6 +35,7 @@ class HTML5MediaEmbedIE(InfoExtractor):
 
 class QuotedHTMLIE(InfoExtractor):
     """For common cases of quoted/escaped html parts in the webpage"""
+
     _VALID_URL = False
     IE_NAME = 'generic:quoted-html'
     IE_DESC = False  # Do not list

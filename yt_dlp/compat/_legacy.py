@@ -1,4 +1,4 @@
-""" Do not use! """
+"""Do not use!"""
 
 import base64
 import collections

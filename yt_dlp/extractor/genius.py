@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    js_to_json,
-    smuggle_url,
-    str_or_none,
-    traverse_obj,
-    unescapeHTML,
-)
+from ..utils import ExtractorError, js_to_json, smuggle_url, str_or_none, traverse_obj, unescapeHTML
 
 
 class GeniusIE(InfoExtractor):

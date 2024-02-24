@@ -2,11 +2,7 @@ import json
 
 from .radiocanada import RadioCanadaIE
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    merge_dicts,
-)
+from ..utils import ExtractorError, int_or_none, merge_dicts
 
 
 class TouTvIE(RadioCanadaIE):  # XXX: Do not subclass from concrete IE

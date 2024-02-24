@@ -6,12 +6,7 @@ import random
 import re
 import time
 
-from ..minicurses import (
-    BreaklineStatusPrinter,
-    MultilineLogger,
-    MultilinePrinter,
-    QuietMultilinePrinter,
-)
+from ..minicurses import BreaklineStatusPrinter, MultilineLogger, MultilinePrinter, QuietMultilinePrinter
 from ..utils import (
     IDENTITY,
     NO_DEFAULT,
@@ -35,7 +30,8 @@ from ..utils import (
 
 
 class FileDownloader:
-    """File Downloader class.
+    """
+    File Downloader class.
 
     File downloader objects are the ones responsible of downloading the
     actual video file and writing it to disk.
@@ -411,12 +407,17 @@ class FileDownloader:
 
     @staticmethod
     def supports_manifest(manifest):
-        """ Whether the downloader can download the fragments from the manifest.
-        Redefine in subclasses if needed. """
+        """
+        Whether the downloader can download the fragments from the manifest.
+
+        Redefine in subclasses if needed.
+        """
         pass
 
     def download(self, filename, info_dict, subtitle=False):
-        """Download to a filename using the info from info_dict
+        """
+        Download to a filename using the info from info_dict
+
         Return True on success and False otherwise
         """
         nooverwrites_and_exists = (

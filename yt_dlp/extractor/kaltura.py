@@ -1,21 +1,19 @@
 import base64
+import contextlib
 import json
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_urlparse,
-    compat_parse_qs,
-)
+from ..compat import compat_parse_qs, compat_urlparse
 from ..utils import (
-    clean_html,
     ExtractorError,
+    clean_html,
     format_field,
     int_or_none,
-    unsmuggle_url,
+    remove_start,
     smuggle_url,
     traverse_obj,
-    remove_start
+    unsmuggle_url,
 )
 
 
@@ -242,7 +240,7 @@ class KalturaIE(InfoExtractor):
 
     def _kaltura_api_call(self, video_id, actions, service_url=None, *args, **kwargs):
         params = actions[0]
-        params.update({i: a for i, a in enumerate(actions[1:], start=1)})
+        params.update(dict(enumerate(actions[1:], start=1)))
 
         data = self._download_json(
             (service_url or self._SERVICE_URL) + self._SERVICE_BASE,
@@ -423,14 +421,9 @@ class KalturaIE(InfoExtractor):
                 # Unfortunately, data returned in kalturaIframePackageData lacks
                 # captions so we will try requesting the complete data using
                 # regular approach since we now know the entry_id
-                try:
+                with contextlib.suppress(ExtractorError):
                     _, info, flavor_assets, captions = self._get_video_info(
                         entry_id, partner_id, player_type=player_type)
-                except ExtractorError:
-                    # Regular scenario failed but we already have everything
-                    # extracted apart from captions and can process at least
-                    # with this
-                    pass
             elif 'uiconf_id' in params and 'flashvars[playlistAPI.kpl0Id]' in params:
                 playlist_id = params['flashvars[playlistAPI.kpl0Id]'][0]
                 webpage = self._download_webpage(url, playlist_id)

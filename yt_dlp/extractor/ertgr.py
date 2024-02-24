@@ -4,15 +4,15 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import (
+    ExtractorError,
     clean_html,
     determine_ext,
-    ExtractorError,
     dict_get,
     int_or_none,
     merge_dicts,
-    parse_qs,
     parse_age_limit,
     parse_iso8601,
+    parse_qs,
     str_or_none,
     try_get,
     url_or_none,
@@ -42,7 +42,7 @@ class ERTFlixBaseIE(InfoExtractor):
             return response
 
     def _call_api_get_tiles(self, video_id, *tile_ids):
-        requested_tile_ids = [video_id] + list(tile_ids)
+        requested_tile_ids = [video_id, *list(tile_ids)]
         requested_tiles = [{'Id': tile_id} for tile_id in requested_tile_ids]
         tiles_response = self._call_api(
             video_id, method='Tile/GetTiles', api_version=2,
@@ -176,7 +176,7 @@ class ERTFlixIE(ERTFlixBaseIE):
     def _extract_episode(self, episode):
         codename = try_get(episode, lambda x: x['Codename'], compat_str)
         title = episode.get('Title')
-        description = clean_html(dict_get(episode, ('ShortDescription', 'TinyDescription', )))
+        description = clean_html(dict_get(episode, ('ShortDescription', 'TinyDescription')))
         if not codename or not title or not episode.get('HasPlayableStream', True):
             return
         thumbnail = next((
@@ -212,7 +212,7 @@ class ERTFlixIE(ERTFlixBaseIE):
         series_info = {
             'age_limit': self._parse_age_rating(series),
             'title': series.get('Title'),
-            'description': dict_get(series, ('ShortDescription', 'TinyDescription', )),
+            'description': dict_get(series, ('ShortDescription', 'TinyDescription')),
         }
         if season_numbers:
             season_titles = season_titles or []

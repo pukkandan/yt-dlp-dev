@@ -1,11 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_urlparse
-from ..utils import (
-    fix_xml_ampersands,
-    float_or_none,
-    xpath_with_ns,
-    xpath_text,
-)
+from ..utils import fix_xml_ampersands, float_or_none, xpath_text, xpath_with_ns
 
 
 class KarriereVideosIE(InfoExtractor):

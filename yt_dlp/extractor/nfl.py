@@ -6,14 +6,7 @@ import uuid
 
 from .anvato import AnvatoIE
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    clean_html,
-    determine_ext,
-    get_element_by_class,
-    traverse_obj,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, clean_html, determine_ext, get_element_by_class, traverse_obj, urlencode_postdata
 
 
 class NFLBaseIE(InfoExtractor):
@@ -127,7 +120,7 @@ class NFLBaseIE(InfoExtractor):
             raise ExtractorError('Failed to retrieve account info with provided cookies', expected=True)
 
     def _get_auth_token(self, url, slug):
-        if self._TOKEN and self._TOKEN_EXPIRY > int(time.time() + 30):
+        if self._TOKEN and int(time.time() + 30) < self._TOKEN_EXPIRY:
             return
 
         if not self._ACCOUNT_INFO:

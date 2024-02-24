@@ -4,11 +4,7 @@ import time
 
 from .common import FileDownloader
 from ..networking import Request
-from ..networking.exceptions import (
-    CertificateVerifyError,
-    HTTPError,
-    TransportError,
-)
+from ..networking.exceptions import CertificateVerifyError, HTTPError, TransportError
 from ..utils import (
     ContentTooShortError,
     RetryManager,
@@ -194,7 +190,7 @@ class HttpFD(FileDownloader):
 
         def close_stream():
             if ctx.stream is not None:
-                if not ctx.tmpfilename == '-':
+                if ctx.tmpfilename != '-':
                     ctx.stream.close()
                 ctx.stream = None
 

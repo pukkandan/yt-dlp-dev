@@ -1,19 +1,8 @@
 import itertools
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_b64decode,
-    compat_ord,
-    compat_str,
-    compat_urllib_parse_unquote,
-)
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_iso8601,
-    strip_or_none,
-    try_get,
-)
+from ..compat import compat_b64decode, compat_ord, compat_str, compat_urllib_parse_unquote
+from ..utils import ExtractorError, int_or_none, parse_iso8601, strip_or_none, try_get
 
 
 class MixcloudBaseIE(InfoExtractor):
@@ -239,10 +228,7 @@ class MixcloudPlaylistBaseIE(MixcloudBaseIE):
     def _real_extract(self, url):
         username, slug = self._match_valid_url(url).groups()
         username = compat_urllib_parse_unquote(username)
-        if not slug:
-            slug = 'uploads'
-        else:
-            slug = compat_urllib_parse_unquote(slug)
+        slug = compat_urllib_parse_unquote(slug) if slug else 'uploads'
         playlist_id = '%s_%s' % (username, slug)
 
         is_playlist_type = self._ROOT_TYPE == 'playlist'

@@ -2,16 +2,7 @@ import re
 
 from .common import InfoExtractor
 from ..compat import compat_urllib_parse_urlparse
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    int_or_none,
-    merge_dicts,
-    parse_iso8601,
-    qualities,
-    try_get,
-    urljoin,
-)
+from ..utils import ExtractorError, determine_ext, int_or_none, merge_dicts, parse_iso8601, qualities, try_get, urljoin
 
 
 class NDRBaseIE(InfoExtractor):
@@ -141,7 +132,7 @@ class NDRIE(NDRBaseIE):
         timestamp = parse_iso8601(
             self._search_regex(
                 (r'<span[^>]+itemprop="(?:datePublished|uploadDate)"[^>]+content="(?P<cont>[^"]+)"',
-                 r'\bvar\s*pdt\s*=\s*(?P<q>["\'])(?P<cont>(?:(?!(?P=q)).)+)(?P=q)', ),
+                 r'\bvar\s*pdt\s*=\s*(?P<q>["\'])(?P<cont>(?:(?!(?P=q)).)+)(?P=q)'),
                 webpage, 'upload date', group='cont', default=None))
         info = self._search_json_ld(webpage, display_id, default={})
         return merge_dicts({
@@ -200,7 +191,7 @@ class NJoyIE(NDRBaseIE):
         # find tell-tale URL with the actual ID, or ...
         video_id = self._search_regex(
             (r'''\bsrc\s*=\s*["']?(?:/\w+)+/([a-z]+\d+)(?!\.)\b''',
-             r'<iframe[^>]+id="pp_([\da-z]+)"', ),
+             r'<iframe[^>]+id="pp_([\da-z]+)"'),
             webpage, 'NDR id', default=None)
 
         description = (

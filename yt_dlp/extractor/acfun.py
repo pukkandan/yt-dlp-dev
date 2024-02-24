@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    format_field,
-    int_or_none,
-    traverse_obj,
-    parse_codecs,
-    parse_qs,
-)
+from ..utils import float_or_none, format_field, int_or_none, parse_codecs, parse_qs, traverse_obj
 
 
 class AcFunVideoBaseIE(InfoExtractor):

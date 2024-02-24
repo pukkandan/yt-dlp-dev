@@ -4,6 +4,7 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import (
+    OnDemandPagedList,
     format_field,
     int_or_none,
     parse_resolution,
@@ -12,7 +13,6 @@ from ..utils import (
     unified_timestamp,
     url_or_none,
     urljoin,
-    OnDemandPagedList,
 )
 
 
@@ -1525,10 +1525,7 @@ class PeerTubeIE(InfoExtractor):
         categories = [category] if category else None
 
         nsfw = video.get('nsfw')
-        if nsfw is bool:
-            age_limit = 18 if nsfw else 0
-        else:
-            age_limit = None
+        age_limit = {True: 18, False: 0}.get(nsfw)
 
         webpage_url = 'https://%s/videos/watch/%s' % (host, video_id)
 

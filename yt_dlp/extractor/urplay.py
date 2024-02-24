@@ -1,13 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    dict_get,
-    ExtractorError,
-    int_or_none,
-    ISO639Utils,
-    parse_age_limit,
-    try_get,
-    unified_timestamp,
-)
+from ..utils import ExtractorError, ISO639Utils, dict_get, int_or_none, parse_age_limit, try_get, unified_timestamp
 
 
 class URPlayIE(InfoExtractor):
@@ -104,7 +96,7 @@ class URPlayIE(InfoExtractor):
         subtitles = {}
 
         def parse_lang_code(code):
-            "3-character language code or None (utils candidate)"
+            """3-character language code or None (utils candidate)"""
             if code is None:
                 return
             lang = code.lower()
@@ -116,14 +108,14 @@ class URPlayIE(InfoExtractor):
             for k, v in stream.items():
                 if (k in ('sd', 'hd') or not isinstance(v, dict)):
                     continue
-                lang, sttl_url = (v.get(kk) for kk in ('language', 'location', ))
+                lang, sttl_url = (v.get(kk) for kk in ('language', 'location'))
                 if not sttl_url:
                     continue
                 lang = parse_lang_code(lang)
                 if not lang:
                     continue
                 sttl = subtitles.get(lang) or []
-                sttl.append({'ext': k, 'url': sttl_url, })
+                sttl.append({'ext': k, 'url': sttl_url})
                 subtitles[lang] = sttl
 
         image = urplayer_data.get('image') or {}

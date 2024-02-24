@@ -12,8 +12,8 @@ import sys
 from dataclasses import dataclass
 from zipimport import zipimporter
 
-from .compat import functools as functools  # noqa: PLC0414
 from .compat import compat_realpath, compat_shlex_quote
+from .compat import functools as functools  # noqa: PLC0414
 from .networking import Request
 from .networking.exceptions import HTTPError, network_exceptions
 from .utils import (
@@ -26,14 +26,7 @@ from .utils import (
     system_identifier,
     version_tuple,
 )
-from .version import (
-    CHANNEL,
-    ORIGIN,
-    RELEASE_GIT_HEAD,
-    UPDATE_HINT,
-    VARIANT,
-    __version__,
-)
+from .version import CHANNEL, ORIGIN, RELEASE_GIT_HEAD, UPDATE_HINT, VARIANT, __version__
 
 UPDATE_SOURCES = {
     'stable': 'yt-dlp/yt-dlp',
@@ -60,7 +53,7 @@ def _get_variant_and_executable_path():
         path = sys.executable
         if not hasattr(sys, '_MEIPASS'):
             return 'py2exe', path
-        elif sys._MEIPASS == os.path.dirname(path):
+        elif os.path.dirname(path) == sys._MEIPASS:
             return f'{sys.platform}_dir', path
         elif sys.platform == 'darwin':
             machine = '_legacy' if version_tuple(platform.mac_ver()[0]) < (10, 15) else ''
@@ -157,10 +150,7 @@ def _sha256_file(path):
 
 
 def _make_label(origin, tag, version=None):
-    if '/' in origin:
-        channel = _INVERSE_UPDATE_SOURCES.get(origin, origin)
-    else:
-        channel = origin
+    channel = _INVERSE_UPDATE_SOURCES.get(origin, origin) if '/' in origin else origin
     label = f'{channel}@{tag}'
     if version and version != tag:
         label += f' build {version}'
@@ -191,6 +181,7 @@ class UpdateInfo:
         checksum           Expected checksum (if available) of the binary to be
                         updated to. (default: None)
     """
+
     tag: str
     version: str | None = None
     requested_version: str | None = None
@@ -606,7 +597,9 @@ class Updater:
 
 
 def run_update(ydl):
-    """Update the program file with the latest version from the repository
+    """
+    Update the program file with the latest version from the repository
+
     @returns    Whether there was a successful update (No update = False)
     """
     return Updater(ydl).update()

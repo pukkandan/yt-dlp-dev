@@ -20,14 +20,15 @@ from ..networking._urllib import HTTPHandler
 # isort: split
 from .networking import random_user_agent, std_headers  # noqa: F401
 from ..cookies import YoutubeDLCookieJar  # noqa: F401
-from ..networking._urllib import PUTRequest  # noqa: F401
-from ..networking._urllib import SUPPORTED_ENCODINGS, HEADRequest  # noqa: F401
-from ..networking._urllib import ProxyHandler as PerRequestProxyHandler  # noqa: F401
-from ..networking._urllib import RedirectHandler as YoutubeDLRedirectHandler  # noqa: F401
 from ..networking._urllib import (  # noqa: F401
+    SUPPORTED_ENCODINGS,
+    HEADRequest,
+    PUTRequest,
     make_socks_conn_class,
     update_Request,
 )
+from ..networking._urllib import ProxyHandler as PerRequestProxyHandler  # noqa: F401
+from ..networking._urllib import RedirectHandler as YoutubeDLRedirectHandler  # noqa: F401
 from ..networking.exceptions import HTTPError, network_exceptions  # noqa: F401
 
 has_certifi = bool(certifi)
@@ -36,6 +37,7 @@ has_websockets = bool(websockets)
 
 class WebSocketsWrapper:
     """Wraps websockets module to use in non-async scopes"""
+
     pool = None
 
     def __init__(self, url, headers=None, connect=True, **ws_kwargs):
@@ -121,7 +123,7 @@ def decode_base(value, digits):
 
 
 def platform_name():
-    """ Returns the platform name as a str """
+    """Returns the platform name as a str"""
     return platform.platform()
 
 

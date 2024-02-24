@@ -1,13 +1,7 @@
 import urllib.parse
+
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    parse_duration,
-    remove_end,
-    unified_strdate,
-    ExtractorError,
-)
+from ..utils import ExtractorError, determine_ext, int_or_none, parse_duration, remove_end, unified_strdate
 
 
 class Porn91IE(InfoExtractor):

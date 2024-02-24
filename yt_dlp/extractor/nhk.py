@@ -135,21 +135,20 @@ class NhkBaseIE(InfoExtractor):
                 'id': vod_id,
             })
 
+        elif fetch_episode:
+            audio_path = episode['audio']['audio']
+            info['formats'] = self._extract_m3u8_formats(
+                'https://nhkworld-vh.akamaihd.net/i%s/master.m3u8' % audio_path,
+                episode_id, 'm4a', entry_protocol='m3u8_native',
+                m3u8_id='hls', fatal=False)
+            for f in info['formats']:
+                f['language'] = lang
         else:
-            if fetch_episode:
-                audio_path = episode['audio']['audio']
-                info['formats'] = self._extract_m3u8_formats(
-                    'https://nhkworld-vh.akamaihd.net/i%s/master.m3u8' % audio_path,
-                    episode_id, 'm4a', entry_protocol='m3u8_native',
-                    m3u8_id='hls', fatal=False)
-                for f in info['formats']:
-                    f['language'] = lang
-            else:
-                info.update({
-                    '_type': 'url_transparent',
-                    'ie_key': NhkVodIE.ie_key(),
-                    'url': url,
-                })
+            info.update({
+                '_type': 'url_transparent',
+                'ie_key': NhkVodIE.ie_key(),
+                'url': url,
+            })
         return info
 
 
@@ -669,7 +668,7 @@ class NhkRadiruLiveIE(InfoExtractor):
         present_info = traverse_obj(noa_info, ('nowonair_list', self._NOA_STATION_IDS.get(station), 'present'))
 
         return {
-            'title': ' '.join(traverse_obj(present_info, (('service', 'area',), 'name', {str}))),
+            'title': ' '.join(traverse_obj(present_info, (('service', 'area'), 'name', {str}))),
             'id': join_nonempty(station, area),
             'thumbnails': traverse_obj(present_info, ('service', 'images', ..., {
                 'url': 'url',

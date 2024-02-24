@@ -4,13 +4,7 @@ import time
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    classproperty,
-    float_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import ExtractorError, classproperty, float_or_none, traverse_obj, url_or_none
 
 
 class DacastBaseIE(InfoExtractor):

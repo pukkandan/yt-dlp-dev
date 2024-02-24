@@ -4,7 +4,6 @@ import itertools
 import json
 import re
 import time
-
 from urllib.parse import urlparse
 
 from .common import InfoExtractor, SearchInfoExtractor
@@ -174,7 +173,8 @@ class NiconicoIE(InfoExtractor):
     _NETRC_MACHINE = 'niconico'
     _COMMENT_API_ENDPOINTS = (
         'https://nvcomment.nicovideo.jp/legacy/api.json',
-        'https://nmsg.nicovideo.jp/api.json',)
+        'https://nmsg.nicovideo.jp/api.json',
+    )
     _API_HEADERS = {
         'X-Frontend-ID': '6',
         'X-Frontend-Version': '0',
@@ -907,7 +907,7 @@ class NiconicoLiveIE(InfoExtractor):
         'url': 'https://live.nicovideo.jp/watch/lv339533123',
         'info_dict': {
             'id': 'lv339533123',
-            'title': '激辛ペヤング食べます‪( ;ᯅ; )‬（歌枠オーディション参加中）',
+            'title': '激辛ペヤング食べます\u202a( ;ᯅ; )\u202c（歌枠オーディション参加中）',
             'view_count': 1526,
             'comment_count': 1772,
             'description': '初めましてもかって言います❕\nのんびり自由に適当に暮らしてます',

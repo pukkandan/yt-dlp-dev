@@ -1,11 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    parse_duration,
-    url_or_none,
-)
+from ..utils import int_or_none, parse_duration, url_or_none
 from ..utils.traversal import traverse_obj
 
 

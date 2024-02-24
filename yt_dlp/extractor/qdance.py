@@ -2,15 +2,7 @@ import json
 import time
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    jwt_decode_hs256,
-    str_or_none,
-    traverse_obj,
-    try_call,
-    url_or_none,
-)
+from ..utils import ExtractorError, int_or_none, jwt_decode_hs256, str_or_none, traverse_obj, try_call, url_or_none
 
 
 class QDanceIE(InfoExtractor):

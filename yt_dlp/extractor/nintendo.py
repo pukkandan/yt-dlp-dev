@@ -2,12 +2,7 @@ import json
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    make_archive_id,
-    unified_timestamp,
-    urljoin,
-)
+from ..utils import ExtractorError, make_archive_id, unified_timestamp, urljoin
 from ..utils.traversal import traverse_obj
 
 

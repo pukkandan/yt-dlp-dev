@@ -1,14 +1,6 @@
 from .common import InfoExtractor
 from ..networking import HEADRequest
-from ..utils import (
-    UserNotLive,
-    float_or_none,
-    merge_dicts,
-    str_or_none,
-    traverse_obj,
-    unified_timestamp,
-    url_or_none,
-)
+from ..utils import UserNotLive, float_or_none, merge_dicts, str_or_none, traverse_obj, unified_timestamp, url_or_none
 
 
 class KickBaseIE(InfoExtractor):

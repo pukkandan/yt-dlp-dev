@@ -4,14 +4,7 @@ from urllib.parse import unquote
 
 from .common import InfoExtractor
 from ..compat import functools
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    make_archive_id,
-    mimetype2ext,
-    urljoin,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, make_archive_id, mimetype2ext, urljoin
 from ..utils.traversal import traverse_obj
 
 

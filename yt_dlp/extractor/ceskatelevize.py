@@ -3,13 +3,7 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_urllib_parse_unquote, compat_urllib_parse_urlparse
 from ..networking import Request
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    str_or_none,
-    traverse_obj,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, float_or_none, str_or_none, traverse_obj, urlencode_postdata
 
 USER_AGENTS = {
     'Safari': 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27',
@@ -122,7 +116,7 @@ class CeskaTelevizeIE(InfoExtractor):
             iframe_hash = self._download_webpage(
                 'https://www.ceskatelevize.cz/v-api/iframe-hash/',
                 playlist_id, note='Getting IFRAME hash')
-            query = {'hash': iframe_hash, 'origin': 'iVysilani', 'autoStart': 'true', type_: idec, }
+            query = {'hash': iframe_hash, 'origin': 'iVysilani', 'autoStart': 'true', type_: idec}
             webpage = self._download_webpage(
                 'https://www.ceskatelevize.cz/ivysilani/embed/iFramePlayer.php',
                 playlist_id, note='Downloading player', query=query)
@@ -130,7 +124,7 @@ class CeskaTelevizeIE(InfoExtractor):
         NOT_AVAILABLE_STRING = 'This content is not available at your territory due to limited copyright.'
         if '%s</p>' % NOT_AVAILABLE_STRING in webpage:
             self.raise_geo_restricted(NOT_AVAILABLE_STRING)
-        if any(not_found in webpage for not_found in ('Neplatný parametr pro videopřehrávač', 'IDEC nebyl nalezen', )):
+        if any(not_found in webpage for not_found in ('Neplatný parametr pro videopřehrávač', 'IDEC nebyl nalezen')):
             raise ExtractorError('no video with IDEC available', video_id=idec, expected=True)
 
         type_ = None
@@ -266,10 +260,10 @@ class CeskaTelevizeIE(InfoExtractor):
 
     @staticmethod
     def _fix_subtitles(subtitles):
-        """ Convert millisecond-based subtitles to SRT """
+        """Convert millisecond-based subtitles to SRT"""
 
         def _msectotimecode(msec):
-            """ Helper utility to convert milliseconds to timecode """
+            """Helper utility to convert milliseconds to timecode"""
             components = []
             for divider in [1000, 60, 60, 100]:
                 components.append(msec % divider)

@@ -1,14 +1,7 @@
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_qs,
-    traverse_obj,
-    update_url_query,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, int_or_none, parse_qs, traverse_obj, update_url_query, urlencode_postdata
 
 
 class PlaySuisseIE(InfoExtractor):

@@ -3,13 +3,7 @@ import re
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    OnDemandPagedList,
-    remove_end,
-    str_to_int,
-    unified_strdate,
-)
+from ..utils import ExtractorError, OnDemandPagedList, remove_end, str_to_int, unified_strdate
 
 
 class MotherlessIE(InfoExtractor):

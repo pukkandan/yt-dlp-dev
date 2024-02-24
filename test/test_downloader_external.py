@@ -10,14 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import http.cookiejar
 
 from test.helper import FakeYDL
-from yt_dlp.downloader.external import (
-    Aria2cFD,
-    AxelFD,
-    CurlFD,
-    FFmpegFD,
-    HttpieFD,
-    WgetFD,
-)
+from yt_dlp.downloader.external import Aria2cFD, AxelFD, CurlFD, FFmpegFD, HttpieFD, WgetFD
 
 TEST_COOKIE = {
     'version': 0,

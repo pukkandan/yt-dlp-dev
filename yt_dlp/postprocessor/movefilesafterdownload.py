@@ -2,12 +2,7 @@ import os
 
 from .common import PostProcessor
 from ..compat import shutil
-from ..utils import (
-    PostProcessingError,
-    decodeFilename,
-    encodeFilename,
-    make_dir,
-)
+from ..utils import PostProcessingError, decodeFilename, encodeFilename, make_dir
 
 
 class MoveFilesAfterDownloadPP(PostProcessor):

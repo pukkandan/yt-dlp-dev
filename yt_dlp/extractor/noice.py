@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    determine_ext,
-    int_or_none,
-    parse_iso8601,
-    traverse_obj,
-    variadic,
-)
+from ..utils import clean_html, determine_ext, int_or_none, parse_iso8601, traverse_obj, variadic
 
 
 class NoicePodcastIE(InfoExtractor):

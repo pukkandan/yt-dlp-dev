@@ -1,14 +1,6 @@
 from .common import InfoExtractor
 from .dailymotion import DailymotionIE
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    format_field,
-    int_or_none,
-    join_nonempty,
-    parse_iso8601,
-    parse_qs,
-)
+from ..utils import ExtractorError, determine_ext, format_field, int_or_none, join_nonempty, parse_iso8601, parse_qs
 
 
 class FranceTVBaseInfoExtractor(InfoExtractor):
@@ -165,12 +157,11 @@ class FranceTVIE(InfoExtractor):
                     'format_id': 'rtmp-%s' % format_id,
                     'ext': 'flv',
                 })
-            else:
-                if self._is_valid_url(video_url, video_id, format_id):
-                    formats.append({
-                        'url': video_url,
-                        'format_id': format_id,
-                    })
+            elif self._is_valid_url(video_url, video_id, format_id):
+                formats.append({
+                    'url': video_url,
+                    'format_id': format_id,
+                })
 
             # XXX: what is video['captions']?
 

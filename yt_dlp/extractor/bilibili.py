@@ -215,7 +215,7 @@ class BilibiliBaseIE(InfoExtractor):
             yield {
                 **metainfo,
                 'id': f'{video_id}_{cid}',
-                'title': f'{metainfo.get("title")} - {list(edges.values())[0].get("title")}',
+                'title': f'{metainfo.get("title")} - {next(iter(edges.values())).get("title")}',
                 'formats': self.extract_formats(play_info),
                 'description': f'{json.dumps(edges, ensure_ascii=False)}\n{metainfo.get("description", "")}',
                 'duration': float_or_none(play_info.get('timelength'), scale=1000),
@@ -2205,7 +2205,7 @@ class BiliLiveIE(InfoExtractor):
             raise ExtractorError('Streamer is not live', expected=True)
 
         formats = []
-        for qn in self._FORMATS.keys():
+        for qn in self._FORMATS:
             stream_data = self._call_api('xlive/web-room/v2/index/getRoomPlayInfo', room_id, {
                 'room_id': room_id,
                 'qn': qn,

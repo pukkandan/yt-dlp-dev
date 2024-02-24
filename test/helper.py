@@ -10,7 +10,7 @@ import types
 import yt_dlp.extractor
 from yt_dlp import YoutubeDL
 from yt_dlp.compat import compat_os_name
-from yt_dlp.utils import preferredencoding, try_call, write_string, find_available_port
+from yt_dlp.utils import find_available_port, preferredencoding, try_call, write_string
 
 if 'pytest' in sys.modules:
     import pytest
@@ -36,7 +36,7 @@ def get_params(override=None):
 
 
 def try_rm(filename):
-    """ Remove a file if it exists """
+    """Remove a file if it exists"""
     try:
         os.remove(filename)
     except OSError as ose:
@@ -45,10 +45,10 @@ def try_rm(filename):
 
 
 def report_warning(message, *args, **kwargs):
-    '''
+    """
     Print the message to stderr, it will be prefixed with 'WARNING:'
     If stderr is a tty file the 'WARNING:' will be colored
-    '''
+    """
     if sys.stderr.isatty() and compat_os_name != 'nt':
         _msg_header = '\033[0;33mWARNING:\033[0m'
     else:
@@ -284,11 +284,7 @@ def assertRegexpMatches(self, text, regexp, msg=None):
             note = 'Regexp didn\'t match: %r not found' % (regexp)
             if len(text) < 1000:
                 note += ' in %r' % text
-            if msg is None:
-                msg = note
-            else:
-                msg = note + ', ' + msg
-            self.assertTrue(m, msg)
+            self.assertTrue(m, note if msg is None else f'{note}, {msg}')
 
 
 def assertGreaterEqual(self, got, expected, msg=None):
@@ -306,7 +302,7 @@ def assertLessEqual(self, got, expected, msg=None):
 
 
 def assertEqual(self, got, expected, msg=None):
-    if not (got == expected):
+    if got != expected:
         if msg is None:
             msg = f'{got!r} not equal to {expected!r}'
         self.assertTrue(got == expected, msg)

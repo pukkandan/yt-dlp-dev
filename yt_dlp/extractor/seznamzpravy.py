@@ -1,15 +1,6 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_urlparse,
-)
-from ..utils import (
-    urljoin,
-    int_or_none,
-    parse_codecs,
-    parse_qs,
-    try_get,
-)
+from ..compat import compat_str, compat_urllib_parse_urlparse
+from ..utils import int_or_none, parse_codecs, parse_qs, try_get, urljoin
 
 
 def _raw_id(src_url):

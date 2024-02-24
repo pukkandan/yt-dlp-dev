@@ -9,15 +9,7 @@ from .common import InfoExtractor
 from .youtube import YoutubeIE
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    clean_html,
-    ExtractorError,
-    int_or_none,
-    OnDemandPagedList,
-    parse_age_limit,
-    str_or_none,
-    try_get,
-)
+from ..utils import ExtractorError, OnDemandPagedList, clean_html, int_or_none, parse_age_limit, str_or_none, try_get
 
 
 class ViceBaseIE(InfoExtractor):

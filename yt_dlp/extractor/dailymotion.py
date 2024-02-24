@@ -231,11 +231,10 @@ class DailymotionIE(DailymotionBaseInfoExtractor):
         url, smuggled_data = unsmuggle_url(url)
         video_id, playlist_id = self._match_valid_url(url).groups()
 
-        if playlist_id:
-            if self._yes_playlist(playlist_id, video_id):
-                return self.url_result(
-                    'http://www.dailymotion.com/playlist/' + playlist_id,
-                    'DailymotionPlaylist', playlist_id)
+        if self._yes_playlist(playlist_id, video_id):
+            return self.url_result(
+                'http://www.dailymotion.com/playlist/' + playlist_id,
+                'DailymotionPlaylist', playlist_id)
 
         password = self.get_param('videopassword')
         media = self._call_api(

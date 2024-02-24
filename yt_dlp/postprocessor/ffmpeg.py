@@ -119,7 +119,7 @@ class FFmpegPostProcessor(PostProcessor):
             filename = os.path.basename(location)
             basename = next((p for p in programs if p in filename), 'ffmpeg')
             dirname = os.path.dirname(os.path.abspath(location))
-            if basename in self._ffmpeg_to_avconv.keys():
+            if basename in self._ffmpeg_to_avconv:
                 self._prefer_ffmpeg = True
 
         paths = {p: os.path.join(dirname, p) for p in programs}
@@ -437,7 +437,7 @@ class FFmpegPostProcessor(PostProcessor):
 
 
 class FFmpegExtractAudioPP(FFmpegPostProcessor):
-    COMMON_AUDIO_EXTS = MEDIA_EXTENSIONS.common_audio + ('wma', )
+    COMMON_AUDIO_EXTS = (*MEDIA_EXTENSIONS.common_audio, 'wma')
     SUPPORTED_EXTS = tuple(ACODECS.keys())
     FORMAT_RE = create_mapping_re(('best', *SUPPORTED_EXTS))
 
@@ -470,11 +470,8 @@ class FFmpegExtractAudioPP(FFmpegPostProcessor):
         return ['-q:a', f'{q}']
 
     def run_ffmpeg(self, path, out_path, codec, more_opts):
-        if codec is None:
-            acodec_opts = []
-        else:
-            acodec_opts = ['-acodec', codec]
-        opts = ['-vn'] + acodec_opts + more_opts
+        acodec_opts = [] if codec is None else ['-acodec', codec]
+        opts = ['-vn', *acodec_opts, *more_opts]
         try:
             FFmpegPostProcessor.run_ffmpeg(self, path, out_path, opts)
         except FFmpegPostProcessorError as err:
@@ -497,7 +494,7 @@ class FFmpegExtractAudioPP(FFmpegPostProcessor):
         if filecodec == 'aac' and target_format in ('m4a', 'best'):
             # Lossless, but in another container
             extension, _, more_opts, acodec = *ACODECS['m4a'], 'copy'
-        elif target_format == 'best' or target_format == filecodec:
+        elif target_format in ('best', filecodec):
             # Lossless if possible
             try:
                 extension, _, more_opts, acodec = *ACODECS[filecodec], 'copy'
@@ -630,10 +627,9 @@ class FFmpegEmbedSubtitlePP(FFmpegPostProcessor):
                 sub_langs.append(lang)
                 sub_names.append(sub_info.get('name'))
                 sub_filenames.append(sub_info['filepath'])
-            else:
-                if not webm_vtt_warn and ext == 'webm' and sub_ext != 'vtt':
-                    webm_vtt_warn = True
-                    self.report_warning('Only WebVTT subtitles can be embedded in webm files')
+            elif not webm_vtt_warn and ext == 'webm' and sub_ext != 'vtt':
+                webm_vtt_warn = True
+                self.report_warning('Only WebVTT subtitles can be embedded in webm files')
             if not mp4_ass_warn and ext == 'mp4' and sub_ext == 'ass':
                 mp4_ass_warn = True
                 self.report_warning('ASS subtitles cannot be properly embedded in mp4 files; expect issues')
@@ -641,7 +637,7 @@ class FFmpegEmbedSubtitlePP(FFmpegPostProcessor):
         if not sub_langs:
             return [], info
 
-        input_files = [filename] + sub_filenames
+        input_files = [filename, *sub_filenames]
 
         opts = [
             *self.stream_copy_opts(ext=info['ext']),
@@ -738,7 +734,7 @@ class FFmpegMetadataPP(FFmpegPostProcessor):
 
         def add(meta_list, info_list=None):
             value = next((
-                str(info[key]) for key in [f'{meta_prefix}_'] + list(variadic(info_list or meta_list))
+                str(info[key]) for key in [f'{meta_prefix}_', *list(variadic(info_list or meta_list))]
                 if info.get(key) is not None), None)
             if value not in ('', None):
                 value = value.replace('\0', '')  # nul character cannot be passed in command line
@@ -923,7 +919,7 @@ class FFmpegFixupTimestampPP(FFmpegFixupPostProcessor):
             opts = ['-vf', 'setpts=PTS-STARTPTS']
         else:
             opts = ['-c', 'copy', '-bsf', 'setts=ts=TS-STARTPTS']
-        self._fixup('Fixing frame timestamp', info['filepath'], opts + [*self.stream_copy_opts(False), '-ss', self.trim])
+        self._fixup('Fixing frame timestamp', info['filepath'], [*opts, *self.stream_copy_opts(False), '-ss', self.trim])
         return [], info
 
 
@@ -1083,14 +1079,14 @@ class FFmpegThumbnailsConvertorPP(FFmpegPostProcessor):
     def fixup_webp(self, info, idx=-1):
         thumbnail_filename = info['thumbnails'][idx]['filepath']
         _, thumbnail_ext = os.path.splitext(thumbnail_filename)
-        if thumbnail_ext:
-            if thumbnail_ext.lower() != '.webp' and imghdr.what(thumbnail_filename) == 'webp':
-                self.to_screen('Correcting thumbnail "%s" extension to webp' % thumbnail_filename)
-                webp_filename = replace_extension(thumbnail_filename, 'webp')
-                os.replace(thumbnail_filename, webp_filename)
-                info['thumbnails'][idx]['filepath'] = webp_filename
-                info['__files_to_move'][webp_filename] = replace_extension(
-                    info['__files_to_move'].pop(thumbnail_filename), 'webp')
+        if (thumbnail_ext or '').lower() == '.webp' or imghdr.what(thumbnail_filename) != 'webp':
+            return
+        self.to_screen('Correcting thumbnail "%s" extension to webp' % thumbnail_filename)
+        webp_filename = replace_extension(thumbnail_filename, 'webp')
+        os.replace(thumbnail_filename, webp_filename)
+        info['thumbnails'][idx]['filepath'] = webp_filename
+        info['__files_to_move'][webp_filename] = replace_extension(
+            info['__files_to_move'].pop(thumbnail_filename), 'webp')
 
     @staticmethod
     def _options(target_ext):

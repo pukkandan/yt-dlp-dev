@@ -51,12 +51,7 @@ class Canalc2IE(InfoExtractor):
                     'format_id': 'http',
                 })
 
-        if formats:
-            info = {
-                'formats': formats,
-            }
-        else:
-            info = self._parse_html5_media_entries(url, webpage, url)[0]
+        info = {'formats': formats} if formats else self._parse_html5_media_entries(url, webpage, url)[0]
 
         info.update({
             'id': video_id,

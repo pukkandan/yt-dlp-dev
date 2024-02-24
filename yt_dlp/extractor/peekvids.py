@@ -1,13 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    get_element_by_class,
-    int_or_none,
-    merge_dicts,
-    url_or_none,
-)
+from ..utils import ExtractorError, get_element_by_class, int_or_none, merge_dicts, url_or_none
 
 
 class PeekVidsBaseIE(InfoExtractor):

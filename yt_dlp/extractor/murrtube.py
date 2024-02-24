@@ -2,13 +2,7 @@ import functools
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    OnDemandPagedList,
-    determine_ext,
-    int_or_none,
-    try_get,
-)
+from ..utils import ExtractorError, OnDemandPagedList, determine_ext, int_or_none, try_get
 
 
 class MurrtubeIE(InfoExtractor):

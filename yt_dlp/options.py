@@ -65,7 +65,7 @@ def parseOpts(overrideArguments=None, ignore_config_files='if_override'):
             yield read_config(config_dir, 'config.txt')
 
     def add_config(label, path=None, func=None):
-        """ Adds config and returns whether to continue """
+        """Adds config and returns whether to continue"""
         if root.parse_known_args()[0].ignoreconfig:
             return False
         elif func:
@@ -140,7 +140,7 @@ class _YoutubeDLHelpFormatter(optparse.IndentedHelpFormatter):
 
     @staticmethod
     def format_option_strings(option):
-        """ ('-o', '--option') -> -o, --format METAVAR """
+        """('-o', '--option') -> -o, --format METAVAR"""
         opts = join_nonempty(
             option._short_opts and option._short_opts[0],
             option._long_opts and option._long_opts[0],
@@ -261,7 +261,7 @@ def create_parser():
         except Exception as err:
             raise optparse.OptionValueError(f'wrong {opt_str} formatting; {err}')
         for key in keys:
-            out_dict[key] = out_dict.get(key, []) + [val] if append else val
+            out_dict[key] = [*out_dict.get(key, []), val] if append else val
         setattr(parser.values, option.dest, out_dict)
 
     def when_prefix(default):

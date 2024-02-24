@@ -1,15 +1,8 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    urlencode_postdata,
-)
+from ..compat import compat_str, compat_urlparse
+from ..utils import ExtractorError, int_or_none, urlencode_postdata
 
 
 class LyndaBaseIE(InfoExtractor):
@@ -44,7 +37,7 @@ class LyndaBaseIE(InfoExtractor):
             headers={
                 'Referer': referrer_url,
                 'X-Requested-With': 'XMLHttpRequest',
-            }, expected_status=(418, 500, ))
+            }, expected_status=(418, 500))
 
         self._check_error(response, ('email', 'password', 'ErrorMessage'))
 
@@ -220,7 +213,7 @@ class LyndaIE(LyndaBaseIE):
     def _fix_subtitles(self, subs):
         srt = ''
         seq_counter = 0
-        for pos in range(0, len(subs) - 1):
+        for pos in range(len(subs) - 1):
             seq_current = subs[pos]
             m_current = re.match(self._TIMECODE_REGEX, seq_current['Timecode'])
             if m_current is None:

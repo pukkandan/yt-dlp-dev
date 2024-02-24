@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    join_nonempty,
-    traverse_obj,
-    unified_timestamp,
-    update_url_query,
-)
+from ..utils import ExtractorError, join_nonempty, traverse_obj, unified_timestamp, update_url_query
 
 
 class Kanal2IE(InfoExtractor):

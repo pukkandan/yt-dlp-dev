@@ -2,8 +2,8 @@ from .common import InfoExtractor
 from ..compat import compat_str
 from ..utils import (
     ExtractorError,
-    int_or_none,
     float_or_none,
+    int_or_none,
     smuggle_url,
     str_or_none,
     try_get,
@@ -79,8 +79,8 @@ class NineNowIE(InfoExtractor):
             if not cache:
                 continue
             common_data = {
-                'episode': (cache.get(current_key) or list(cache.values())[0])[kind],
-                'season': (cache.get(current_key) or list(cache.values())[0]).get('season', None)
+                'episode': (cache.get(current_key) or next(iter(cache.values())))[kind],
+                'season': (cache.get(current_key) or next(iter(cache.values()))).get('season', None)
             }
             break
         else:

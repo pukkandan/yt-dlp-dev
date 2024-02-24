@@ -3,10 +3,10 @@ import re
 from .common import InfoExtractor
 from .wistia import WistiaIE
 from ..utils import (
-    clean_html,
     ExtractorError,
-    int_or_none,
+    clean_html,
     get_element_by_class,
+    int_or_none,
     strip_or_none,
     urlencode_postdata,
     urljoin,
@@ -29,7 +29,7 @@ class TeachableBaseIE(InfoExtractor):
         'courses.workitdaily.com': 'workitdaily',
     }
 
-    _VALID_URL_SUB_TUPLE = (_URL_PREFIX, '|'.join(re.escape(site) for site in _SITES.keys()))
+    _VALID_URL_SUB_TUPLE = (_URL_PREFIX, '|'.join(re.escape(site) for site in _SITES))
 
     def _real_initialize(self):
         self._logged_in = False

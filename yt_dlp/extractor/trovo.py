@@ -4,14 +4,7 @@ import random
 import string
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    format_field,
-    int_or_none,
-    str_or_none,
-    traverse_obj,
-    try_get,
-)
+from ..utils import ExtractorError, format_field, int_or_none, str_or_none, traverse_obj, try_get
 
 
 class TrovoBaseIE(InfoExtractor):

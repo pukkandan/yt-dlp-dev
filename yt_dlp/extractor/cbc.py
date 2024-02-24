@@ -6,9 +6,7 @@ import urllib.parse
 import xml.etree.ElementTree
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
+from ..compat import compat_str
 from ..utils import (
     ExtractorError,
     int_or_none,
@@ -398,7 +396,7 @@ class CBCGemIE(InfoExtractor):
         self._claims_token = self.cache.load(self._NETRC_MACHINE, 'claims_token')
 
     def _find_secret_formats(self, formats, video_id):
-        """ Find a valid video url and convert it to the secret variant """
+        """Find a valid video url and convert it to the secret variant"""
         base_format = next((f for f in formats if f.get('vcodec') != 'none'), None)
         if not base_format:
             return

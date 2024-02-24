@@ -1,9 +1,6 @@
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    float_or_none,
-    ExtractorError,
-)
+from ..utils import ExtractorError, float_or_none
 
 
 class RedBullTVIE(InfoExtractor):

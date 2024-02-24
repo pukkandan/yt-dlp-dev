@@ -96,7 +96,7 @@ def build_ies(ies, bases, attr_base):
 
 
 def sort_ies(ies, ignored_bases):
-    """find the correct sorting and add the required base classes so that subclasses can be correctly created"""
+    """Find the correct sorting and add the required base classes so that subclasses can be correctly created"""
     classes, returned_classes = ies[:-1], set()
     assert ies[-1].__name__ == 'GenericIE', 'Last IE must be GenericIE'
     while classes:

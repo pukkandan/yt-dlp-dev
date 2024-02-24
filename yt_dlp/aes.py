@@ -7,20 +7,20 @@ from .utils import bytes_to_intlist, intlist_to_bytes
 
 if Cryptodome.AES:
     def aes_cbc_decrypt_bytes(data, key, iv):
-        """ Decrypt bytes with AES-CBC using pycryptodome """
+        """Decrypt bytes with AES-CBC using pycryptodome"""
         return Cryptodome.AES.new(key, Cryptodome.AES.MODE_CBC, iv).decrypt(data)
 
     def aes_gcm_decrypt_and_verify_bytes(data, key, tag, nonce):
-        """ Decrypt bytes with AES-GCM using pycryptodome """
+        """Decrypt bytes with AES-GCM using pycryptodome"""
         return Cryptodome.AES.new(key, Cryptodome.AES.MODE_GCM, nonce).decrypt_and_verify(data, tag)
 
 else:
     def aes_cbc_decrypt_bytes(data, key, iv):
-        """ Decrypt bytes with AES-CBC using native implementation since pycryptodome is unavailable """
+        """Decrypt bytes with AES-CBC using native implementation since pycryptodome is unavailable"""
         return intlist_to_bytes(aes_cbc_decrypt(*map(bytes_to_intlist, (data, key, iv))))
 
     def aes_gcm_decrypt_and_verify_bytes(data, key, tag, nonce):
-        """ Decrypt bytes with AES-GCM using native implementation since pycryptodome is unavailable """
+        """Decrypt bytes with AES-GCM using native implementation since pycryptodome is unavailable"""
         return intlist_to_bytes(aes_gcm_decrypt_and_verify(*map(bytes_to_intlist, (data, key, tag, nonce))))
 
 
@@ -68,7 +68,7 @@ def pad_block(block, padding_mode):
         raise NotImplementedError(f'Padding mode {padding_mode} is not implemented')
 
     if padding_mode == 'iso7816' and padding_size:
-        block = block + [0x80]  # NB: += mutates list
+        block = [*block, 0x80]  # NB: += mutates list
         padding_size -= 1
 
     return block + [PADDING_BYTE[padding_mode]] * padding_size
@@ -224,7 +224,7 @@ def aes_gcm_decrypt_and_verify(data, key, tag, nonce):
     hash_subkey = aes_encrypt([0] * BLOCK_SIZE_BYTES, key_expansion(key))
 
     if len(nonce) == 12:
-        j0 = nonce + [0, 0, 0, 1]
+        j0 = [*nonce, 0, 0, 0, 1]
     else:
         fill = (BLOCK_SIZE_BYTES - (len(nonce) % BLOCK_SIZE_BYTES)) % BLOCK_SIZE_BYTES + 8
         ghash_in = nonce + [0] * fill + bytes_to_intlist((8 * len(nonce)).to_bytes(8, 'big'))

@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_b64decode,
-    compat_str,
-    compat_urllib_parse_unquote,
-    compat_urlparse,
-)
+from ..compat import compat_b64decode, compat_str, compat_urllib_parse_unquote, compat_urlparse
 from ..utils import (
     int_or_none,
     parse_duration,

@@ -3,12 +3,7 @@ import json
 import uuid
 
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    js_to_json,
-    traverse_obj,
-    urljoin,
-)
+from ..utils import int_or_none, js_to_json, traverse_obj, urljoin
 
 
 class CaracolTvPlayIE(InfoExtractor):

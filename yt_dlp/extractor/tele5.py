@@ -1,9 +1,6 @@
 from .dplay import DPlayIE
 from ..compat import compat_urlparse
-from ..utils import (
-    ExtractorError,
-    extract_attributes,
-)
+from ..utils import ExtractorError, extract_attributes
 
 
 class Tele5IE(DPlayIE):  # XXX: Do not subclass from concrete IE
@@ -75,7 +72,7 @@ class Tele5IE(DPlayIE):  # XXX: Do not subclass from concrete IE
         webpage = self._download_webpage(url, video_id)
         player_element = self._search_regex(r'(<hyoga-player\b[^>]+?>)', webpage, 'video player')
         player_info = extract_attributes(player_element)
-        asset_id, country, realm = (player_info[x] for x in ('assetid', 'locale', 'realm', ))
+        asset_id, country, realm = (player_info[x] for x in ('assetid', 'locale', 'realm'))
         endpoint = compat_urlparse.urlparse(player_info['endpoint']).hostname
         source_type = player_info.get('sourcetype')
         if source_type:

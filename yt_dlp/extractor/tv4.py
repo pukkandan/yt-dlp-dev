@@ -1,13 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    bool_or_none,
-    int_or_none,
-    parse_iso8601,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import bool_or_none, int_or_none, parse_iso8601, traverse_obj, url_or_none
 
 
 class TV4IE(InfoExtractor):

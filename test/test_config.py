@@ -44,7 +44,7 @@ def set_environ(**kwargs):
 
 def _generate_expected_groups():
     xdg_config_home = os.getenv('XDG_CONFIG_HOME') or compat_expanduser('~/.config')
-    appdata_dir = os.getenv('appdata')
+    appdata_dir = os.getenv('APPDATA')
     home_dir = compat_expanduser('~')
     return {
         'Portable': [

@@ -1,13 +1,7 @@
 import functools
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    parse_iso8601,
-    url_or_none,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, parse_iso8601, url_or_none
 from ..utils.traversal import traverse_obj
 
 

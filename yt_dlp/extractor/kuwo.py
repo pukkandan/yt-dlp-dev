@@ -2,13 +2,7 @@ import re
 
 from .common import InfoExtractor
 from ..compat import compat_urlparse
-from ..utils import (
-    get_element_by_id,
-    clean_html,
-    ExtractorError,
-    InAdvancePagedList,
-    remove_start,
-)
+from ..utils import ExtractorError, InAdvancePagedList, clean_html, get_element_by_id, remove_start
 
 
 class KuwoBaseIE(InfoExtractor):
@@ -41,7 +35,7 @@ class KuwoBaseIE(InfoExtractor):
             if song_url == 'IPDeny' and not tolerate_ip_deny:
                 raise ExtractorError('This song is blocked in this region', expected=True)
 
-            if song_url.startswith('http://') or song_url.startswith('https://'):
+            if song_url.startswith(('http://', 'https://')):
                 formats.append({
                     'url': song_url,
                     'format_id': file_format['format'],
@@ -308,10 +302,9 @@ class KuwoMvIE(KuwoBaseIE):
             'format': 'mv',
         },
     }
-    _FORMATS = KuwoBaseIE._FORMATS + [
-        {'format': 'mkv', 'ext': 'mkv', 'preference': 250},
-        {'format': 'mp4', 'ext': 'mp4', 'preference': 200},
-    ]
+    _FORMATS = [*KuwoBaseIE._FORMATS,
+                {'format': 'mkv', 'ext': 'mkv', 'preference': 250},
+                {'format': 'mp4', 'ext': 'mp4', 'preference': 200}]
 
     def _real_extract(self, url):
         song_id = self._match_id(url)

@@ -1,21 +1,18 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
+from ..compat import compat_str, compat_urlparse
 from ..utils import (
+    ExtractorError,
     determine_ext,
     dict_get,
-    ExtractorError,
     js_to_json,
     strip_jsonp,
     try_get,
     unified_strdate,
     update_url_query,
-    urlhandle_detect_ext,
     url_or_none,
+    urlhandle_detect_ext,
 )
 
 
@@ -39,7 +36,7 @@ class WDRIE(InfoExtractor):
 
     def _asset_url(self, wdr_id):
         id_len = max(len(wdr_id), 5)
-        return ''.join(('https:', self.__API_URL_TPL % (wdr_id[:id_len - 4], wdr_id, ), '.js'))
+        return ''.join(('https:', self.__API_URL_TPL % (wdr_id[:id_len - 4], wdr_id), '.js'))
 
     def _real_extract(self, url):
         video_id = self._match_id(url)

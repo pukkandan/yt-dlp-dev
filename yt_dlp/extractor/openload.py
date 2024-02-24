@@ -47,7 +47,8 @@ def cookie_jar_to_list(cookie_jar):
 
 
 class PhantomJSwrapper:
-    """PhantomJS wrapper class
+    """
+    PhantomJS wrapper class
 
     This class is experimental.
     """

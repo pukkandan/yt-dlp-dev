@@ -5,17 +5,9 @@ import random
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-)
+from ..compat import compat_str
 from ..networking import HEADRequest
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    orderedSet,
-    str_or_none,
-    try_get,
-)
+from ..utils import ExtractorError, float_or_none, orderedSet, str_or_none, try_get
 
 
 class GloboIE(InfoExtractor):

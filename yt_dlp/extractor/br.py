@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_duration,
-    xpath_element,
-    xpath_text,
-)
+from ..utils import ExtractorError, int_or_none, parse_duration, xpath_element, xpath_text
 
 
 class BRIE(InfoExtractor):

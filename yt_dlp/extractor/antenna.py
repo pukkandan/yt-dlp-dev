@@ -2,12 +2,7 @@ import urllib.parse
 
 from .common import InfoExtractor
 from ..networking import HEADRequest
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    make_archive_id,
-    scale_thumbnails_to_max_format_width,
-)
+from ..utils import ExtractorError, determine_ext, make_archive_id, scale_thumbnails_to_max_format_width
 
 
 class AntennaBaseIE(InfoExtractor):

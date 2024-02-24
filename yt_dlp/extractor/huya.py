@@ -2,18 +2,9 @@ import hashlib
 import random
 import re
 
-from ..compat import compat_urlparse, compat_b64decode
-
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    str_or_none,
-    try_get,
-    unescapeHTML,
-    update_url_query,
-)
-
 from .common import InfoExtractor
+from ..compat import compat_b64decode, compat_urlparse
+from ..utils import ExtractorError, int_or_none, str_or_none, try_get, unescapeHTML, update_url_query
 
 
 class HuyaLiveIE(InfoExtractor):

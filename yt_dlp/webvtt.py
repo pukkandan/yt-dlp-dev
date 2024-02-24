@@ -68,9 +68,7 @@ class _MatchChildParser(_MatchParser):
         self._pos = parent._pos
 
     def commit(self):
-        """
-        Advance the parent state to the current position of this child state.
-        """
+        """Advance the parent state to the current position of this child state."""
         self.__parent._pos = self._pos
         return self.__parent
 
@@ -116,9 +114,7 @@ def _format_ts(ts):
 
 
 class Block:
-    """
-    An abstract WebVTT block.
-    """
+    """An abstract WebVTT block."""
 
     def __init__(self, **kwargs):
         for key, val in kwargs.items():
@@ -260,9 +256,7 @@ class CommentBlock(Block):
 
 
 class CueBlock(Block):
-    """
-    A cue block. The payload is not interpreted.
-    """
+    """A cue block. The payload is not interpreted."""
 
     _REGEX_ID = re.compile(r'((?:(?!-->)[^\r\n])+)(?:\r\n|[\r\n])')
     _REGEX_ARROW = re.compile(r'[ \t]+-->[ \t]+')

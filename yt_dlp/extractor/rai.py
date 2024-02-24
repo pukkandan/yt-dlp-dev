@@ -2,11 +2,11 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
+    ExtractorError,
+    GeoRestrictedError,
     clean_html,
     determine_ext,
-    ExtractorError,
     filter_dict,
-    GeoRestrictedError,
     int_or_none,
     join_nonempty,
     parse_duration,
@@ -120,7 +120,7 @@ class RaiBaseIE(InfoExtractor):
         }
 
         def percentage(number, target, pc=20, roof=125):
-            '''check if the target is in the range of number +/- percent'''
+            """Check if the target is in the range of number +/- percent"""
             if not number or number < 0:
                 return False
             return abs(target - number) < min(float(number) * float(pc) / 100.0, roof)
@@ -130,17 +130,13 @@ class RaiBaseIE(InfoExtractor):
             br = int_or_none(tbr)
             if len(fmts) == 1 and not br:
                 br = fmts[0].get('tbr')
-            if br and br > 300:
-                tbr = math.floor(br / 100) * 100
-            else:
-                tbr = 250
+            tbr = math.floor(br / 100) * 100 if br and br > 300 else 250
 
             # try extracting info from available m3u8 formats
             format_copy = [None, None]
             for f in fmts:
-                if f.get('tbr'):
-                    if percentage(tbr, f['tbr']):
-                        format_copy[0] = f.copy()
+                if f.get('tbr') and percentage(tbr, f['tbr']):
+                    format_copy[0] = f.copy()
                 if [f.get('width'), f.get('height')] == _QUALITY.get(tbr):
                     format_copy[1] = f.copy()
                     format_copy[1]['tbr'] = tbr
@@ -168,7 +164,7 @@ class RaiBaseIE(InfoExtractor):
 
         # filter out single-stream formats
         fmts = [f for f in fmts
-                if not f.get('vcodec') == 'none' and not f.get('acodec') == 'none']
+                if f.get('vcodec') != 'none' and f.get('acodec') != 'none']
 
         mobj = re.search(_MANIFEST_REG, manifest_url)
         if not mobj:
@@ -210,7 +206,7 @@ class RaiBaseIE(InfoExtractor):
                     'ext': sub_ext,
                     'url': sub_url,
                 })
-                if STL_EXT == sub_ext:
+                if sub_ext == STL_EXT:
                     subtitles[sub_lang].append({
                         'ext': SRT_EXT,
                         'url': sub_url[:-len(STL_EXT)] + SRT_EXT,

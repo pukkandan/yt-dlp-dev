@@ -46,7 +46,7 @@ class MonkeyPatch:
 
 class TestCookies(unittest.TestCase):
     def test_get_desktop_environment(self):
-        """ based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/base/nix/xdg_util_unittest.cc """
+        """Based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/base/nix/xdg_util_unittest.cc"""
         test_cases = [
             ({}, _LinuxDesktopEnvironment.OTHER),
             ({'DESKTOP_SESSION': 'my_custom_de'}, _LinuxDesktopEnvironment.OTHER),
@@ -131,7 +131,7 @@ class TestCookies(unittest.TestCase):
 
         jar = parse_safari_cookies(cookies)
         self.assertEqual(len(jar), 1)
-        cookie = list(jar)[0]
+        cookie = next(iter(jar))
         self.assertEqual(cookie.domain, 'localhost')
         self.assertEqual(cookie.port, None)
         self.assertEqual(cookie.path, '/')

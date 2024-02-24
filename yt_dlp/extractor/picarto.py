@@ -1,11 +1,7 @@
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    str_or_none,
-    traverse_obj,
-)
+from ..utils import ExtractorError, str_or_none, traverse_obj
 
 
 class PicartoIE(InfoExtractor):
@@ -69,10 +65,7 @@ class PicartoIE(InfoExtractor):
                 })
 
         mature = metadata.get('adult')
-        if mature is None:
-            age_limit = None
-        else:
-            age_limit = 18 if mature is True else 0
+        age_limit = {None: None, True: 18}.get(mature, 0)
 
         return {
             'id': channel_id,

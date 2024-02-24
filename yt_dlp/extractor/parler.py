@@ -2,14 +2,7 @@ import functools
 
 from .common import InfoExtractor
 from .youtube import YoutubeIE
-from ..utils import (
-    clean_html,
-    int_or_none,
-    strip_or_none,
-    traverse_obj,
-    unified_timestamp,
-    urljoin,
-)
+from ..utils import clean_html, int_or_none, strip_or_none, traverse_obj, unified_timestamp, urljoin
 
 
 class ParlerIE(InfoExtractor):

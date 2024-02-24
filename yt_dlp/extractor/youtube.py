@@ -2793,9 +2793,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             start_time = time.time()
 
         def mpd_feed(format_id, delay):
-            """
-            @returns (manifest_url, manifest_stream_number, is_live) or None
-            """
+            """@returns (manifest_url, manifest_stream_number, is_live) or None"""
             for retry in self.RetryManager(fatal=False):
                 with lock:
                     refetch_manifest(format_id, delay)
@@ -2951,7 +2949,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 return f'https://www.youtube.com/s/player/{player_version}/player_ias.vflset/en_US/base.js'
 
     def _signature_cache_id(self, example_sig):
-        """ Return a string representation of a signature """
+        """Return a string representation of a signature"""
         return '.'.join(str(len(part)) for part in example_sig.split('.'))
 
     @classmethod
@@ -3208,7 +3206,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             # cpn generation algorithm is reverse engineered from base.js.
             # In fact it works even with dummy cpn.
             CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'
-            cpn = ''.join(CPN_ALPHABET[random.randint(0, 256) & 63] for _ in range(0, 16))
+            cpn = ''.join(CPN_ALPHABET[random.randint(0, 256) & 63] for _ in range(16))
 
             # # more consistent results setting it to right before the end
             video_length = [str(float((qs.get('len') or ['1.5'])[0]) - 1)]
@@ -3434,7 +3432,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         # Keeps track of counts across recursive calls
         if not tracker:
-            tracker = dict(
+            tracker = dict(  # noqa: C408
                 running_total=0,
                 est_total=None,
                 current_page_thread=0,
@@ -3453,8 +3451,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         if max_depth == 1 and parent:
             return
 
-        max_comments, max_parents, max_replies, max_replies_per_thread, *_ = map(
-            lambda p: int_or_none(p, default=sys.maxsize), self._configuration_arg('max_comments', ) + [''] * 4)
+        max_comments, max_parents, max_replies, max_replies_per_thread, *_ = (
+            int_or_none(p, default=sys.maxsize) for p in self._configuration_arg('max_comments') + [''] * 4)
 
         continuation = self._extract_continuation(root_continuation_data)
 
@@ -3539,9 +3537,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
     @staticmethod
     def _generate_comment_continuation(video_id):
-        """
-        Generates initial comment section continuation token from given video id
-        """
+        """Generates initial comment section continuation token from given video id"""
         token = f'\x12\r\x12\x0b{video_id}\x18\x062\'"\x11"\x0b{video_id}0\x00x\x020\x00B\x10comments-section'
         return base64.b64encode(token.encode()).decode()
 
@@ -3620,7 +3616,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         requested_clients = []
         default = ['ios', 'android', 'web']
         allowed_clients = sorted(
-            (client for client in INNERTUBE_CLIENTS.keys() if client[:1] != '_'),
+            (client for client in INNERTUBE_CLIENTS if client[:1] != '_'),
             key=lambda client: INNERTUBE_CLIENTS[client]['priority'], reverse=True)
         for client in self._configuration_arg('player_client'):
             if client in allowed_clients:
@@ -3651,14 +3647,13 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         prs = []
 
         def append_client(*client_names):
-            """ Append the first client name that exists but not already used """
+            """Append the first client name that exists but not already used"""
             for client_name in client_names:
                 actual_client = _split_innertube_client(client_name)[0]
-                if actual_client in INNERTUBE_CLIENTS:
-                    if actual_client not in all_clients:
-                        clients.append(client_name)
-                        all_clients.add(actual_client)
-                        return
+                if actual_client in INNERTUBE_CLIENTS and actual_client not in all_clients:
+                    clients.append(client_name)
+                    all_clients.add(actual_client)
+                    return
 
         # Android player_response does not have microFormats which are needed for
         # extraction of some data. So we return the initial_pr with formats
@@ -3766,9 +3761,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             itag = str_or_none(fmt.get('itag'))
             audio_track = fmt.get('audioTrack') or {}
             stream_id = (itag, audio_track.get('id'), fmt.get('isDrc'))
-            if not all_formats:
-                if stream_id in stream_ids:
-                    continue
+            if not all_formats and stream_id in stream_ids:
+                continue
 
             quality = fmt.get('quality')
             height = int_or_none(fmt.get('height'))
@@ -3928,9 +3922,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                 return False
             itags[itag].add(key)
 
-            if itag and all_formats:
-                f['format_id'] = f'{itag}-{proto}'
-            elif any(p != proto for p, _ in itags[itag]):
+            if itag and all_formats or any(p != proto for p, _ in itags[itag]):
                 f['format_id'] = f'{itag}-{proto}'
             elif itag:
                 f['format_id'] = itag
@@ -4984,7 +4976,7 @@ class YoutubeTabBaseInfoExtractor(YoutubeBaseInfoExtractor):
             continuation_item = traverse_obj(continuation_items, 0, None, expected_type=dict, default={})
 
             video_items_renderer = None
-            for key in continuation_item.keys():
+            for key in continuation_item:
                 if key not in known_renderers:
                     continue
                 func, parent_key = known_renderers[key]
@@ -5250,9 +5242,7 @@ class YoutubeTabBaseInfoExtractor(YoutubeBaseInfoExtractor):
                 return renderer
 
     def _reload_with_unavailable_videos(self, item_id, data, ytcfg):
-        """
-        Reload playlists with unavailable videos (e.g. private videos, region blocked, etc.)
-        """
+        """Reload playlists with unavailable videos (e.g. private videos, region blocked, etc.)"""
         is_playlist = bool(traverse_obj(
             data, ('metadata', 'playlistMetadataRenderer'), ('header', 'playlistHeaderRenderer')))
         if not is_playlist:
@@ -6545,9 +6535,9 @@ class YoutubeTabIE(YoutubeTabBaseInfoExtractor):
                 self.to_screen('Downloading all uploads of the channel. '
                                'To download only the videos in a specific tab, pass the tab\'s URL')
                 if self._has_tab(tabs, 'streams'):
-                    extra_tabs.append(''.join((pre, '/streams', post)))
+                    extra_tabs.append(f'{pre}/streams{post}')
                 if self._has_tab(tabs, 'shorts'):
-                    extra_tabs.append(''.join((pre, '/shorts', post)))
+                    extra_tabs.append(f'{pre}/shorts{post}')
                 # XXX: Members-only tab should also be extracted
 
                 if not extra_tabs and selected_tab_id != 'videos':
@@ -7080,7 +7070,7 @@ class YoutubeMusicSearchURLIE(YoutubeTabBaseInfoExtractor):
         if params:
             section = next((k for k, v in self._SECTIONS.items() if v == params), params)
         else:
-            section = urllib.parse.unquote_plus((url.split('#') + [''])[1]).lower()
+            section = urllib.parse.unquote_plus(([*url.split('#'), ''])[1]).lower()
             params = self._SECTIONS.get(section)
             if not params:
                 section = None
@@ -7093,6 +7083,7 @@ class YoutubeFeedsInfoExtractor(InfoExtractor):
     Base class for feed extractors
     Subclasses must re-define the _FEED_NAME property.
     """
+
     _LOGIN_REQUIRED = True
     _FEED_NAME = 'feeds'
 
@@ -7173,9 +7164,7 @@ class YoutubeShortsAudioPivotIE(InfoExtractor):
 
     @staticmethod
     def _generate_audio_pivot_params(video_id):
-        """
-        Generates sfv_audio_pivot browse params for this video id
-        """
+        """Generates sfv_audio_pivot browse params for this video id"""
         pb_params = b'\xf2\x05+\n)\x12\'\n\x0b%b\x12\x0b%b\x1a\x0b%b' % ((video_id.encode(),) * 3)
         return urllib.parse.quote(base64.b64encode(pb_params).decode())
 

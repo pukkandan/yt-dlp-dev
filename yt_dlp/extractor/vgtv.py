@@ -2,11 +2,7 @@ import re
 
 from .common import InfoExtractor
 from .xstream import XstreamIE
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    try_get,
-)
+from ..utils import ExtractorError, float_or_none, try_get
 
 
 class VGTVIE(XstreamIE):  # XXX: Do not subclass from concrete IE
@@ -185,9 +181,8 @@ class VGTVIE(XstreamIE):  # XXX: Do not subclass from concrete IE
         info = {
             'formats': [],
         }
-        if len(video_id) == 5:
-            if appname == 'bttv':
-                info = self._extract_video_info('btno', video_id)
+        if len(video_id) == 5 and appname == 'bttv':
+            info = self._extract_video_info('btno', video_id)
 
         streams = data['streamUrls']
         stream_type = data.get('streamType')

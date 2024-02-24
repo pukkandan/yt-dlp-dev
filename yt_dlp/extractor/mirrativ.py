@@ -1,10 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    dict_get,
-    traverse_obj,
-    try_get,
-)
+from ..utils import ExtractorError, dict_get, traverse_obj, try_get
 
 
 class MirrativBaseIE(InfoExtractor):

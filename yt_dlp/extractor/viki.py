@@ -4,13 +4,7 @@ import json
 import time
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_age_limit,
-    parse_iso8601,
-    try_get,
-)
+from ..utils import ExtractorError, int_or_none, parse_age_limit, parse_iso8601, try_get
 
 
 class VikiBaseIE(InfoExtractor):
@@ -248,11 +242,11 @@ class VikiIE(VikiBaseIE):
             video_id, 'Downloading video streams JSON')['main'][0]
 
         stream_id = try_get(resp, lambda x: x['properties']['track']['stream_id'])
-        subtitles = dict((lang, [{
+        subtitles = {lang: [{
             'ext': ext,
             'url': self._API_URL_TEMPLATE % self._api_query(
                 f'videos/{video_id}/auth_subtitles/{lang}.{ext}', stream_id=stream_id)
-        } for ext in ('srt', 'vtt')]) for lang in (video.get('subtitle_completions') or {}).keys())
+        } for ext in ('srt', 'vtt')] for lang in (video.get('subtitle_completions') or {})}
 
         mpd_url = resp['url']
         # 720p is hidden in another MPD which can be found in the current manifest content

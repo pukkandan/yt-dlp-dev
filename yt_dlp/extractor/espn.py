@@ -6,14 +6,7 @@ import urllib.parse
 from .adobepass import AdobePassIE
 from .common import InfoExtractor
 from .once import OnceIE
-from ..utils import (
-    determine_ext,
-    dict_get,
-    int_or_none,
-    traverse_obj,
-    unified_strdate,
-    unified_timestamp,
-)
+from ..utils import determine_ext, dict_get, int_or_none, traverse_obj, unified_strdate, unified_timestamp
 
 
 class ESPNIE(OnceIE):
@@ -100,7 +93,7 @@ class ESPNIE(OnceIE):
     }, {
         'url': 'http://www.espn.com/watch/player?bucketId=257&id=19505875',
         'only_matching': True,
-    }, ]
+    }]
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
@@ -114,8 +107,8 @@ class ESPNIE(OnceIE):
         format_urls = set()
         formats = []
 
-        def traverse_source(source, base_source_id=None):
-            for source_id, source in source.items():
+        def traverse_source(sources, base_source_id=None):
+            for source_id, source in sources.items():
                 if source_id == 'alert':
                     continue
                 elif isinstance(source, str):

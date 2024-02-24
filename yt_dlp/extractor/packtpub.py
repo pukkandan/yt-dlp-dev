@@ -2,15 +2,9 @@ import json
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    clean_html,
-    ExtractorError,
-    # remove_end,
-    str_or_none,
-    strip_or_none,
-    unified_timestamp,
-    # urljoin,
-)
+from ..utils import ExtractorError, clean_html, str_or_none, strip_or_none, unified_timestamp
+
+# from ..utils import remove_end, urljoin
 
 
 class PacktPubBaseIE(InfoExtractor):
@@ -140,7 +134,7 @@ class PacktPubCourseIE(PacktPubBaseIE):
                     continue
                 entry = {
                     '_type': 'url_transparent',
-                    'url': '/'.join([url, chapter_id, section_id]),
+                    'url': f'{url}/{chapter_id}/{section_id}',
                     'title': strip_or_none(section.get('title')),
                     'description': clean_html(section.get('summary')),
                     'thumbnail': metadata.get('coverImage'),

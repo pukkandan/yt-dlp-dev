@@ -5,7 +5,9 @@ del passthrough_module
 
 
 def gen_extractor_classes():
-    """ Return a list of supported extractors.
+    """
+    Return a list of supported extractors.
+
     The order does matter; the first extractor matched is the one handling the URL.
     """
     from .extractors import _ALL_CLASSES
@@ -14,7 +16,9 @@ def gen_extractor_classes():
 
 
 def gen_extractors():
-    """ Return a list of an instance of every supported extractor.
+    """
+    Return a list of an instance of every supported extractor.
+
     The order does matter; the first extractor matched is the one handling the URL.
     """
     return [klass() for klass in gen_extractor_classes()]

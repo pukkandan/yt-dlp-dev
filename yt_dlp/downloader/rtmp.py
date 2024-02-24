@@ -4,13 +4,7 @@ import subprocess
 import time
 
 from .common import FileDownloader
-from ..utils import (
-    Popen,
-    check_executable,
-    encodeArgument,
-    encodeFilename,
-    get_exe_version,
-)
+from ..utils import Popen, check_executable, encodeArgument, encodeFilename, get_exe_version
 
 
 def rtmpdump_version():
@@ -182,7 +176,7 @@ class RtmpFD(FileDownloader):
             prevsize = os.path.getsize(encodeFilename(tmpfilename))
             self.to_screen('[rtmpdump] Downloaded %s bytes' % prevsize)
             time.sleep(5.0)  # This seems to be needed
-            args = basic_args + ['--resume']
+            args = [*basic_args, '--resume']
             if retval == RD_FAILED:
                 args += ['--skip', '1']
             args = [encodeArgument(a) for a in args]

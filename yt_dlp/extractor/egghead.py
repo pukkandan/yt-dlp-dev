@@ -1,12 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    try_get,
-    unified_timestamp,
-    url_or_none,
-)
+from ..utils import determine_ext, int_or_none, try_get, unified_timestamp, url_or_none
 
 
 class EggheadBaseIE(InfoExtractor):
@@ -102,7 +96,7 @@ class EggheadLessonIE(EggheadBaseIE):
         title = lesson['title']
 
         formats = []
-        for _, format_url in lesson['media_urls'].items():
+        for format_url in lesson['media_urls'].values():
             format_url = url_or_none(format_url)
             if not format_url:
                 continue

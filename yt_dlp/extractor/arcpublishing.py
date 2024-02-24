@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    extract_attributes,
-    int_or_none,
-    parse_iso8601,
-    try_get,
-)
+from ..utils import extract_attributes, int_or_none, parse_iso8601, try_get
 
 
 class ArcPublishingIE(InfoExtractor):
@@ -122,7 +117,7 @@ class ArcPublishingIE(InfoExtractor):
             elif stream_type in ('ts', 'hls'):
                 m3u8_formats = self._extract_m3u8_formats(
                     s_url, uuid, 'mp4', live=is_live, m3u8_id='hls', fatal=False)
-                if all([f.get('acodec') == 'none' for f in m3u8_formats]):
+                if all(f.get('acodec') == 'none' for f in m3u8_formats):
                     continue
                 for f in m3u8_formats:
                     height = f.get('height')

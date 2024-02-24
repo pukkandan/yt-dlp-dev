@@ -1,15 +1,6 @@
-from ..compat import (
-    compat_b64decode,
-    compat_urllib_parse_unquote,
-    compat_urlparse,
-)
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    update_url_query,
-    traverse_obj,
-)
 from .bokecc import BokeCCBaseIE
+from ..compat import compat_b64decode, compat_urllib_parse_unquote, compat_urlparse
+from ..utils import ExtractorError, determine_ext, traverse_obj, update_url_query
 
 
 class InfoQIE(BokeCCBaseIE):

@@ -125,10 +125,7 @@ class CCMAIE(InfoExtractor):
         if codi_etic:
             codi_etic_s = codi_etic.split('_')
             if len(codi_etic_s) == 2:
-                if codi_etic_s[1] == 'TP':
-                    age_limit = 0
-                else:
-                    age_limit = int_or_none(codi_etic_s[1])
+                age_limit = 0 if codi_etic_s[1] == 'TP' else int_or_none(codi_etic_s[1])
 
         return {
             'id': media_id,

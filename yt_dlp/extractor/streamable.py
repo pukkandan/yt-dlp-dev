@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    try_get,
-    parse_codecs,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, parse_codecs, try_get
 
 
 class StreamableIE(InfoExtractor):

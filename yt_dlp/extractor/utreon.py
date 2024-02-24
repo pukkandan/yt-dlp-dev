@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    dict_get,
-    int_or_none,
-    str_or_none,
-    try_get,
-    unified_strdate,
-    url_or_none,
-)
+from ..utils import dict_get, int_or_none, str_or_none, try_get, unified_strdate, url_or_none
 
 
 class UtreonIE(InfoExtractor):

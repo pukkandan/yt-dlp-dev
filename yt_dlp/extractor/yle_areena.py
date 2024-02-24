@@ -1,12 +1,6 @@
 from .common import InfoExtractor
 from .kaltura import KalturaIE
-from ..utils import (
-    int_or_none,
-    smuggle_url,
-    traverse_obj,
-    unified_strdate,
-    url_or_none,
-)
+from ..utils import int_or_none, smuggle_url, traverse_obj, unified_strdate, url_or_none
 
 
 class YleAreenaIE(InfoExtractor):

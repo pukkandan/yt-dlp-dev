@@ -2,14 +2,7 @@ import functools
 import uuid
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    OnDemandPagedList,
-    int_or_none,
-    month_by_name,
-    parse_duration,
-    try_call,
-)
+from ..utils import ExtractorError, OnDemandPagedList, int_or_none, month_by_name, parse_duration, try_call
 
 
 class WyborczaVideoIE(InfoExtractor):

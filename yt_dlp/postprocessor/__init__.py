@@ -23,11 +23,7 @@ from .ffmpeg import (
     FFmpegVideoConvertorPP,
     FFmpegVideoRemuxerPP,
 )
-from .metadataparser import (
-    MetadataFromFieldPP,
-    MetadataFromTitlePP,
-    MetadataParserPP,
-)
+from .metadataparser import MetadataFromFieldPP, MetadataFromTitlePP, MetadataParserPP
 from .modify_chapters import ModifyChaptersPP
 from .movefilesafterdownload import MoveFilesAfterDownloadPP
 from .sponskrub import SponSkrubPP
@@ -43,5 +39,5 @@ def get_postprocessor(key):
 
 
 globals().update(_PLUGIN_CLASSES)
-__all__ = [name for name in globals().keys() if name.endswith('PP')]
+__all__ = [name for name in globals() if name.endswith('PP')]
 __all__.extend(('PostProcessor', 'FFmpegPostProcessor'))

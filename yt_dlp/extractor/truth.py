@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    format_field,
-    int_or_none,
-    strip_or_none,
-    traverse_obj,
-    unified_timestamp,
-)
+from ..utils import clean_html, format_field, int_or_none, strip_or_none, traverse_obj, unified_timestamp
 
 
 class TruthIE(InfoExtractor):

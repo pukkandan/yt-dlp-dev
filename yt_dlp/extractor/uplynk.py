@@ -1,14 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    smuggle_url,
-    traverse_obj,
-    unsmuggle_url,
-    update_url_query,
-)
+from ..utils import ExtractorError, float_or_none, smuggle_url, traverse_obj, unsmuggle_url, update_url_query
 
 
 class UplynkBaseIE(InfoExtractor):

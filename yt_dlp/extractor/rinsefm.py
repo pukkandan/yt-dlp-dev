@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    MEDIA_EXTENSIONS,
-    determine_ext,
-    parse_iso8601,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import MEDIA_EXTENSIONS, determine_ext, parse_iso8601, traverse_obj, url_or_none
 
 
 class RinseFMBaseIE(InfoExtractor):

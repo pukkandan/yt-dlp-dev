@@ -2,14 +2,11 @@ import functools
 import re
 
 from .turner import TurnerBaseIE
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_unquote,
-)
+from ..compat import compat_str, compat_urllib_parse_unquote
 from ..utils import (
+    OnDemandPagedList,
     int_or_none,
     merge_dicts,
-    OnDemandPagedList,
     parse_duration,
     parse_iso8601,
     parse_qs,

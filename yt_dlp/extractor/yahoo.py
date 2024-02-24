@@ -271,10 +271,7 @@ class YahooIE(InfoExtractor):
 
     def _real_extract(self, url):
         url, country, display_id = self._match_valid_url(url).groups()
-        if not country:
-            country = 'us'
-        else:
-            country = country.split('-')[0]
+        country = 'us' if not country else country.split('-')[0]
 
         items = self._download_json(
             'https://%s.yahoo.com/caas/content/article' % country, display_id,
@@ -401,7 +398,7 @@ class YahooJapanNewsIE(InfoExtractor):
                 'appid': 'dj0zaiZpPVZMTVFJR0FwZWpiMyZzPWNvbnN1bWVyc2VjcmV0Jng9YjU-',
                 'output': 'json',
                 'domain': HOST,
-                'ak': hashlib.md5('_'.join((space_id, HOST)).encode()).hexdigest() if space_id else '',
+                'ak': hashlib.md5(f'{space_id}_{HOST}'.encode()).hexdigest() if space_id else '',
                 'device_type': '1100',
             })
 

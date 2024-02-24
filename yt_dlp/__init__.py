@@ -73,9 +73,7 @@ def _exit(status=0, *args):
 
 
 def get_urls(urls, batchfile, verbose):
-    """
-    @param verbose      -1: quiet, 0: normal, 1: verbose
-    """
+    """@param verbose      -1: quiet, 0: normal, 1: verbose"""
     batch_urls = []
     if batchfile is not None:
         try:
@@ -220,7 +218,7 @@ def validate_options(opts):
         validate_minmax(opts.sleep_interval, opts.max_sleep_interval, 'sleep interval')
 
     if opts.wait_for_video is not None:
-        min_wait, max_wait, *_ = map(parse_duration, opts.wait_for_video.split('-', 1) + [None])
+        min_wait, max_wait, *_ = map(parse_duration, [*opts.wait_for_video.split('-', 1), None])
         validate(min_wait is not None and not (max_wait is None and '-' in opts.wait_for_video),
                  'time range to wait for video', opts.wait_for_video)
         validate_minmax(min_wait, max_wait, 'time range to wait for video')

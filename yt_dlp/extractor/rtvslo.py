@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_duration,
-    traverse_obj,
-    unified_timestamp,
-    url_or_none,
-)
+from ..utils import ExtractorError, int_or_none, parse_duration, traverse_obj, unified_timestamp, url_or_none
 
 
 class RTVSLOIE(InfoExtractor):

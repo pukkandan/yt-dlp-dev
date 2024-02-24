@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    clean_podcast_url,
-    get_element_by_class,
-    int_or_none,
-    parse_iso8601,
-    try_get,
-)
+from ..utils import clean_html, clean_podcast_url, get_element_by_class, int_or_none, parse_iso8601, try_get
 
 
 class ApplePodcastsIE(InfoExtractor):

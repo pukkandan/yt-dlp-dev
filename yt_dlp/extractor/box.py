@@ -2,11 +2,7 @@ import json
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    parse_iso8601,
-    update_url_query,
-    url_or_none,
-)
+from ..utils import parse_iso8601, update_url_query, url_or_none
 from ..utils.traversal import traverse_obj
 
 

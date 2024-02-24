@@ -3,14 +3,7 @@ import re
 from .common import InfoExtractor
 from ..aes import aes_decrypt_text
 from ..compat import compat_urllib_parse_unquote
-from ..utils import (
-    determine_ext,
-    format_field,
-    int_or_none,
-    str_to_int,
-    strip_or_none,
-    url_or_none,
-)
+from ..utils import determine_ext, format_field, int_or_none, str_to_int, strip_or_none, url_or_none
 
 
 class Tube8IE(InfoExtractor):
@@ -102,10 +95,9 @@ class Tube8IE(InfoExtractor):
         if video_url:
             extract_format(compat_urllib_parse_unquote(video_url))
 
-        if not formats:
-            if 'title="This video is no longer available"' in webpage:
-                self.raise_no_formats(
-                    'Video %s is no longer available' % video_id, expected=True)
+        if not formats and 'title="This video is no longer available"' in webpage:
+            self.raise_no_formats(
+                'Video %s is no longer available' % video_id, expected=True)
 
         if not title:
             title = self._html_search_regex(
@@ -153,8 +145,8 @@ class Tube8IE(InfoExtractor):
         tags_str = self._search_regex(
             r'(?s)Tags:\s*</dt>\s*<dd>(.+?)</(?!a)',
             webpage, 'tags', fatal=False)
-        tags = [t for t in re.findall(
-            r'<a[^>]+href=[^>]+>([^<]+)', tags_str)] if tags_str else None
+        tags = list(re.findall(
+            r'<a[^>]+href=[^>]+>([^<]+)', tags_str)) if tags_str else None
 
         info.update({
             'description': description,

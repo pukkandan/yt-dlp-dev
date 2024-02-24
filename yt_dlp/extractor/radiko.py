@@ -4,14 +4,7 @@ import re
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    clean_html,
-    time_seconds,
-    try_call,
-    unified_timestamp,
-    update_url_query,
-)
+from ..utils import ExtractorError, clean_html, time_seconds, try_call, unified_timestamp, update_url_query
 from ..utils.traversal import traverse_obj
 
 

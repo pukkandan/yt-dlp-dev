@@ -38,13 +38,7 @@ from ._helper import (
     make_socks_proxy_opts,
     select_proxy,
 )
-from .common import (
-    Features,
-    RequestHandler,
-    Response,
-    register_preference,
-    register_rh,
-)
+from .common import Features, RequestHandler, Response, register_preference, register_rh
 from .exceptions import (
     CertificateVerifyError,
     HTTPError,
@@ -186,9 +180,7 @@ class RequestsHTTPAdapter(requests.adapters.HTTPAdapter):
 
 
 class RequestsSession(requests.sessions.Session):
-    """
-    Ensure unified redirect method handling with our urllib redirect handler.
-    """
+    """Ensure unified redirect method handling with our urllib redirect handler."""
 
     def rebuild_method(self, prepared_request, response):
         new_method = get_redirect_method(prepared_request.method, response.status_code)
@@ -243,10 +235,8 @@ class Urllib3LoggingHandler(logging.Handler):
 
 @register_rh
 class RequestsRH(RequestHandler, InstanceStoreMixin):
+    """Requests RequestHandler: https://github.com/psf/requests"""
 
-    """Requests RequestHandler
-    https://github.com/psf/requests
-    """
     _SUPPORTED_URL_SCHEMES = ('http', 'https')
     _SUPPORTED_ENCODINGS = tuple(SUPPORTED_ENCODINGS)
     _SUPPORTED_PROXY_SCHEMES = ('http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h')

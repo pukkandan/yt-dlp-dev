@@ -10,7 +10,7 @@ from ..utils import DownloadError, str_or_none, try_get
 
 
 class NiconicoDmcFD(FileDownloader):
-    """ Downloading niconico douga from DMC with heartbeat """
+    """Downloading niconico douga from DMC with heartbeat"""
 
     def real_download(self, filename, info_dict):
         from ..extractor.niconico import NiconicoIE
@@ -57,7 +57,7 @@ class NiconicoDmcFD(FileDownloader):
 
 
 class NiconicoLiveFD(FileDownloader):
-    """ Downloads niconico live without being stopped """
+    """Downloads niconico live without being stopped"""
 
     def real_download(self, filename, info_dict):
         video_id = info_dict['video_id']

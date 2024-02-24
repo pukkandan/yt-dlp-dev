@@ -141,7 +141,7 @@ class ExternalFD(FragmentFD):
         return self.ydl.cookiejar.filename or self._cookies_tempfile
 
     def _call_downloader(self, tmpfilename, info_dict):
-        """ Either overwrite this or implement _make_cmd """
+        """Either overwrite this or implement _make_cmd"""
         cmd = [encodeArgument(a) for a in self._make_cmd(tmpfilename, info_dict)]
 
         self._debug_cmd(cmd)
@@ -463,7 +463,7 @@ class FFmpegFD(ExternalFD):
         return FFmpegPostProcessor().available
 
     def on_process_started(self, proc, stdin):
-        """ Override this in subclasses  """
+        """Override this in subclasses"""
         pass
 
     @classmethod
@@ -575,7 +575,7 @@ class FFmpegFD(ExternalFD):
             if end_time:
                 args += ['-t', str(end_time - start_time)]
 
-            args += self._configuration_args((f'_i{i + 1}', '_i')) + ['-i', fmt['url']]
+            args += [*self._configuration_args((f'_i{i + 1}', '_i')), '-i', fmt['url']]
 
         if not (start_time or end_time) or not self.params.get('force_keyframes_at_cuts'):
             args += ['-c', 'copy']
@@ -657,7 +657,7 @@ def list_external_downloaders():
 
 
 def get_external_downloader(external_downloader):
-    """ Given the name of the executable, see whether we support the given downloader """
+    """Given the name of the executable, see whether we support the given downloader"""
     bn = os.path.splitext(os.path.basename(external_downloader))[0]
     return _BY_NAME.get(bn) or next((
         klass for klass in _BY_NAME.values() if klass.EXE_NAME in bn

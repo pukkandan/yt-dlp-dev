@@ -2,12 +2,7 @@ import json
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_age_limit,
-    traverse_obj,
-)
+from ..utils import ExtractorError, int_or_none, parse_age_limit, traverse_obj
 
 
 class ViewLiftBaseIE(InfoExtractor):

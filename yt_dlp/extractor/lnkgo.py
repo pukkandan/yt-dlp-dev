@@ -1,12 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    clean_html,
-    format_field,
-    int_or_none,
-    parse_iso8601,
-    unified_strdate,
-)
+from ..utils import clean_html, format_field, int_or_none, parse_iso8601, unified_strdate
 
 
 class LnkGoIE(InfoExtractor):

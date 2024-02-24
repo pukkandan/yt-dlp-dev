@@ -2,17 +2,12 @@ import os
 
 from .common import PostProcessor
 from ..compat import compat_os_name
-from ..utils import (
-    PostProcessingError,
-    XAttrMetadataError,
-    XAttrUnavailableError,
-    hyphenate_date,
-    write_xattr,
-)
+from ..utils import PostProcessingError, XAttrMetadataError, XAttrUnavailableError, hyphenate_date, write_xattr
 
 
 class XAttrMetadataPP(PostProcessor):
-    """Set extended attributes on downloaded file (if xattr support is found)
+    """
+    Set extended attributes on downloaded file (if xattr support is found)
 
     More info about extended attributes for media:
         http://freedesktop.org/wiki/CommonExtendedAttributes/

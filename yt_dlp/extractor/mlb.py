@@ -3,15 +3,7 @@ import urllib.parse
 import uuid
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    join_nonempty,
-    parse_duration,
-    parse_iso8601,
-    traverse_obj,
-    try_get,
-)
+from ..utils import determine_ext, int_or_none, join_nonempty, parse_duration, parse_iso8601, traverse_obj, try_get
 
 
 class MLBBaseIE(InfoExtractor):
@@ -304,7 +296,7 @@ class MLBTVIE(InfoExtractor):
             }, data=data.encode())['access_token']
 
         entitlement = self._download_webpage(
-            f'https://media-entitlement.mlb.com/api/v3/jwt?os=Android&appname=AtBat&did={str(uuid.uuid4())}', None,
+            f'https://media-entitlement.mlb.com/api/v3/jwt?os=Android&appname=AtBat&did={uuid.uuid4()!s}', None,
             headers={
                 'User-Agent': 'okhttp/3.12.1',
                 'Authorization': f'Bearer {access_token}'

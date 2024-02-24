@@ -1,12 +1,7 @@
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    extract_attributes,
-    try_get,
-    urlencode_postdata,
-    ExtractorError,
-)
+from ..utils import ExtractorError, extract_attributes, try_get, urlencode_postdata
 
 
 class TVPlayerIE(InfoExtractor):

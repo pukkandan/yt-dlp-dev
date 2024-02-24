@@ -3,14 +3,7 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_parse_qs
 from ..networking import Request
-from ..utils import (
-    ExtractorError,
-    js_to_json,
-    traverse_obj,
-    update_url_query,
-    urlencode_postdata,
-    urljoin,
-)
+from ..utils import ExtractorError, js_to_json, traverse_obj, update_url_query, urlencode_postdata, urljoin
 
 
 class FC2IE(InfoExtractor):

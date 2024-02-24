@@ -2,13 +2,7 @@ import json
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    float_or_none,
-    int_or_none,
-    parse_iso8601,
-    strip_or_none,
-)
+from ..utils import determine_ext, float_or_none, int_or_none, parse_iso8601, strip_or_none
 
 
 class ToggleIE(InfoExtractor):

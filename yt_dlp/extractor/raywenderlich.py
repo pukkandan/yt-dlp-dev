@@ -3,15 +3,7 @@ import re
 from .common import InfoExtractor
 from .vimeo import VimeoIE
 from ..compat import compat_str
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    merge_dicts,
-    try_get,
-    unescapeHTML,
-    unified_timestamp,
-    urljoin,
-)
+from ..utils import ExtractorError, int_or_none, merge_dicts, try_get, unescapeHTML, unified_timestamp, urljoin
 
 
 class RayWenderlichIE(InfoExtractor):

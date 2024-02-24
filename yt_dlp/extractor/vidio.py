@@ -1,7 +1,7 @@
 from .common import InfoExtractor
 from ..utils import (
-    clean_html,
     ExtractorError,
+    clean_html,
     format_field,
     get_element_by_class,
     int_or_none,
@@ -260,9 +260,8 @@ class VidioLiveIE(VidioBaseIE):
         username = user.get('username')
 
         formats = []
-        if stream_meta.get('is_drm'):
-            if not self.get_param('allow_unplayable_formats'):
-                self.report_drm(video_id)
+        if stream_meta.get('is_drm') and not self.get_param('allow_unplayable_formats'):
+            self.report_drm(video_id)
         if stream_meta.get('is_premium'):
             sources = self._download_json(
                 'https://www.vidio.com/interactions_stream.json?video_id=%s&type=livestreamings' % video_id,

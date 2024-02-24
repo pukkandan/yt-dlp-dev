@@ -1,10 +1,12 @@
 import re
 
 from .common import InfoExtractor
+from .senategov import SenateISVPIE
+from .ustream import UstreamIE
 from ..compat import compat_HTMLParseError
 from ..utils import (
-    determine_ext,
     ExtractorError,
+    determine_ext,
     extract_attributes,
     find_xpath_attr,
     get_element_by_attribute,
@@ -19,8 +21,6 @@ from ..utils import (
     str_to_int,
     unescapeHTML,
 )
-from .senategov import SenateISVPIE
-from .ustream import UstreamIE
 
 
 class CSpanIE(InfoExtractor):
@@ -216,7 +216,7 @@ class CSpanIE(InfoExtractor):
                     continue
                 formats = self._extract_m3u8_formats(
                     path, video_id, 'mp4', entry_protocol='m3u8_native',
-                    m3u8_id='hls') if determine_ext(path) == 'm3u8' else [{'url': path, }]
+                    m3u8_id='hls') if determine_ext(path) == 'm3u8' else [{'url': path}]
             add_referer(formats)
             entries.append({
                 'id': '%s_%d' % (video_id, partnum + 1),

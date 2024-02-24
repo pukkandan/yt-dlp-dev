@@ -6,6 +6,7 @@ import time
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
 from ..utils import (
+    ExtractorError,
     determine_ext,
     float_or_none,
     int_or_none,
@@ -13,7 +14,6 @@ from ..utils import (
     parse_age_limit,
     parse_duration,
     url_or_none,
-    ExtractorError
 )
 
 
@@ -71,10 +71,10 @@ class CrackleIE(InfoExtractor):
         # Authorization generation algorithm is reverse engineered from:
         # https://www.sonycrackle.com/static/js/main.ea93451f.chunk.js
         timestamp = time.strftime('%Y%m%d%H%M', time.gmtime())
-        h = hmac.new(b'IGSLUQCBDFHEOIFM', '|'.join([url, timestamp]).encode(), hashlib.sha1).hexdigest().upper()
+        h = hmac.new(b'IGSLUQCBDFHEOIFM', f'{url}|{timestamp}'.encode(), hashlib.sha1).hexdigest().upper()
         headers = {
             'Accept': 'application/json',
-            'Authorization': '|'.join([h, timestamp, '117', '1']),
+            'Authorization': f'{h}|{timestamp}|117|1',
         }
         return InfoExtractor._download_json(self, url, *args, headers=headers, **kwargs)
 

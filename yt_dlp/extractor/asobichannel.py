@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    clean_html,
-    merge_dicts,
-    parse_iso8601,
-    url_or_none,
-)
+from ..utils import ExtractorError, clean_html, merge_dicts, parse_iso8601, url_or_none
 from ..utils.traversal import traverse_obj
 
 

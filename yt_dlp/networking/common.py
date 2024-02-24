@@ -14,21 +14,10 @@ from email.message import Message
 from http import HTTPStatus
 
 from ._helper import make_ssl_context, wrap_request_errors
-from .exceptions import (
-    NoSupportingHandlers,
-    RequestError,
-    TransportError,
-    UnsupportedRequest,
-)
+from .exceptions import NoSupportingHandlers, RequestError, TransportError, UnsupportedRequest
 from ..compat.types import NoneType
 from ..cookies import YoutubeDLCookieJar
-from ..utils import (
-    bug_reports_message,
-    classproperty,
-    deprecation_warning,
-    error_to_str,
-    update_url_query,
-)
+from ..utils import bug_reports_message, classproperty, deprecation_warning, error_to_str, update_url_query
 from ..utils.networking import HTTPHeaderDict, normalize_url
 
 
@@ -47,7 +36,8 @@ def register_preference(*handlers: type[RequestHandler]):
 
 
 class RequestDirector:
-    """RequestDirector class
+    """
+    RequestDirector class
 
     Helper class that, when given a request, forward it to a RequestHandler that supports it.
 
@@ -89,9 +79,7 @@ class RequestDirector:
             self.logger.stdout(f'director: {msg}')
 
     def send(self, request: Request) -> Response:
-        """
-        Passes a request onto a suitable RequestHandler
-        """
+        """Passes a request onto a suitable RequestHandler"""
         if not self.handlers:
             raise RequestError('No request handlers configured')
 
@@ -144,8 +132,8 @@ class Features(enum.Enum):
 
 
 class RequestHandler(abc.ABC):
-
-    """Request Handler class
+    """
+    Request Handler class
 
     Request handlers are class that, given a Request,
     process the request from start to finish and return a Response.
@@ -523,8 +511,11 @@ class Response(io.IOBase):
         return super().close()
 
     def get_header(self, name, default=None):
-        """Get header for name.
-        If there are multiple matching headers, return all seperated by comma."""
+        """
+        Get header for name.
+
+        If there are multiple matching headers, return all seperated by comma.
+        """
         headers = self.headers.get_all(name)
         if not headers:
             return default

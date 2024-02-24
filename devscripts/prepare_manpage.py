@@ -10,12 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import os.path
 import re
 
-from devscripts.utils import (
-    compose_functions,
-    get_filename_args,
-    read_file,
-    write_file,
-)
+from devscripts.utils import compose_functions, get_filename_args, read_file, write_file
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 README_FILE = os.path.join(ROOT_DIR, 'README.md')

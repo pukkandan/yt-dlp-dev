@@ -1,12 +1,6 @@
 from .common import InfoExtractor
 from .youtube import YoutubeIE
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    qualities,
-    str_or_none,
-    url_or_none,
-)
+from ..utils import ExtractorError, int_or_none, qualities, str_or_none, url_or_none
 from ..utils.traversal import traverse_obj
 
 

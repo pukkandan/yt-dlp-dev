@@ -2,14 +2,7 @@ import functools
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    OnDemandPagedList,
-    int_or_none,
-    parse_duration,
-    qualities,
-    try_get,
-)
+from ..utils import ExtractorError, OnDemandPagedList, int_or_none, parse_duration, qualities, try_get
 
 
 class VeohIE(InfoExtractor):

@@ -8,14 +8,7 @@ from .external import FFmpegFD
 from .fragment import FragmentFD
 from .. import webvtt
 from ..dependencies import Cryptodome
-from ..utils import (
-    bug_reports_message,
-    parse_m3u8_attributes,
-    remove_start,
-    traverse_obj,
-    update_url_query,
-    urljoin,
-)
+from ..utils import bug_reports_message, parse_m3u8_attributes, remove_start, traverse_obj, update_url_query, urljoin
 
 
 class HlsFD(FragmentFD):

@@ -322,7 +322,7 @@ class ArteTVCategoryIE(ArteTVBaseIE):
     @classmethod
     def suitable(cls, url):
         return (
-            not any(ie.suitable(url) for ie in (ArteTVIE, ArteTVPlaylistIE, ))
+            not any(ie.suitable(url) for ie in (ArteTVIE, ArteTVPlaylistIE))
             and super().suitable(url))
 
     def _real_extract(self, url):
@@ -336,7 +336,7 @@ class ArteTVCategoryIE(ArteTVBaseIE):
             video = video.group('url')
             if video == url:
                 continue
-            if any(ie.suitable(video) for ie in (ArteTVIE, ArteTVPlaylistIE, )):
+            if any(ie.suitable(video) for ie in (ArteTVIE, ArteTVPlaylistIE)):
                 items.append(video)
 
         title = strip_or_none(self._generic_title('', webpage, default='').rsplit('|', 1)[0]) or None

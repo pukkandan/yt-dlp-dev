@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+import contextlib
 import copy
 import json
 
@@ -17,13 +18,7 @@ from yt_dlp.compat import compat_os_name
 from yt_dlp.extractor import YoutubeIE
 from yt_dlp.extractor.common import InfoExtractor
 from yt_dlp.postprocessor.common import PostProcessor
-from yt_dlp.utils import (
-    ExtractorError,
-    LazyList,
-    OnDemandPagedList,
-    int_or_none,
-    match_filter_func,
-)
+from yt_dlp.utils import ExtractorError, LazyList, OnDemandPagedList, int_or_none, match_filter_func
 from yt_dlp.utils.traversal import traverse_obj
 
 TEST_URL = 'http://localhost/sample.mp4'
@@ -129,7 +124,7 @@ class TestFormatSelection(unittest.TestCase):
                 'allow_multiple_audio_streams': multi,
             })
             ydl.process_ie_result(info_dict.copy())
-            downloaded = map(lambda x: x['format_id'], ydl.downloaded_info_dicts)
+            downloaded = (x['format_id'] for x in ydl.downloaded_info_dicts)
             self.assertEqual(list(downloaded), list(expected))
 
         test('20/47', '47')
@@ -515,10 +510,8 @@ class TestFormatSelection(unittest.TestCase):
         self.assertEqual(downloaded_ids, ['D', 'C', 'B'])
 
         ydl = YDL({'format': 'best[height<40]'})
-        try:
+        with contextlib.suppress(ExtractorError):
             ydl.process_ie_result(info_dict)
-        except ExtractorError:
-            pass
         self.assertEqual(ydl.downloaded_info_dicts, [])
 
     def test_default_format_spec(self):
@@ -847,14 +840,14 @@ class TestYoutubeDL(unittest.TestCase):
         # test('%(foo|)s', ('', '_'))  # fixme
 
         # Environment variable expansion for prepare_filename
-        os.environ['__yt_dlp_var'] = 'expanded'
+        os.environ['__YT_DLP_VAR'] = 'expanded'
         envvar = '%__yt_dlp_var%' if compat_os_name == 'nt' else '$__yt_dlp_var'
         test(envvar, (envvar, 'expanded'))
         if compat_os_name == 'nt':
             test('%s%', ('%s%', '%s%'))
-            os.environ['s'] = 'expanded'
+            os.environ['S'] = 'expanded'
             test('%s%', ('%s%', 'expanded'))  # %s% should be expanded before escaping %s
-            os.environ['(test)s'] = 'expanded'
+            os.environ['(TEST)S'] = 'expanded'
             test('%(test)s%', ('NA%', 'expanded'))  # Environment should take priority over template
 
         # Path expansion and escaping

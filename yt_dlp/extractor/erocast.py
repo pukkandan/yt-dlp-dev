@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    parse_iso8601,
-    str_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import int_or_none, parse_iso8601, str_or_none, traverse_obj, url_or_none
 
 
 class ErocastIE(InfoExtractor):

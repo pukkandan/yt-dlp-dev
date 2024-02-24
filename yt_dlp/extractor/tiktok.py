@@ -129,13 +129,13 @@ class TikTokBaseIE(InfoExtractor):
                 if isinstance(e.cause, json.JSONDecodeError) and e.cause.pos == 0:
                     if count == len(self._APP_VERSIONS):
                         if fatal:
-                            raise e
+                            raise
                         else:
                             self.report_warning(str(e.cause or e.msg))
                             return
                     self.report_warning('%s. Retrying... (attempt %s of %s)' % (str(e.cause or e.msg), count, len(self._APP_VERSIONS)))
                     continue
-                raise e
+                raise
 
     def _extract_aweme_app(self, aweme_id):
         feed_list = self._call_api(

@@ -10,7 +10,7 @@ from ..dependencies import websockets
 
 
 class FFmpegSinkFD(FileDownloader):
-    """ A sink to ffmpeg for downloading fragments in any form """
+    """A sink to ffmpeg for downloading fragments in any form"""
 
     def real_download(self, filename, info_dict):
         info_copy = info_dict.copy()
@@ -39,7 +39,7 @@ class FFmpegSinkFD(FileDownloader):
         return FFmpegStdinFD(self.ydl, self.params or {}).download(filename, info_copy)
 
     async def real_connection(self, sink, info_dict):
-        """ Override this in subclasses """
+        """Override this in subclasses"""
         raise NotImplementedError('This method must be implemented by subclasses')
 
 

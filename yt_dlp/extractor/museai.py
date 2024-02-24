@@ -1,15 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    float_or_none,
-    int_or_none,
-    js_to_json,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import ExtractorError, determine_ext, float_or_none, int_or_none, js_to_json, traverse_obj, url_or_none
 
 
 class MuseAIIE(InfoExtractor):

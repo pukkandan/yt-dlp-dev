@@ -2,13 +2,7 @@ import importlib
 import random
 import re
 
-from ..utils import (
-    age_restricted,
-    bug_reports_message,
-    classproperty,
-    variadic,
-    write_string,
-)
+from ..utils import age_restricted, bug_reports_message, classproperty, variadic, write_string
 
 # These bloat the lazy_extractors, so allow them to passthrough silently
 ALLOWED_CLASSMETHODS = {'extract_from_webpage', 'get_testcases', 'get_webpage_testcases'}

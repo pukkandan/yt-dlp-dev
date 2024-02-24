@@ -4,15 +4,7 @@ import struct
 
 from .common import InfoExtractor
 from ..compat import compat_b64decode
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    float_or_none,
-    qualities,
-    remove_end,
-    remove_start,
-    try_get,
-)
+from ..utils import ExtractorError, determine_ext, float_or_none, qualities, remove_end, remove_start, try_get
 
 
 class RTVEALaCartaIE(InfoExtractor):
@@ -96,15 +88,14 @@ class RTVEALaCartaIE(InfoExtractor):
                     if f == 0:
                         l = int(letter) * 10
                         f = 1
+                    elif e == 0:
+                        l += int(letter)
+                        url += alphabet[l]
+                        e = (b + 3) % 4
+                        f = 0
+                        b += 1
                     else:
-                        if e == 0:
-                            l += int(letter)
-                            url += alphabet[l]
-                            e = (b + 3) % 4
-                            f = 0
-                            b += 1
-                        else:
-                            e -= 1
+                        e -= 1
 
                 yield quality.decode(), url
             encrypted_data.read(4)  # CRC
@@ -164,9 +155,9 @@ class RTVEALaCartaIE(InfoExtractor):
         subs = self._download_json(
             sub_file + '.json', video_id,
             'Downloading subtitles info')['page']['items']
-        return dict(
-            (s['lang'], [{'ext': 'vtt', 'url': s['src']}])
-            for s in subs)
+        return {
+            s['lang']: [{'ext': 'vtt', 'url': s['src']}]
+            for s in subs}
 
 
 class RTVEAudioIE(RTVEALaCartaIE):  # XXX: Do not subclass from concrete IE
@@ -211,7 +202,7 @@ class RTVEAudioIE(RTVEALaCartaIE):  # XXX: Do not subclass from concrete IE
 
     def _extract_png_formats(self, audio_id):
         """
-        This function retrieves media related png thumbnail which obfuscate
+        Retrieves media related png thumbnail which obfuscate
         valuable information about the media. This information is decrypted
         via base class _decrypt_url function providing media quality and
         media url

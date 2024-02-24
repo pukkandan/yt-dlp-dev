@@ -1242,7 +1242,7 @@ class BBCIE(BBCCoUkIE):  # XXX: Do not subclass from concrete IE
                 elif name == 'article':
                     for block in (try_get(resp,
                                           (lambda x: x['data']['blocks'],
-                                           lambda x: x['data']['content']['model']['blocks'],),
+                                           lambda x: x['data']['content']['model']['blocks']),
                                           list) or []):
                         if block.get('type') not in ['media', 'video']:
                             continue
@@ -1251,9 +1251,8 @@ class BBCIE(BBCCoUkIE):  # XXX: Do not subclass from concrete IE
                 entries, playlist_id, playlist_title, playlist_description)
 
         def extract_all(pattern):
-            return list(filter(None, map(
-                lambda s: self._parse_json(s, playlist_id, fatal=False),
-                re.findall(pattern, webpage))))
+            return list(filter(None, (self._parse_json(s, playlist_id, fatal=False)
+                                      for s in re.findall(pattern, webpage))))
 
         # Multiple video article (e.g.
         # http://www.bbc.co.uk/blogs/adamcurtis/entries/3662a707-0af9-3149-963f-47bea720b460)

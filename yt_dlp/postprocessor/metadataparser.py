@@ -15,9 +15,10 @@ class MetadataParserPP(PostProcessor):
 
     @classmethod
     def validate_action(cls, action, *data):
-        """Each action can be:
-                (Actions.INTERPRET, from, to) OR
-                (Actions.REPLACE, field, search, replace)
+        """
+        Each action can be:
+            (Actions.INTERPRET, from, to) OR
+            (Actions.REPLACE, field, search, replace)
         """
         if action not in cls.Actions:
             raise ValueError(f'{action!r} is not a valid action')

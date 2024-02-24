@@ -1,8 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    parse_duration,
-    traverse_obj,
-)
+from ..utils import parse_duration, traverse_obj
 
 
 class WimbledonIE(InfoExtractor):

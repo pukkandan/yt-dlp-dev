@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script employs a VERY basic heuristic ('porn' in webpage.lower()) to check
+Employs a VERY basic heuristic ('porn' in webpage.lower()) to check
 if we are not 'age_limit' tagging some porn site
 
 A second approach implemented relies on a list of porn domains, to activate it

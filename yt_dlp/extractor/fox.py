@@ -2,10 +2,7 @@ import json
 import uuid
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_unquote,
-)
+from ..compat import compat_str, compat_urllib_parse_unquote
 from ..networking.exceptions import HTTPError
 from ..utils import (
     ExtractorError,

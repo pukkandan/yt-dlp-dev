@@ -4,13 +4,7 @@ import time
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    dict_get,
-    ExtractorError,
-    strip_or_none,
-    traverse_obj,
-    try_get
-)
+from ..utils import ExtractorError, dict_get, strip_or_none, traverse_obj, try_get
 
 
 class RCTIPlusBaseIE(InfoExtractor):
@@ -189,7 +183,7 @@ class RCTIPlusIE(RCTIPlusBaseIE):
             if isinstance(e.cause, HTTPError) and e.cause.status == 403:
                 self.raise_geo_restricted(countries=['ID'], metadata_available=True)
             else:
-                raise e
+                raise
         for f in formats:
             if 'akamaized' in f['url'] or 'cloudfront' in f['url']:
                 f.setdefault('http_headers', {})['Referer'] = 'https://www.rctiplus.com/'  # Referer header is required for akamai/cloudfront CDNs
@@ -266,7 +260,7 @@ class RCTIPlusSeriesIE(RCTIPlusBaseIE):
         except ExtractorError as e:
             if 'not found' in str(e):
                 return []
-            raise e
+            raise
         if total_pages <= 0:
             return []
 

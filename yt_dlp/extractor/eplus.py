@@ -1,12 +1,7 @@
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    try_call,
-    unified_timestamp,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, try_call, unified_timestamp, urlencode_postdata
 
 
 class EplusIbIE(InfoExtractor):

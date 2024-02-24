@@ -1,14 +1,6 @@
 from .common import InfoExtractor
 from ..compat import functools
-from ..utils import (
-    int_or_none,
-    parse_duration,
-    parse_iso8601,
-    qualities,
-    str_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import int_or_none, parse_duration, parse_iso8601, qualities, str_or_none, traverse_obj, url_or_none
 
 
 class PornboxIE(InfoExtractor):

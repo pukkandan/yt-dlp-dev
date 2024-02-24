@@ -26,17 +26,11 @@ import zlib
 from email.message import Message
 from http.cookiejar import CookieJar
 
+from test.conftest import validate_and_send
 from test.helper import FakeYDL, http_server_port, verify_address_availability
 from yt_dlp.cookies import YoutubeDLCookieJar
 from yt_dlp.dependencies import brotli, requests, urllib3
-from yt_dlp.networking import (
-    HEADRequest,
-    PUTRequest,
-    Request,
-    RequestDirector,
-    RequestHandler,
-    Response,
-)
+from yt_dlp.networking import HEADRequest, PUTRequest, Request, RequestDirector, RequestHandler, Response
 from yt_dlp.networking._urllib import UrllibRH
 from yt_dlp.networking.exceptions import (
     CertificateVerifyError,
@@ -51,8 +45,6 @@ from yt_dlp.networking.exceptions import (
 )
 from yt_dlp.utils._utils import _YDLLogger as FakeLogger
 from yt_dlp.utils.networking import HTTPHeaderDict
-
-from test.conftest import validate_and_send
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -155,14 +147,7 @@ class HTTPTestRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', str(len(payload)))
             self.end_headers()
             self.wfile.write(payload)
-        elif self.path == '/%E4%B8%AD%E6%96%87.html':
-            payload = b'<html><video src="/vid.mp4" /></html>'
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.send_header('Content-Length', str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
-        elif self.path == '/%c7%9f':
+        elif self.path in ('/%E4%B8%AD%E6%96%87.html', '/%c7%9f'):
             payload = b'<html><video src="/vid.mp4" /></html>'
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
@@ -799,7 +784,7 @@ class TestUrllibRequestHandler(TestRequestHandlerBase):
                 validate_and_send(rh, Request(f'https://127.0.0.1:{self.https_port}/headers'))
 
     @pytest.mark.parametrize('handler', ['Urllib'], indirect=True)
-    @pytest.mark.parametrize('req,match,version_check', [
+    @pytest.mark.parametrize(('req', 'match', 'version_check'), [
         # https://github.com/python/cpython/blob/987b712b4aeeece336eed24fcc87a950a756c3e2/Lib/http/client.py#L1256
         # bpo-39603: Check implemented in 3.7.9+, 3.8.5+
         (
@@ -828,19 +813,19 @@ class TestUrllibRequestHandler(TestRequestHandlerBase):
 
 
 class TestRequestsRequestHandler(TestRequestHandlerBase):
-    @pytest.mark.parametrize('raised,expected', [
-        (lambda: requests.exceptions.ConnectTimeout(), TransportError),
-        (lambda: requests.exceptions.ReadTimeout(), TransportError),
-        (lambda: requests.exceptions.Timeout(), TransportError),
-        (lambda: requests.exceptions.ConnectionError(), TransportError),
-        (lambda: requests.exceptions.ProxyError(), ProxyError),
+    @pytest.mark.parametrize(('raised', 'expected'), [
+        (requests.exceptions.ConnectTimeout, TransportError),
+        (requests.exceptions.ReadTimeout, TransportError),
+        (requests.exceptions.Timeout, TransportError),
+        (requests.exceptions.ConnectionError, TransportError),
+        (requests.exceptions.ProxyError, ProxyError),
         (lambda: requests.exceptions.SSLError('12[CERTIFICATE_VERIFY_FAILED]34'), CertificateVerifyError),
-        (lambda: requests.exceptions.SSLError(), SSLError),
-        (lambda: requests.exceptions.InvalidURL(), RequestError),
-        (lambda: requests.exceptions.InvalidHeader(), RequestError),
+        (requests.exceptions.SSLError, SSLError),
+        (requests.exceptions.InvalidURL, RequestError),
+        (requests.exceptions.InvalidHeader, RequestError),
         # catch-all: https://github.com/psf/requests/blob/main/src/requests/adapters.py#L535
-        (lambda: urllib3.exceptions.HTTPError(), TransportError),
-        (lambda: requests.exceptions.RequestException(), RequestError)
+        (urllib3.exceptions.HTTPError, TransportError),
+        (requests.exceptions.RequestException, RequestError)
         #  (lambda: requests.exceptions.TooManyRedirects(), HTTPError) - Needs a response object
     ])
     @pytest.mark.parametrize('handler', ['Requests'], indirect=True)
@@ -859,13 +844,13 @@ class TestRequestsRequestHandler(TestRequestHandlerBase):
 
             assert exc_info.type is expected
 
-    @pytest.mark.parametrize('raised,expected,match', [
-        (lambda: urllib3.exceptions.SSLError(), SSLError, None),
-        (lambda: urllib3.exceptions.TimeoutError(), TransportError, None),
+    @pytest.mark.parametrize(('raised', 'expected', 'match'), [
+        (urllib3.exceptions.SSLError, SSLError, None),
+        (urllib3.exceptions.TimeoutError, TransportError, None),
         (lambda: urllib3.exceptions.ReadTimeoutError(None, None, None), TransportError, None),
-        (lambda: urllib3.exceptions.ProtocolError(), TransportError, None),
-        (lambda: urllib3.exceptions.DecodeError(), TransportError, None),
-        (lambda: urllib3.exceptions.HTTPError(), TransportError, None),  # catch-all
+        (urllib3.exceptions.ProtocolError, TransportError, None),
+        (urllib3.exceptions.DecodeError, TransportError, None),
+        (urllib3.exceptions.HTTPError, TransportError, None),  # catch-all
         (
             lambda: urllib3.exceptions.ProtocolError('error', http.client.IncompleteRead(partial=b'abc', expected=4)),
             IncompleteRead,
@@ -1012,7 +997,7 @@ class TestRequestHandlerValidation:
         ]),
     ]
 
-    @pytest.mark.parametrize('handler,scheme,fail,handler_kwargs', [
+    @pytest.mark.parametrize(('handler', 'scheme', 'fail', 'handler_kwargs'), [
         (handler_tests[0], scheme, fail, handler_kwargs)
         for handler_tests in URL_SCHEME_TESTS
         for scheme, fail, handler_kwargs in handler_tests[1]
@@ -1021,12 +1006,12 @@ class TestRequestHandlerValidation:
     def test_url_scheme(self, handler, scheme, fail, handler_kwargs):
         run_validation(handler, fail, Request(f'{scheme}://'), **(handler_kwargs or {}))
 
-    @pytest.mark.parametrize('handler,fail', [('Urllib', False), ('Requests', False)], indirect=['handler'])
+    @pytest.mark.parametrize(('handler', 'fail'), [('Urllib', False), ('Requests', False)], indirect=['handler'])
     def test_no_proxy(self, handler, fail):
         run_validation(handler, fail, Request('http://', proxies={'no': '127.0.0.1,github.com'}))
         run_validation(handler, fail, Request('http://'), proxies={'no': '127.0.0.1,github.com'})
 
-    @pytest.mark.parametrize('handler,proxy_key,fail', [
+    @pytest.mark.parametrize(('handler', 'proxy_key', 'fail'), [
         (handler_tests[0], proxy_key, fail)
         for handler_tests in PROXY_KEY_TESTS
         for proxy_key, fail in handler_tests[1]
@@ -1035,7 +1020,7 @@ class TestRequestHandlerValidation:
         run_validation(handler, fail, Request('http://', proxies={proxy_key: 'http://example.com'}))
         run_validation(handler, fail, Request('http://'), proxies={proxy_key: 'http://example.com'})
 
-    @pytest.mark.parametrize('handler,req_scheme,scheme,fail', [
+    @pytest.mark.parametrize(('handler', 'req_scheme', 'scheme', 'fail'), [
         (handler_tests[0], handler_tests[1], scheme, fail)
         for handler_tests in PROXY_SCHEME_TESTS
         for scheme, fail in handler_tests[2]
@@ -1054,7 +1039,7 @@ class TestRequestHandlerValidation:
     def test_invalid_proxy_url(self, handler, proxy_url):
         run_validation(handler, UnsupportedRequest, Request('http://', proxies={'http': proxy_url}))
 
-    @pytest.mark.parametrize('handler,scheme,extensions,fail', [
+    @pytest.mark.parametrize(('handler', 'scheme', 'extensions', 'fail'), [
         (handler_tests[0], handler_tests[1], extensions, fail)
         for handler_tests in EXTENSION_TESTS
         for extensions, fail in handler_tests[2]
@@ -1219,7 +1204,7 @@ class TestYoutubeDLNetworking:
                 warnings.simplefilter('ignore', category=DeprecationWarning)
                 assert isinstance(ydl._opener, urllib.request.OpenerDirector)
 
-    @pytest.mark.parametrize('proxy,expected', [
+    @pytest.mark.parametrize(('proxy', 'expected'), [
         ('http://127.0.0.1:8080', {'all': 'http://127.0.0.1:8080'}),
         ('', {'all': '__noproxy__'}),
         (None, {'http': 'http://127.0.0.1:8081', 'https': 'http://127.0.0.1:8081'})  # env, set https
@@ -1284,7 +1269,7 @@ class TestYoutubeDLNetworking:
             with pytest.raises(SSLError, match='testerror'):
                 ydl.urlopen('ssl://testerror')
 
-    @pytest.mark.parametrize('proxy_key,proxy_url,expected', [
+    @pytest.mark.parametrize(('proxy_key', 'proxy_url', 'expected'), [
         ('http', '__noproxy__', None),
         ('no', '127.0.0.1,foo.bar', '127.0.0.1,foo.bar'),
         ('https', 'example.com', 'http://example.com'),
@@ -1533,7 +1518,7 @@ class TestRequest:
         assert isinstance(req.copy(), AnotherRequest)
 
     def test_url(self):
-        req = Request(url='https://фtest.example.com/ some spaceв?ä=c',)
+        req = Request(url='https://фtest.example.com/ some spaceв?ä=c')
         assert req.url == 'https://xn--test-z6d.example.com/%20some%20space%D0%B2?%C3%A4=c'
 
         assert Request(url='//example.com').url == 'http://example.com'
@@ -1544,7 +1529,7 @@ class TestRequest:
 
 class TestResponse:
 
-    @pytest.mark.parametrize('reason,status,expected', [
+    @pytest.mark.parametrize(('reason', 'status', 'expected'), [
         ('custom', 200, 'custom'),
         (None, 404, 'Not Found'),  # fallback status
         ('', 403, 'Forbidden'),

@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    int_or_none,
-    remove_end,
-    strip_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import float_or_none, int_or_none, remove_end, strip_or_none, traverse_obj, url_or_none
 
 
 class NZOnScreenIE(InfoExtractor):

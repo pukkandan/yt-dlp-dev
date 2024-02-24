@@ -5,13 +5,7 @@ import urllib.parse
 
 from .common import InfoExtractor
 from ..compat import compat_urllib_parse_unquote
-from ..utils import (
-    int_or_none,
-    parse_duration,
-    remove_end,
-    try_get,
-    urljoin,
-)
+from ..utils import int_or_none, parse_duration, remove_end, try_get, urljoin
 
 
 class MailRuIE(InfoExtractor):
@@ -235,10 +229,7 @@ class MailRuMusicSearchBaseIE(InfoExtractor):
         track = t.get('Name') or t.get('Name_Text_HTML')
         artist = t.get('Author') or t.get('Author_Text_HTML')
 
-        if track:
-            title = '%s - %s' % (artist, track) if artist else track
-        else:
-            title = audio_id
+        title = f'{artist} - {track}' if artist and track else track or audio_id
 
         return {
             'extractor_key': MailRuMusicIE.ie_key(),
@@ -329,9 +320,8 @@ class MailRuMusicSearchIE(MailRuMusicSearchBaseIE):
             total = try_get(
                 search, lambda x: x['Results']['music']['Total'], int)
 
-            if total is not None:
-                if offset > total:
-                    break
+            if total is not None and offset > total:
+                break
 
             offset += LIMIT
 

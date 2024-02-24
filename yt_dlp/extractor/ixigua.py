@@ -1,14 +1,7 @@
 import base64
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    get_element_by_id,
-    int_or_none,
-    js_to_json,
-    str_or_none,
-    traverse_obj,
-)
+from ..utils import ExtractorError, get_element_by_id, int_or_none, js_to_json, str_or_none, traverse_obj
 
 
 class IxiguaIE(InfoExtractor):

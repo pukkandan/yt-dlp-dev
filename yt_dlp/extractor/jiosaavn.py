@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    js_to_json,
-    url_or_none,
-    urlencode_postdata,
-    urljoin,
-)
+from ..utils import int_or_none, js_to_json, url_or_none, urlencode_postdata, urljoin
 from ..utils.traversal import traverse_obj
 
 

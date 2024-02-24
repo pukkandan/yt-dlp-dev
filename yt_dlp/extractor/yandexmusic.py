@@ -3,12 +3,7 @@ import itertools
 
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    float_or_none,
-    try_get,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, try_get
 
 
 class YandexMusicBaseIE(InfoExtractor):
@@ -199,9 +194,10 @@ class YandexMusicPlaylistBaseIE(YandexMusicBaseIE):
         # tracks dictionary shipped with playlist.jsx API is limited to 150 tracks,
         # missing tracks should be retrieved manually.
         if len(tracks) < len(track_ids):
-            present_track_ids = set([
+            present_track_ids = {
                 compat_str(track['id'])
-                for track in tracks if track.get('id')])
+                for track in tracks if track.get('id')
+            }
             missing_track_ids = [
                 track_id for track_id in track_ids
                 if track_id not in present_track_ids]

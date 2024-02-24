@@ -4,11 +4,7 @@ import re
 from .brightcove import BrightcoveNewBaseIE
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    try_get,
-    update_url_query,
-)
+from ..utils import ExtractorError, try_get, update_url_query
 
 
 class SevenPlusIE(BrightcoveNewBaseIE):

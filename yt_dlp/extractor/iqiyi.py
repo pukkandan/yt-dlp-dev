@@ -4,20 +4,16 @@ import re
 import time
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_urlencode,
-    compat_urllib_parse_unquote
-)
 from .openload import PhantomJSwrapper
+from ..compat import compat_str, compat_urllib_parse_unquote, compat_urllib_parse_urlencode
 from ..utils import (
+    ExtractorError,
     clean_html,
     decode_packed_codes,
-    ExtractorError,
     float_or_none,
     format_field,
-    get_element_by_id,
     get_element_by_attribute,
+    get_element_by_id,
     int_or_none,
     js_to_json,
     ohdave_rsa_encrypt,
@@ -45,7 +41,7 @@ class IqiyiSDK:
 
     @staticmethod
     def split_sum(data):
-        return compat_str(sum(map(lambda p: int(p, 16), list(data))))
+        return compat_str(sum((int(p, 16) for p in list(data))))
 
     @staticmethod
     def digit_sum(num):
@@ -69,7 +65,7 @@ class IqiyiSDK:
 
     def mod(self, modulus):
         chunks, ip = self.preprocess(32)
-        self.target = chunks[0] + ''.join(map(lambda p: compat_str(p % modulus), ip))
+        self.target = chunks[0] + ''.join((compat_str(p % modulus) for p in ip))
 
     def split(self, chunksize):
         modulus_map = {
@@ -112,7 +108,7 @@ class IqiyiSDK:
             'm': '%02d' % d.tm_mon,
             'd': '%02d' % d.tm_mday,
         }
-        self.target += ''.join(map(lambda c: strings[c], list(scheme)))
+        self.target += ''.join((strings[c] for c in list(scheme)))
 
     def split_time_even_odd(self):
         even, odd = self.even_odd()
@@ -566,7 +562,7 @@ class IqIE(InfoExtractor):
             return
         self._BID_TAGS = {
             bid: traverse_obj(extracted_bid_tags, (bid, 'value'), expected_type=str, default=self._BID_TAGS.get(bid))
-            for bid in extracted_bid_tags.keys()
+            for bid in extracted_bid_tags
         }
 
     def _get_cookie(self, name, default=None):

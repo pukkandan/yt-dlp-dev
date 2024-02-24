@@ -4,13 +4,7 @@ import os
 
 from ..networking import Request
 from ..networking.exceptions import HTTPError, network_exceptions
-from ..utils import (
-    PostProcessingError,
-    RetryManager,
-    _configuration_args,
-    deprecation_warning,
-    encodeFilename,
-)
+from ..utils import PostProcessingError, RetryManager, _configuration_args, deprecation_warning, encodeFilename
 
 
 class PostProcessorMetaClass(type):
@@ -34,7 +28,8 @@ class PostProcessorMetaClass(type):
 
 
 class PostProcessor(metaclass=PostProcessorMetaClass):
-    """Post Processor class.
+    """
+    Post Processor class.
 
     PostProcessor objects can be added to downloaders with their
     add_post_processor() method. When the downloader has finished a
@@ -133,7 +128,8 @@ class PostProcessor(metaclass=PostProcessorMetaClass):
         return decorator
 
     def run(self, information):
-        """Run the PostProcessor.
+        """
+        Run the PostProcessor.
 
         The "information" argument is a dictionary like the ones
         composed by InfoExtractors. The only difference is that this

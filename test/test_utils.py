@@ -17,11 +17,7 @@ import json
 import subprocess
 import xml.etree.ElementTree
 
-from yt_dlp.compat import (
-    compat_etree_fromstring,
-    compat_HTMLParseError,
-    compat_os_name,
-)
+from yt_dlp.compat import compat_etree_fromstring, compat_HTMLParseError, compat_os_name
 from yt_dlp.utils import (
     Config,
     DateRange,
@@ -132,12 +128,7 @@ from yt_dlp.utils import (
     xpath_text,
     xpath_with_ns,
 )
-from yt_dlp.utils.networking import (
-    HTTPHeaderDict,
-    escape_rfc3986,
-    normalize_url,
-    remove_dot_segments,
-)
+from yt_dlp.utils.networking import HTTPHeaderDict, escape_rfc3986, normalize_url, remove_dot_segments
 
 
 class TestUtil(unittest.TestCase):
@@ -268,7 +259,7 @@ class TestUtil(unittest.TestCase):
         def env(var):
             return f'%{var}%' if sys.platform == 'win32' else f'${var}'
 
-        os.environ['yt_dlp_EXPATH_PATH'] = 'expanded'
+        os.environ['YT_DLP_EXPATH_PATH'] = 'expanded'
         self.assertEqual(expand_path(env('yt_dlp_EXPATH_PATH')), 'expanded')
 
         old_home = os.environ.get('HOME')
@@ -769,13 +760,13 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(dict_get(d, 'b'), None)
         self.assertEqual(dict_get(d, 'b', 42), 42)
         self.assertEqual(dict_get(d, ('a', )), 42)
-        self.assertEqual(dict_get(d, ('b', 'a', )), 42)
-        self.assertEqual(dict_get(d, ('b', 'c', 'a', 'd', )), 42)
-        self.assertEqual(dict_get(d, ('b', 'c', )), None)
-        self.assertEqual(dict_get(d, ('b', 'c', ), 42), 42)
+        self.assertEqual(dict_get(d, ('b', 'a')), 42)
+        self.assertEqual(dict_get(d, ('b', 'c', 'a', 'd')), 42)
+        self.assertEqual(dict_get(d, ('b', 'c')), None)
+        self.assertEqual(dict_get(d, ('b', 'c'), 42), 42)
         for key, false_value in FALSE_VALUES.items():
-            self.assertEqual(dict_get(d, ('b', 'c', key, )), None)
-            self.assertEqual(dict_get(d, ('b', 'c', key, ), skip_false_values=False), false_value)
+            self.assertEqual(dict_get(d, ('b', 'c', key)), None)
+            self.assertEqual(dict_get(d, ('b', 'c', key), skip_false_values=False), false_value)
 
     def test_merge_dicts(self):
         self.assertEqual(merge_dicts({'a': 1}, {'b': 2}), {'a': 1, 'b': 2})
@@ -2022,7 +2013,7 @@ Line 1
                          msg='int fn with expected_type int should give int')
         self.assertEqual(try_call(lambda: 1, expected_type=dict), None,
                          msg='int fn with wrong expected_type should give None')
-        self.assertEqual(try_call(total, args=(0, 1, 0, ), expected_type=int), 1,
+        self.assertEqual(try_call(total, args=(0, 1, 0), expected_type=int), 1,
                          msg='fn should accept arglist')
         self.assertEqual(try_call(total, kwargs={'a': 0, 'b': 1, 'c': 0}, expected_type=int), 1,
                          msg='fn should accept kwargs')
@@ -2093,13 +2084,13 @@ Line 1
         self.assertEqual(traverse_obj(iter(range(4)), lambda _, x: x % 2 == 0), [0, 2],
                          msg='function key should accept iterables')
         if __debug__:
-            with self.assertRaises(Exception, msg='Wrong function signature should raise in debug'):
+            with self.assertRaises(TypeError, msg='Wrong function signature should raise in debug'):
                 traverse_obj(_TEST_DATA, lambda a: ...)
-            with self.assertRaises(Exception, msg='Wrong function signature should raise in debug'):
+            with self.assertRaises(TypeError, msg='Wrong function signature should raise in debug'):
                 traverse_obj(_TEST_DATA, lambda a, b, c: ...)
 
         # Test set as key (transformation/type, like `expected_type`)
-        self.assertEqual(traverse_obj(_TEST_DATA, (..., {str.upper}, )), ['STR'],
+        self.assertEqual(traverse_obj(_TEST_DATA, (..., {str.upper})), ['STR'],
                          msg='Function in set should be a transformation')
         self.assertEqual(traverse_obj(_TEST_DATA, (..., {str})), ['str'],
                          msg='Type in set should be a type filter')
@@ -2113,9 +2104,9 @@ Line 1
         self.assertEqual(traverse_obj(_TEST_DATA, ('fail', {lambda _: 'const'})), 'const',
                          msg='Function in set should always be called')
         if __debug__:
-            with self.assertRaises(Exception, msg='Sets with length != 1 should raise in debug'):
+            with self.assertRaises(ValueError, msg='Sets with length != 1 should raise in debug'):
                 traverse_obj(_TEST_DATA, set())
-            with self.assertRaises(Exception, msg='Sets with length != 1 should raise in debug'):
+            with self.assertRaises(ValueError, msg='Sets with length != 1 should raise in debug'):
                 traverse_obj(_TEST_DATA, {str.upper, str})
 
         # Test `slice` as a key

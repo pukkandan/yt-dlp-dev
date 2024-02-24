@@ -3,13 +3,7 @@ import re
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    get_element_by_class,
-    int_or_none,
-    url_or_none,
-    urljoin,
-)
+from ..utils import clean_html, get_element_by_class, int_or_none, url_or_none, urljoin
 
 
 class ThisVidIE(InfoExtractor):

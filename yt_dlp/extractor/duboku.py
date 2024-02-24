@@ -3,9 +3,9 @@ import re
 from .common import InfoExtractor
 from ..compat import compat_urlparse
 from ..utils import (
+    ExtractorError,
     clean_html,
     extract_attributes,
-    ExtractorError,
     get_elements_by_class,
     int_or_none,
     js_to_json,
@@ -29,8 +29,7 @@ def _get_elements_by_tag_and_attrib(html, tag=None, attribute=None, value=None, 
         value = re.escape(value) if escape_value else value
         value = '=[\'"]?(?P<value>%s)[\'"]?' % value
 
-    retlist = []
-    for m in re.finditer(r'''(?xs)
+    return re.finditer(r'''(?xs)
         <(?P<tag>%s)
          (?:\s+[a-zA-Z0-9:._-]+(?:=[a-zA-Z0-9:._-]*|="[^"]*"|='[^']*'|))*?
          %s%s
@@ -38,14 +37,11 @@ def _get_elements_by_tag_and_attrib(html, tag=None, attribute=None, value=None, 
         \s*>
         (?P<content>.*?)
         </\1>
-    ''' % (tag, attribute, value), html):
-        retlist.append(m)
-
-    return retlist
+    ''' % (tag, attribute, value), html)
 
 
 def _get_element_by_tag_and_attrib(html, tag=None, attribute=None, value=None, escape_value=True):
-    retval = _get_elements_by_tag_and_attrib(html, tag, attribute, value, escape_value)
+    retval = list(_get_elements_by_tag_and_attrib(html, tag, attribute, value, escape_value))
     return retval[0] if retval else None
 
 

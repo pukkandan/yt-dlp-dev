@@ -3,14 +3,7 @@ import json
 import uuid
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    dict_get,
-    ExtractorError,
-    float_or_none,
-    OnDemandPagedList,
-    traverse_obj,
-)
+from ..utils import ExtractorError, OnDemandPagedList, determine_ext, dict_get, float_or_none, traverse_obj
 
 
 class MildomBaseIE(InfoExtractor):
@@ -18,7 +11,7 @@ class MildomBaseIE(InfoExtractor):
 
     def _call_api(self, url, video_id, query=None, note='Downloading JSON metadata', body=None):
         if not self._GUEST_ID:
-            self._GUEST_ID = f'pc-gp-{str(uuid.uuid4())}'
+            self._GUEST_ID = f'pc-gp-{uuid.uuid4()!s}'
 
         content = self._download_json(
             url, video_id, note=note, data=json.dumps(body).encode() if body else None,

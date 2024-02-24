@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_qs,
-    time_seconds,
-    traverse_obj,
-)
+from ..utils import ExtractorError, int_or_none, parse_qs, time_seconds, traverse_obj
 
 
 class PIAULIZAPortalIE(InfoExtractor):

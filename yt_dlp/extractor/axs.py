@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    js_to_json,
-    parse_iso8601,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import float_or_none, js_to_json, parse_iso8601, traverse_obj, url_or_none
 
 
 class AxsIE(InfoExtractor):

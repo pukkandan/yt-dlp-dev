@@ -190,10 +190,7 @@ class NiconicoChannelPlusIE(NiconicoChannelPlusBaseIE):
 
         payload = {}
         if video_type == 'vod':
-            if live_finished_at:
-                live_status = 'was_live'
-            else:
-                live_status = 'not_live'
+            live_status = 'was_live' if live_finished_at else 'not_live'
         elif video_type == 'live':
             if not data_json.get('live_started_at'):
                 return 'is_upcoming', ''

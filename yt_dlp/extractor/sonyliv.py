@@ -7,13 +7,7 @@ import uuid
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    jwt_decode_hs256,
-    try_call,
-    try_get,
-)
+from ..utils import ExtractorError, int_or_none, jwt_decode_hs256, try_call, try_get
 
 
 class SonyLIVIE(InfoExtractor):

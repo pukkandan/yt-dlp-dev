@@ -7,6 +7,7 @@ from ..utils import (
     ExtractorError,
     int_or_none,
     parse_qs,
+    remove_start,
     smuggle_url,
     traverse_obj,
     unified_timestamp,
@@ -547,7 +548,7 @@ class SlidesLiveIE(InfoExtractor):
                 }, note='Downloading video slides info', errnote='Failed to download video slides info') or {}
 
             for slide_id, slide in enumerate(traverse_obj(slides, ('slides', ...)), 1):
-                if not traverse_obj(slide, ('video', 'service')) == 'yoda':
+                if traverse_obj(slide, ('video', 'service')) != 'yoda':
                     continue
                 video_path = traverse_obj(slide, ('video', 'id'))
                 cdn_hostname = traverse_obj(service_data, (

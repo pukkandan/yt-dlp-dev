@@ -4,14 +4,7 @@ from uuid import uuid4
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    join_nonempty,
-    try_get,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, int_or_none, join_nonempty, try_get, url_or_none, urlencode_postdata
 
 
 class ZattooPlatformBaseIE(InfoExtractor):
@@ -119,9 +112,7 @@ class ZattooPlatformBaseIE(InfoExtractor):
         return cid, info_dict
 
     def _extract_ondemand_info(self, ondemand_id):
-        """
-        @returns    (ondemand_token, ondemand_type, info_dict)
-        """
+        """@returns    (ondemand_token, ondemand_type, info_dict)"""
         data = self._download_json(
             '%s/zapi/vod/movies/%s' % (self._host_url(), ondemand_id),
             ondemand_id, 'Downloading ondemand information')

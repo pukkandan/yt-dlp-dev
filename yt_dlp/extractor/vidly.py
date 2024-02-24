@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    mimetype2ext,
-    url_or_none,
-)
+from ..utils import ExtractorError, mimetype2ext, url_or_none
 from ..utils.traversal import traverse_obj
 
 

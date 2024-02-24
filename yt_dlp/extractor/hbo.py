@@ -1,13 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    xpath_text,
-    xpath_element,
-    int_or_none,
-    parse_duration,
-    urljoin,
-)
+from ..utils import int_or_none, parse_duration, urljoin, xpath_element, xpath_text
 
 
 class HBOBaseIE(InfoExtractor):

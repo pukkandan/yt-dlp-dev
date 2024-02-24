@@ -1,14 +1,7 @@
 # flake8: noqa: F401
 import warnings
 
-from .common import (
-    HEADRequest,
-    PUTRequest,
-    Request,
-    RequestDirector,
-    RequestHandler,
-    Response,
-)
+from .common import HEADRequest, PUTRequest, Request, RequestDirector, RequestHandler, Response
 
 # isort: split
 # TODO: all request handlers should be safely imported

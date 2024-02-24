@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    parse_age_limit,
-    parse_iso8601,
-    time_seconds,
-    update_url_query,
-)
+from ..utils import int_or_none, parse_age_limit, parse_iso8601, time_seconds, update_url_query
 
 
 class IndavideoEmbedIE(InfoExtractor):
@@ -80,7 +74,7 @@ class IndavideoEmbedIE(InfoExtractor):
             height = int_or_none(self._search_regex(
                 r'\.(\d{3,4})\.mp4(?:\?|$)', video_url, 'height', default=None))
             if not height and len(filesh) == 1:
-                height = int_or_none(list(filesh.keys())[0])
+                height = int_or_none(next(iter(filesh.keys())))
             token = filesh.get(str(height))
             if token is None:
                 continue

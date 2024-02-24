@@ -1,17 +1,9 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
+from ..compat import compat_str, compat_urlparse
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    js_to_json,
-    parse_duration,
-    parse_iso8601,
-)
+from ..utils import ExtractorError, js_to_json, parse_duration, parse_iso8601
 
 
 class ViideaIE(InfoExtractor):

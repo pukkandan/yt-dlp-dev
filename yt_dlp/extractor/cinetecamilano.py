@@ -1,15 +1,8 @@
 import json
+
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    parse_iso8601,
-    strip_or_none,
-    traverse_obj,
-    try_get,
-    urljoin,
-)
+from ..utils import ExtractorError, float_or_none, parse_iso8601, strip_or_none, traverse_obj, try_get, urljoin
 
 
 class CinetecaMilanoIE(InfoExtractor):

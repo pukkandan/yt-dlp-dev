@@ -1,21 +1,18 @@
 import itertools
-import re
 import json
-# import random
+import re
 
-from .common import (
-    InfoExtractor,
-    SearchInfoExtractor
-)
+# import random
+from .common import InfoExtractor, SearchInfoExtractor
 from ..compat import compat_str
 from ..networking import HEADRequest, Request
 from ..networking.exceptions import HTTPError
 from ..utils import (
-    error_to_compat_str,
+    KNOWN_EXTENSIONS,
     ExtractorError,
+    error_to_compat_str,
     float_or_none,
     int_or_none,
-    KNOWN_EXTENSIONS,
     mimetype2ext,
     parse_qs,
     str_or_none,
@@ -179,9 +176,8 @@ class SoundcloudBaseIE(InfoExtractor):
         h = p
 
         m = 8011470
-        f = 0
 
-        for f in range(f, len(h)):
+        for f in range(len(h)):
             m = (m >> 1) + ((1 & m) << 23)
             m += ord(h[f])
             m &= 16777215
@@ -244,10 +240,7 @@ class SoundcloudBaseIE(InfoExtractor):
             abr = f.get('abr')
             if abr:
                 f['abr'] = int(abr)
-            if protocol == 'hls':
-                protocol = 'm3u8' if ext == 'aac' else 'm3u8_native'
-            else:
-                protocol = 'http'
+            protocol = 'http' if protocol != 'hls' else 'm3u8' if ext == 'aac' else 'm3u8_native'
             f.update({
                 'format_id': '_'.join(format_id_list),
                 'protocol': protocol,
@@ -348,13 +341,15 @@ class SoundcloudBaseIE(InfoExtractor):
 
 
 class SoundcloudIE(SoundcloudBaseIE):
-    """Information extractor for soundcloud.com
-       To access the media, the uid of the song and a stream token
-       must be extracted from the page source and the script must make
-       a request to media.soundcloud.com/crossdomain.xml. Then
-       the media can be grabbed by requesting from an url composed
-       of the stream token and uid
-     """
+    """
+    Information extractor for soundcloud.com
+
+    To access the media, the uid of the song and a stream token
+    must be extracted from the page source and the script must make
+    a request to media.soundcloud.com/crossdomain.xml. Then
+    the media can be grabbed by requesting from an url composed
+    of the stream token and uid
+    """
 
     _VALID_URL = r'''(?x)^(?:https?://)?
                     (?:(?:(?:www\.|m\.)?soundcloud\.com/
@@ -418,7 +413,7 @@ class SoundcloudIE(SoundcloudBaseIE):
                 'id': '123998367',
                 'ext': 'mp3',
                 'title': 'Youtube - Dl Test Video \'\' Ä↭',
-                'description': 'test chars:  \"\'/\\ä↭',
+                'description': 'test chars:  "\'/\\ä↭',
                 'uploader': 'jaimeMF',
                 'uploader_id': '69767071',
                 'timestamp': 1386604920,
@@ -439,7 +434,7 @@ class SoundcloudIE(SoundcloudBaseIE):
                 'id': '123998367',
                 'ext': 'mp3',
                 'title': 'Youtube - Dl Test Video \'\' Ä↭',
-                'description': 'test chars:  \"\'/\\ä↭',
+                'description': 'test chars:  "\'/\\ä↭',
                 'uploader': 'jaimeMF',
                 'uploader_id': '69767071',
                 'timestamp': 1386604920,
@@ -569,7 +564,7 @@ class SoundcloudPlaylistBaseIE(SoundcloudBaseIE):
     def _extract_set(self, playlist, token=None):
         playlist_id = compat_str(playlist['id'])
         tracks = playlist.get('tracks') or []
-        if not all([t.get('permalink_url') for t in tracks]) and token:
+        if not all(t.get('permalink_url') for t in tracks) and token:
             tracks = self._download_json(
                 self._API_V2_BASE + 'tracks', playlist_id,
                 'Downloading tracks', query={

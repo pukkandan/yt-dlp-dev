@@ -1,12 +1,7 @@
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    OnDemandPagedList,
-    determine_ext,
-    parse_iso8601,
-    traverse_obj,
-)
+from ..utils import OnDemandPagedList, determine_ext, parse_iso8601, traverse_obj
 
 
 class TuneInBaseIE(InfoExtractor):

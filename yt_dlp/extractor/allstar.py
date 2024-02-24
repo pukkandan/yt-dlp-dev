@@ -2,16 +2,8 @@ import functools
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    OnDemandPagedList,
-    int_or_none,
-    join_nonempty,
-    parse_qs,
-    urljoin,
-)
+from ..utils import ExtractorError, OnDemandPagedList, int_or_none, join_nonempty, parse_qs, urljoin
 from ..utils.traversal import traverse_obj
-
 
 _FIELDS = '''
     _id

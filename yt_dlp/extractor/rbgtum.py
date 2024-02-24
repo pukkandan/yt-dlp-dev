@@ -1,7 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import parse_qs, remove_start, traverse_obj, ExtractorError
+from ..utils import ExtractorError, parse_qs, remove_start, traverse_obj
 
 
 class RbgTumIE(InfoExtractor):
@@ -39,7 +39,7 @@ class RbgTumIE(InfoExtractor):
     }, {
         'url': 'https://tum.live/w/linalginfo/27102',
         'only_matching': True,
-    }, ]
+    }]
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
@@ -84,7 +84,7 @@ class RbgTumCourseIE(InfoExtractor):
     }, {
         'url': 'https://tum.live/old/course/2023/S/linalginfo',
         'only_matching': True,
-    }, ]
+    }]
 
     def _real_extract(self, url):
         course_id, hostname, year, term, slug = self._match_valid_url(url).group('id', 'hostname', 'year', 'term', 'slug')

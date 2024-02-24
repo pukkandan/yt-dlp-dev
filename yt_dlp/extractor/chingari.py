@@ -3,13 +3,7 @@ import json
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    clean_html,
-    int_or_none,
-    str_to_int,
-    url_or_none,
-)
+from ..utils import ExtractorError, clean_html, int_or_none, str_to_int, url_or_none
 
 
 class ChingariBaseIE(InfoExtractor):

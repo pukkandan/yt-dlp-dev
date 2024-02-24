@@ -1,16 +1,9 @@
 import re
-
 from hashlib import sha1
+
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    float_or_none,
-    int_or_none,
-    merge_dicts,
-    unified_strdate,
-)
+from ..utils import ExtractorError, determine_ext, float_or_none, int_or_none, merge_dicts, unified_strdate
 
 
 class ProSiebenSat1BaseIE(InfoExtractor):
@@ -77,7 +70,7 @@ class ProSiebenSat1BaseIE(InfoExtractor):
         if not formats:
             source_ids = [compat_str(source['id']) for source in video['sources']]
 
-            client_id = self._SALT[:2] + sha1(''.join([clip_id, self._SALT, self._TOKEN, client_location, self._SALT, self._CLIENT_NAME]).encode('utf-8')).hexdigest()
+            client_id = self._SALT[:2] + sha1(f'{clip_id}{self._SALT}{self._TOKEN}{client_location}{self._SALT}{self._CLIENT_NAME}'.encode('utf-8')).hexdigest()
 
             sources = self._download_json(
                 'http://vas.sim-technik.de/vas/live/v2/videos/%s/sources' % clip_id,
@@ -96,7 +89,7 @@ class ProSiebenSat1BaseIE(InfoExtractor):
                 return (bitrate // 1000) if bitrate % 1000 == 0 else bitrate
 
             for source_id in source_ids:
-                client_id = self._SALT[:2] + sha1(''.join([self._SALT, clip_id, self._TOKEN, server_id, client_location, source_id, self._SALT, self._CLIENT_NAME]).encode('utf-8')).hexdigest()
+                client_id = self._SALT[:2] + sha1(f'{self._SALT}{clip_id}{self._TOKEN}{server_id}{client_location}{source_id}{self._SALT}{self._CLIENT_NAME}'.encode('utf-8')).hexdigest()
                 urls = self._download_json(
                     'http://vas.sim-technik.de/vas/live/v2/videos/%s/sources/url' % clip_id,
                     clip_id, 'Downloading urls JSON', fatal=False, query={

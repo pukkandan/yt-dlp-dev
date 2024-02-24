@@ -3,13 +3,7 @@ import re
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    smuggle_url,
-    unsmuggle_url,
-    url_or_none,
-)
+from ..utils import ExtractorError, int_or_none, smuggle_url, unsmuggle_url, url_or_none
 
 
 class EaglePlatformIE(InfoExtractor):

@@ -5,15 +5,7 @@ import urllib.parse
 import uuid
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    strip_or_none,
-    traverse_obj,
-    try_call,
-    unified_timestamp,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, strip_or_none, traverse_obj, try_call, unified_timestamp
 
 
 class RedBeeBaseIE(InfoExtractor):

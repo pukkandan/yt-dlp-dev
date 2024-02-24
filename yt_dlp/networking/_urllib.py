@@ -64,7 +64,8 @@ def _create_http_connection(http_class, source_address, *args, **kwargs):
 
 
 class HTTPHandler(urllib.request.AbstractHTTPHandler):
-    """Handler for HTTP requests and responses.
+    """
+    Handler for HTTP requests and responses.
 
     This class, when installed with an OpenerDirector, automatically adds
     the standard headers to every HTTP request and handles gzipped, deflated and
@@ -202,7 +203,8 @@ def make_socks_conn_class(base_class, socks_proxy):
 
 
 class RedirectHandler(urllib.request.HTTPRedirectHandler):
-    """YoutubeDL redirect handler
+    """
+    YoutubeDL redirect handler
 
     The code is based on HTTPRedirectHandler implementation from CPython [1].
 
@@ -292,9 +294,7 @@ def update_Request(req, url=None, data=None, headers=None, query=None):
 
 
 class UrllibResponseAdapter(Response):
-    """
-    HTTP Response adapter class for urllib addinfourl and http.client.HTTPResponse
-    """
+    """HTTP Response adapter class for urllib addinfourl and http.client.HTTPResponse"""
 
     def __init__(self, res: http.client.HTTPResponse | urllib.response.addinfourl):
         # addinfourl: In Python 3.9+, .status was introduced and .getcode() was deprecated [1]
@@ -310,7 +310,7 @@ class UrllibResponseAdapter(Response):
             return self.fp.read(amt)
         except Exception as e:
             handle_response_read_exceptions(e)
-            raise e
+            raise
 
 
 def handle_sslerror(e: ssl.SSLError):

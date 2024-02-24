@@ -1,10 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    parse_age_limit,
-    parse_duration,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import parse_age_limit, parse_duration, traverse_obj, url_or_none
 
 
 class MzaaloIE(InfoExtractor):

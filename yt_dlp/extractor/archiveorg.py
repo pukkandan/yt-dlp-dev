@@ -219,7 +219,7 @@ class ArchiveOrgIE(InfoExtractor):
 
     def _real_extract(self, url):
         video_id = urllib.parse.unquote_plus(self._match_id(url))
-        identifier, entry_id = (video_id.split('/', 1) + [None])[:2]
+        identifier, entry_id = ([*video_id.split('/', 1), None])[:2]
 
         # Archive.org metadata API doesn't clearly demarcate playlist entries
         # or subtitle tracks, so we get them from the embeddable player.
@@ -292,7 +292,7 @@ class ArchiveOrgIE(InfoExtractor):
                     'height': int_or_none(f.get('width')),
                     'filesize': int_or_none(f.get('size'))})
 
-            extension = (f['name'].rsplit('.', 1) + [None])[1]
+            extension = ([*f['name'].rsplit('.', 1), None])[1]
 
             # We don't want to skip private formats if the user has access to them,
             # however without access to an account with such privileges we can't implement/test this.
@@ -316,10 +316,7 @@ class ArchiveOrgIE(InfoExtractor):
         if len(entries) == 1:
             # If there's only one item, use it as the main info dict
             only_video = next(iter(entries.values()))
-            if entry_id:
-                info = merge_dicts(only_video, info)
-            else:
-                info = merge_dicts(info, only_video)
+            info = merge_dicts(only_video, info) if entry_id else merge_dicts(info, only_video)
         else:
             # Otherwise, we have a playlist.
             info['_type'] = 'playlist'
@@ -672,7 +669,7 @@ class YoutubeWebArchiveIE(InfoExtractor):
 
     _YT_DEFAULT_THUMB_SERVERS = ['i.ytimg.com']  # thumbnails most likely archived on these servers
     _YT_ALL_THUMB_SERVERS = orderedSet(
-        _YT_DEFAULT_THUMB_SERVERS + ['img.youtube.com', *[f'{c}{n or ""}.ytimg.com' for c in ('i', 's') for n in (*range(0, 5), 9)]])
+        [*_YT_DEFAULT_THUMB_SERVERS, 'img.youtube.com', *[f'{c}{n or ""}.ytimg.com' for c in ('i', 's') for n in (*range(5), 9)]])
 
     _WAYBACK_BASE_URL = 'https://web.archive.org/web/%sif_/'
     _OLDEST_CAPTURE_DATE = 20050214000000
@@ -694,7 +691,7 @@ class YoutubeWebArchiveIE(InfoExtractor):
             note or 'Downloading CDX API JSON', query=query, fatal=fatal)
         if isinstance(res, list) and len(res) >= 2:
             # format response to make it easier to use
-            return list(dict(zip(res[0], v)) for v in res[1:])
+            return [dict(zip(res[0], v)) for v in res[1:]]
         elif not isinstance(res, list) or len(res) != 0:
             self.report_warning('Error while parsing CDX API response' + bug_reports_message())
 

@@ -1,16 +1,8 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
-from ..utils import (
-    ExtractorError,
-    parse_duration,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..compat import compat_str, compat_urlparse
+from ..utils import ExtractorError, parse_duration, url_or_none, urlencode_postdata
 
 
 class FrontendMastersBaseIE(InfoExtractor):

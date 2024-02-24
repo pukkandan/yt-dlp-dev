@@ -1,11 +1,7 @@
 import hashlib
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    traverse_obj,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, traverse_obj, urlencode_postdata
 
 
 class BrilliantpalaBaseIE(InfoExtractor):

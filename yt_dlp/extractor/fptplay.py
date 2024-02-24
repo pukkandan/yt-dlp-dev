@@ -3,11 +3,7 @@ import time
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    join_nonempty,
-    strip_or_none,
-)
+from ..utils import clean_html, join_nonempty, strip_or_none
 
 
 class FptplayIE(InfoExtractor):
@@ -89,7 +85,7 @@ class FptplayIE(InfoExtractor):
                     i[n] = e[c]
                 n += 1
                 c += 1  # noqa: SIM113
-                if 3 == n:
+                if n == 3:
                     a[0] = (252 & i[0]) >> 2
                     a[1] = ((3 & i[0]) << 4) + ((240 & i[1]) >> 4)
                     a[2] = ((15 & i[1]) << 2) + ((192 & i[2]) >> 6)

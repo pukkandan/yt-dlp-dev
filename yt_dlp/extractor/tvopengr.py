@@ -1,9 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    get_elements_text_and_html_by_attribute,
-    scale_thumbnails_to_max_format_width,
-)
+from ..utils import determine_ext, get_elements_text_and_html_by_attribute, scale_thumbnails_to_max_format_width
 
 
 class TVOpenGrBaseIE(InfoExtractor):

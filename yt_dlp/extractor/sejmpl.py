@@ -2,13 +2,7 @@ import datetime
 
 from .common import InfoExtractor
 from .redge import RedCDNLivxIE
-from ..utils import (
-    clean_html,
-    join_nonempty,
-    js_to_json,
-    strip_or_none,
-    update_url_query,
-)
+from ..utils import clean_html, join_nonempty, js_to_json, strip_or_none, update_url_query
 from ..utils.traversal import traverse_obj
 
 

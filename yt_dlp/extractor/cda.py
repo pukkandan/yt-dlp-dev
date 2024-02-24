@@ -319,10 +319,7 @@ class CDAIE(InfoExtractor):
         for href, resolution in re.findall(
                 r'<a[^>]+data-quality="[^"]+"[^>]+href="([^"]+)"[^>]+class="quality-btn"[^>]*>([0-9]+p)',
                 webpage):
-            if need_confirm_age:
-                handler = self._download_age_confirm_page
-            else:
-                handler = self._download_webpage
+            handler = self._download_age_confirm_page if need_confirm_age else self._download_webpage
 
             webpage = handler(
                 urljoin(self._BASE_URL, href), video_id,

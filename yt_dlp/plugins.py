@@ -13,13 +13,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from .compat import functools as functools  # noqa: PLC0414
-from .utils import (
-    get_executable_path,
-    get_system_config_dirs,
-    get_user_config_dirs,
-    orderedSet,
-    write_string,
-)
+from .utils import get_executable_path, get_system_config_dirs, get_user_config_dirs, orderedSet, write_string
 
 PACKAGE_NAME = 'yt_dlp_plugins'
 COMPAT_PACKAGE_NAME = 'ytdlp_plugins'
@@ -47,7 +41,7 @@ def dirs_in_zip(archive):
 
 class PluginFinder(importlib.abc.MetaPathFinder):
     """
-    This class provides one or multiple namespace packages.
+    Provides one or multiple namespace packages.
     It searches in sys.path and yt-dlp config folders for
     the existing subdirectories from which the modules can be imported
     """
@@ -55,7 +49,7 @@ class PluginFinder(importlib.abc.MetaPathFinder):
     def __init__(self, *packages):
         self._zip_content_cache = {}
         self.packages = set(itertools.chain.from_iterable(
-            itertools.accumulate(name.split('.'), lambda a, b: '.'.join((a, b)))
+            itertools.accumulate(name.split('.'), lambda a, b: f'{a}.{b}')
             for name in packages))
 
     def search_locations(self, fullname):

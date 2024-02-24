@@ -23,10 +23,7 @@ from yt_dlp.networking._helper import (
     select_proxy,
     ssl_load_certs,
 )
-from yt_dlp.networking.exceptions import (
-    HTTPError,
-    IncompleteRead,
-)
+from yt_dlp.networking.exceptions import HTTPError, IncompleteRead
 from yt_dlp.socks import ProxyType
 from yt_dlp.utils.networking import HTTPHeaderDict
 
@@ -47,7 +44,7 @@ class TestNetworkingUtils:
         assert select_proxy('http://bypass.example.com', proxies) is None
         assert select_proxy('https://yt-dl.org', proxies) is None
 
-    @pytest.mark.parametrize('socks_proxy,expected', [
+    @pytest.mark.parametrize(('socks_proxy', 'expected'), [
         ('socks5h://example.com', {
             'proxytype': ProxyType.SOCKS5,
             'addr': 'example.com',
@@ -105,7 +102,7 @@ class TestNetworkingUtils:
         if context_default.get_ca_certs() == context_certifi.get_ca_certs():
             pytest.skip('System uses certifi as default. The test is not valid')
 
-    @pytest.mark.parametrize('method,status,expected', [
+    @pytest.mark.parametrize(('method', 'status', 'expected'), [
         ('GET', 303, 'GET'),
         ('HEAD', 303, 'HEAD'),
         ('PUT', 303, 'GET'),
@@ -122,7 +119,7 @@ class TestNetworkingUtils:
     def test_get_redirect_method(self, method, status, expected):
         assert get_redirect_method(method, status) == expected
 
-    @pytest.mark.parametrize('headers,supported_encodings,expected', [
+    @pytest.mark.parametrize(('headers', 'supported_encodings', 'expected'), [
         ({'Accept-Encoding': 'br'}, ['gzip', 'br'], {'Accept-Encoding': 'br'}),
         ({}, ['gzip', 'br'], {'Accept-Encoding': 'gzip, br'}),
         ({'Content-type': 'application/json'}, [], {'Content-type': 'application/json', 'Accept-Encoding': 'identity'}),
@@ -148,7 +145,7 @@ class TestInstanceStoreMixin:
 
         assert mixin._get_instance(d={'a': 1, 'b': 2, 'c': {'e', 4}}) != mixin._get_instance(d={'a': 1, 'b': 2, 'c': {'d', 4}})
 
-        assert mixin._get_instance(d={'a': 1, 'b': 2, 'c': {'d', 4}} != mixin._get_instance(d={'a': 1, 'b': 2, 'g': {'d', 4}}))
+        assert mixin._get_instance(d=mixin._get_instance(d={'a': 1, 'b': 2, 'g': {'d', 4}}) != {'a': 1, 'b': 2, 'c': {'d', 4}})
 
         assert mixin._get_instance(d={'a': 1}, e=[1, 2, 3]) == mixin._get_instance(d={'a': 1}, e=[1, 2, 3])
 

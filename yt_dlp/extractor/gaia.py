@@ -1,16 +1,6 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_unquote,
-)
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    str_or_none,
-    strip_or_none,
-    try_get,
-    urlencode_postdata,
-)
+from ..compat import compat_str, compat_urllib_parse_unquote
+from ..utils import ExtractorError, int_or_none, str_or_none, strip_or_none, try_get, urlencode_postdata
 
 
 class GaiaIE(InfoExtractor):

@@ -3,11 +3,7 @@ import re
 import urllib.parse
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_etree_fromstring,
-    compat_str,
-    compat_urllib_parse_unquote,
-)
+from ..compat import compat_etree_fromstring, compat_str, compat_urllib_parse_unquote
 from ..networking import Request
 from ..networking.exceptions import network_exceptions
 from ..utils import (
@@ -524,7 +520,7 @@ class FacebookIE(InfoExtractor):
                 'timestamp': timestamp,
                 'thumbnail': thumbnail,
                 'view_count': parse_count(self._search_regex(
-                    (r'\bviewCount\s*:\s*["\']([\d,.]+)', r'video_view_count["\']\s*:\s*(\d+)',),
+                    (r'\bviewCount\s*:\s*["\']([\d,.]+)', r'video_view_count["\']\s*:\s*(\d+)'),
                     webpage, 'view count', default=None)),
                 'concurrent_view_count': get_first(post, (
                     ('video', (..., ..., 'attachments', ..., 'media')), 'liveViewerCount', {int_or_none})),
@@ -1034,7 +1030,7 @@ class FacebookAdsIE(InfoExtractor):
 
         entries = []
         for idx, entry in enumerate(traverse_obj(
-            data, (('videos', 'cards'), lambda _, v: any([url_or_none(v[f]) for f in self._FORMATS_MAP]))), 1
+            data, (('videos', 'cards'), lambda _, v: any(url_or_none(v[f]) for f in self._FORMATS_MAP))), 1
         ):
             entries.append({
                 'id': f'{video_id}_{idx}',

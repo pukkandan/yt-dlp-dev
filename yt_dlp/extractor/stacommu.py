@@ -1,11 +1,7 @@
 import time
 
 from .wrestleuniverse import WrestleUniverseBaseIE
-from ..utils import (
-    int_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import int_or_none, traverse_obj, url_or_none
 
 
 class StacommuBaseIE(WrestleUniverseBaseIE):
@@ -22,7 +18,7 @@ class StacommuBaseIE(WrestleUniverseBaseIE):
 
     @WrestleUniverseBaseIE._TOKEN.getter
     def _TOKEN(self):
-        if self._REAL_TOKEN and self._TOKEN_EXPIRY <= int(time.time()):
+        if self._REAL_TOKEN and int(time.time()) >= self._TOKEN_EXPIRY:
             self._refresh_token()
 
         return self._REAL_TOKEN

@@ -103,6 +103,7 @@ class IGNIE(IGNBaseIE):
     Extractor for some of the IGN sites, like www.ign.com, es.ign.com de.ign.com.
     Some videos of it.ign.com are also supported
     """
+
     _VIDEO_PATH_RE = r'/(?:\d{4}/\d{2}/\d{2}/)?(?P<id>.+?)'
     _PLAYLIST_PATH_RE = r'(?:/?\?(?P<filt>[^&#]+))?'
     _VALID_URL = (

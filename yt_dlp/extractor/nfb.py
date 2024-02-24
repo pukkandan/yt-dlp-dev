@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    join_nonempty,
-    merge_dicts,
-    parse_count,
-    url_or_none,
-    urljoin,
-)
+from ..utils import int_or_none, join_nonempty, merge_dicts, parse_count, url_or_none, urljoin
 from ..utils.traversal import traverse_obj
 
 

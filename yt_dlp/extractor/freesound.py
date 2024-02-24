@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    get_element_by_class,
-    get_element_by_id,
-    unified_strdate,
-)
+from ..utils import float_or_none, get_element_by_class, get_element_by_id, unified_strdate
 
 
 class FreesoundIE(InfoExtractor):

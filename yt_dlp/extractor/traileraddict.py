@@ -34,10 +34,7 @@ class TrailerAddictIE(InfoExtractor):
             webpage, 'video id')
 
         # Presence of (no)watchplus function indicates HD quality is available
-        if re.search(r'function (no)?watchplus()', webpage):
-            fvar = 'fvarhd'
-        else:
-            fvar = 'fvar'
+        fvar = 'fvarhd' if re.search('function (no)?watchplus()', webpage) else 'fvar'
 
         info_url = 'http://www.traileraddict.com/%s.php?tid=%s' % (fvar, str(video_id))
         info_webpage = self._download_webpage(info_url, video_id, 'Downloading the info webpage')

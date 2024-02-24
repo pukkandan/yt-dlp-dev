@@ -19,18 +19,10 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum, auto
 from hashlib import pbkdf2_hmac
 
-from .aes import (
-    aes_cbc_decrypt_bytes,
-    aes_gcm_decrypt_and_verify_bytes,
-    unpad_pkcs7,
-)
-from .compat import functools as functools  # noqa: PLC0414
+from .aes import aes_cbc_decrypt_bytes, aes_gcm_decrypt_and_verify_bytes, unpad_pkcs7
 from .compat import compat_os_name
-from .dependencies import (
-    _SECRETSTORAGE_UNAVAILABLE_REASON,
-    secretstorage,
-    sqlite3,
-)
+from .compat import functools as functools  # noqa: PLC0414
+from .dependencies import _SECRETSTORAGE_UNAVAILABLE_REASON, secretstorage, sqlite3
 from .minicurses import MultilinePrinter, QuietMultilinePrinter
 from .utils import (
     DownloadError,
@@ -274,12 +266,11 @@ def _extract_chrome_cookies(browser_name, profile, keyring, logger):
     elif _is_path(profile):
         search_root = profile
         config['browser_dir'] = os.path.dirname(profile) if config['supports_profiles'] else profile
+    elif config['supports_profiles']:
+        search_root = os.path.join(config['browser_dir'], profile)
     else:
-        if config['supports_profiles']:
-            search_root = os.path.join(config['browser_dir'], profile)
-        else:
-            logger.error(f'{browser_name} does not support profiles')
-            search_root = config['browser_dir']
+        logger.error(f'{browser_name} does not support profiles')
+        search_root = config['browser_dir']
 
     cookie_database_path = _newest(_find_files(search_root, 'Cookies', logger))
     if cookie_database_path is None:
@@ -311,10 +302,7 @@ def _extract_chrome_cookies(browser_name, profile, keyring, logger):
                     elif not is_encrypted:
                         unencrypted_cookies += 1
                     jar.set_cookie(cookie)
-            if failed_cookies > 0:
-                failed_message = f' ({failed_cookies} could not be decrypted)'
-            else:
-                failed_message = ''
+            failed_message = f' ({failed_cookies} could not be decrypted)' if failed_cookies > 0 else ''
             logger.info(f'Extracted {len(jar)} cookies from {browser_name}{failed_message}')
             counts = decryptor._cookie_counts.copy()
             counts['unencrypted'] = unencrypted_cookies
@@ -689,6 +677,7 @@ class _LinuxDesktopEnvironment(Enum):
     https://chromium.googlesource.com/chromium/src/+/refs/heads/main/base/nix/xdg_util.h
     DesktopEnvironment
     """
+
     OTHER = auto()
     CINNAMON = auto()
     DEEPIN = auto()
@@ -709,6 +698,7 @@ class _LinuxKeyring(Enum):
     https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/os_crypt/sync/key_storage_util_linux.h
     SelectedLinuxBackend
     """
+
     KWALLET = auto()  # KDE4
     KWALLET5 = auto()
     KWALLET6 = auto()
@@ -781,14 +771,13 @@ def _get_linux_desktop_environment(env, logger):
         else:
             logger.info(f'DESKTOP_SESSION is set to an unknown value: "{desktop_session}"')
 
-    else:
-        if 'GNOME_DESKTOP_SESSION_ID' in env:
-            return _LinuxDesktopEnvironment.GNOME
-        elif 'KDE_FULL_SESSION' in env:
-            if 'KDE_SESSION_VERSION' in env:
-                return _LinuxDesktopEnvironment.KDE4
-            else:
-                return _LinuxDesktopEnvironment.KDE3
+    elif 'GNOME_DESKTOP_SESSION_ID' in env:
+        return _LinuxDesktopEnvironment.GNOME
+    elif 'KDE_FULL_SESSION' in env:
+        if 'KDE_SESSION_VERSION' in env:
+            return _LinuxDesktopEnvironment.KDE4
+        else:
+            return _LinuxDesktopEnvironment.KDE3
     return _LinuxDesktopEnvironment.OTHER
 
 
@@ -822,7 +811,8 @@ def _choose_linux_keyring(logger):
 
 
 def _get_kwallet_network_wallet(keyring, logger):
-    """ The name of the wallet used to store network passwords.
+    """
+    The name of the wallet used to store network passwords.
 
     https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/os_crypt/sync/kwallet_dbus.cc
     KWalletDBus::NetworkWallet
@@ -885,21 +875,20 @@ def _get_kwallet_password(browser_keyring_name, keyring, logger):
             logger.error(f'kwallet-query failed with return code {returncode}. '
                          'Please consult the kwallet-query man page for details')
             return b''
+        elif stdout.lower().startswith(b'failed to read'):
+            logger.debug('failed to read password from kwallet. Using empty string instead')
+            # this sometimes occurs in KDE because chrome does not check hasEntry and instead
+            # just tries to read the value (which kwallet returns "") whereas kwallet-query
+            # checks hasEntry. To verify this:
+            # dbus-monitor "interface='org.kde.KWallet'" "type=method_return"
+            # while starting chrome.
+            # this was identified as a bug later and fixed in
+            # https://chromium.googlesource.com/chromium/src/+/bbd54702284caca1f92d656fdcadf2ccca6f4165%5E%21/#F0
+            # https://chromium.googlesource.com/chromium/src/+/5463af3c39d7f5b6d11db7fbd51e38cc1974d764
+            return b''
         else:
-            if stdout.lower().startswith(b'failed to read'):
-                logger.debug('failed to read password from kwallet. Using empty string instead')
-                # this sometimes occurs in KDE because chrome does not check hasEntry and instead
-                # just tries to read the value (which kwallet returns "") whereas kwallet-query
-                # checks hasEntry. To verify this:
-                # dbus-monitor "interface='org.kde.KWallet'" "type=method_return"
-                # while starting chrome.
-                # this was identified as a bug later and fixed in
-                # https://chromium.googlesource.com/chromium/src/+/bbd54702284caca1f92d656fdcadf2ccca6f4165%5E%21/#F0
-                # https://chromium.googlesource.com/chromium/src/+/5463af3c39d7f5b6d11db7fbd51e38cc1974d764
-                return b''
-            else:
-                logger.debug('password found')
-                return stdout.rstrip(b'\n')
+            logger.debug('password found')
+            return stdout.rstrip(b'\n')
     except Exception as e:
         logger.warning(f'exception running kwallet-query: {error_to_str(e)}')
         return b''
@@ -918,9 +907,9 @@ def _get_gnome_keyring_password(browser_keyring_name, logger):
         for item in col.get_all_items():
             if item.get_label() == f'{browser_keyring_name} Safe Storage':
                 return item.get_secret()
-        else:
-            logger.error('failed to read from keyring')
-            return b''
+
+        logger.error('failed to read from keyring')
+        return b''
 
 
 def _get_linux_keyring_password(browser_keyring_name, keyring, logger):
@@ -1110,6 +1099,7 @@ def _parse_browser_specification(browser_name, profile=None, keyring=None, conta
 
 class LenientSimpleCookie(http.cookies.SimpleCookie):
     """More lenient version of http.cookies.SimpleCookie"""
+
     # From https://github.com/python/cpython/blob/v3.10.7/Lib/http/cookies.py
     # We use Morsel's legal key chars to avoid errors on setting values
     _LEGAL_KEY_CHARS = r'\w\d' + re.escape('!#$%&\'*+-.:^_`|~')
@@ -1205,6 +1195,7 @@ class YoutubeDLCookieJar(http.cookiejar.MozillaCookieJar):
 
     1. https://curl.haxx.se/docs/http-cookies.html
     """
+
     _HTTPONLY_PREFIX = '#HttpOnly_'
     _ENTRY_LEN = 7
     _HEADER = '''# Netscape HTTP Cookie File
@@ -1260,7 +1251,8 @@ class YoutubeDLCookieJar(http.cookiejar.MozillaCookieJar):
         """
         Save cookies to a file.
         Code is taken from CPython 3.6
-        https://github.com/python/cpython/blob/8d999cbf4adea053be6dbb612b9844635c4dfb8e/Lib/http/cookiejar.py#L2091-L2117 """
+        https://github.com/python/cpython/blob/8d999cbf4adea053be6dbb612b9844635c4dfb8e/Lib/http/cookiejar.py#L2091-L2117
+        """
 
         if filename is None:
             if self.filename is not None:

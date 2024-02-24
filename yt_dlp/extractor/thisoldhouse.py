@@ -4,13 +4,7 @@ from .common import InfoExtractor
 from .zype import ZypeIE
 from ..networking import HEADRequest
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    filter_dict,
-    parse_qs,
-    try_call,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, filter_dict, parse_qs, try_call, urlencode_postdata
 
 
 class ThisOldHouseIE(InfoExtractor):

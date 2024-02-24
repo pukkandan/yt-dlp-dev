@@ -1,15 +1,7 @@
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    extract_attributes,
-    int_or_none,
-    parse_duration,
-    traverse_obj,
-    try_get,
-    url_or_none,
-)
+from ..utils import determine_ext, extract_attributes, int_or_none, parse_duration, traverse_obj, try_get, url_or_none
 
 
 class TV5MondePlusIE(InfoExtractor):

@@ -1,15 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    filter_dict,
-    parse_qs,
-    remove_end,
-    traverse_obj,
-    update_url_query,
-    urljoin,
-)
+from ..utils import clean_html, filter_dict, parse_qs, remove_end, traverse_obj, update_url_query, urljoin
 
 
 class MediaStreamBaseIE(InfoExtractor):

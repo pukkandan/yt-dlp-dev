@@ -7,7 +7,9 @@ tests = {
 
 
 def what(file=None, h=None):
-    """Detect format of image (Currently supports jpeg, png, webp, gif only)
+    """
+    Detect format of image (Currently supports jpeg, png, webp, gif only)
+
     Ref: https://github.com/python/cpython/blob/3.10/Lib/imghdr.py
     """
     if h is None:

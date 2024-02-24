@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    bug_reports_message,
-    float_or_none,
-    traverse_obj,
-    unified_timestamp,
-)
+from ..utils import bug_reports_message, float_or_none, traverse_obj, unified_timestamp
 
 
 class MediaWorksNZVODIE(InfoExtractor):

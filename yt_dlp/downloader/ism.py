@@ -229,9 +229,7 @@ def extract_box_data(data, box_sequence):
 
 
 class IsmFD(FragmentFD):
-    """
-    Download segments in a ISM manifest
-    """
+    """Download segments in a ISM manifest"""
 
     def real_download(self, filename, info_dict):
         segments = info_dict['fragments'][:1] if self.params.get(

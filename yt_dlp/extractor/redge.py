@@ -2,13 +2,7 @@ import functools
 
 from .common import InfoExtractor
 from ..networking import HEADRequest
-from ..utils import (
-    float_or_none,
-    int_or_none,
-    join_nonempty,
-    parse_qs,
-    update_url_query,
-)
+from ..utils import float_or_none, int_or_none, join_nonempty, parse_qs, update_url_query
 from ..utils.traversal import traverse_obj
 
 

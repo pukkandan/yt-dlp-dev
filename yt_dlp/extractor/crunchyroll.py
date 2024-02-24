@@ -76,7 +76,7 @@ class CrunchyrollBaseIE(InfoExtractor):
             raise ExtractorError('Login succeeded but did not set etp_rt cookie')
 
     def _update_auth(self):
-        if CrunchyrollBaseIE._AUTH_HEADERS and CrunchyrollBaseIE._AUTH_REFRESH > time_seconds():
+        if CrunchyrollBaseIE._AUTH_HEADERS and time_seconds() < CrunchyrollBaseIE._AUTH_REFRESH:
             return
 
         if not CrunchyrollBaseIE._BASIC_AUTH:
@@ -198,7 +198,7 @@ class CrunchyrollCmsBaseIE(CrunchyrollBaseIE):
     _CMS_EXPIRY = None
 
     def _call_cms_api_signed(self, path, internal_id, lang, note='api'):
-        if not CrunchyrollCmsBaseIE._CMS_EXPIRY or CrunchyrollCmsBaseIE._CMS_EXPIRY <= time_seconds():
+        if not CrunchyrollCmsBaseIE._CMS_EXPIRY or time_seconds() >= CrunchyrollCmsBaseIE._CMS_EXPIRY:
             response = self._call_base_api('index/v2', None, lang, 'Retrieving signed policy')['cms_web']
             CrunchyrollCmsBaseIE._CMS_QUERY = {
                 'Policy': response['policy'],

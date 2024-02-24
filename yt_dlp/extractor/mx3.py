@@ -2,13 +2,7 @@ import re
 
 from .common import InfoExtractor
 from ..networking import HEADRequest
-from ..utils import (
-    get_element_by_class,
-    int_or_none,
-    try_call,
-    url_or_none,
-    urlhandle_detect_ext,
-)
+from ..utils import get_element_by_class, int_or_none, try_call, url_or_none, urlhandle_detect_ext
 from ..utils.traversal import traverse_obj
 
 

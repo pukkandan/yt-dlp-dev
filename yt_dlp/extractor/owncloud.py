@@ -2,12 +2,7 @@ import re
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, determine_ext, url_or_none, urlencode_postdata
 
 
 class OwnCloudIE(InfoExtractor):

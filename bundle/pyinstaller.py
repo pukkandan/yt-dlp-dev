@@ -51,7 +51,7 @@ def parse_options():
     # Compatibility with older arguments
     opts = sys.argv[1:]
     if opts[0:1] in (['32'], ['64']):
-        if ARCH != opts[0]:
+        if opts[0] != ARCH:
             raise Exception(f'{opts[0]}bit executable cannot be built on a {ARCH}bit system')
         opts = opts[1:]
     return opts

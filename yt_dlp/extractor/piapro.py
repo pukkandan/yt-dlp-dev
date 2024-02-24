@@ -1,13 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_urlparse
-from ..utils import (
-    ExtractorError,
-    parse_duration,
-    parse_filesize,
-    str_to_int,
-    unified_timestamp,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, parse_duration, parse_filesize, str_to_int, unified_timestamp, urlencode_postdata
 
 
 class PiaproIE(InfoExtractor):

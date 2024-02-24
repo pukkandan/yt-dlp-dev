@@ -634,7 +634,7 @@ class InstagramUserIE(InstagramPlaylistBaseIE):
         }
     }]
 
-    _QUERY_HASH = '42323d64886122307be10013ad2dcc44',
+    _QUERY_HASH = ('42323d64886122307be10013ad2dcc44',)
 
     @staticmethod
     def _parse_timeline_from(data):
@@ -668,7 +668,7 @@ class InstagramTagIE(InstagramPlaylistBaseIE):
         }
     }]
 
-    _QUERY_HASH = 'f92f56d47dc7a55b606908374b43a314',
+    _QUERY_HASH = ('f92f56d47dc7a55b606908374b43a314',)
 
     @staticmethod
     def _parse_timeline_from(data):

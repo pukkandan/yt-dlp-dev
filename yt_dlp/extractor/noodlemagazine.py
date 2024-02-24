@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    parse_count,
-    parse_duration,
-    unified_strdate,
-    urljoin,
-)
+from ..utils import int_or_none, parse_count, parse_duration, unified_strdate, urljoin
 from ..utils.traversal import traverse_obj
 
 

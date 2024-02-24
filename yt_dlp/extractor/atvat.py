@@ -1,12 +1,7 @@
 import datetime
 
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    jwt_encode_hs256,
-    try_get,
-    ExtractorError,
-)
+from ..utils import ExtractorError, float_or_none, jwt_encode_hs256, try_get
 
 
 class ATVAtIE(InfoExtractor):
@@ -90,7 +85,7 @@ class ATVAtIE(InfoExtractor):
                 'token': jwt_token.decode('utf-8')
             })
 
-        video_id, videos_data = list(videos['data'].items())[0]
+        video_id, videos_data = next(iter(videos['data'].items()))
         error_msg = try_get(videos_data, lambda x: x['error']['title'])
         if error_msg == 'Geo check failed':
             self.raise_geo_restricted(error_msg)

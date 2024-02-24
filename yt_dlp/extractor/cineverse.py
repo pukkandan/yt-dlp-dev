@@ -1,15 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    filter_dict,
-    int_or_none,
-    parse_age_limit,
-    smuggle_url,
-    traverse_obj,
-    unsmuggle_url,
-    url_or_none,
-)
+from ..utils import filter_dict, int_or_none, parse_age_limit, smuggle_url, traverse_obj, unsmuggle_url, url_or_none
 
 
 class CineverseBaseIE(InfoExtractor):

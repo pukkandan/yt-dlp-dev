@@ -2,13 +2,7 @@ import re
 
 from .common import InfoExtractor
 from ..networking import Request
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    js_to_json,
-    traverse_obj,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, int_or_none, js_to_json, traverse_obj, urlencode_postdata
 
 
 class TubiTvIE(InfoExtractor):
@@ -156,7 +150,7 @@ class TubiTvShowIE(InfoExtractor):
             r'window\.__data\s*=\s*({[^<]+});\s*</script>',
             show_webpage, 'data'), show_name, transform_source=js_to_json)['video']
 
-        for episode_id in show_json['fullContentById'].keys():
+        for episode_id in show_json['fullContentById']:
             if traverse_obj(show_json, ('byId', episode_id, 'type')) == 's':
                 continue
             yield self.url_result(

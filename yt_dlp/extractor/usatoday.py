@@ -1,12 +1,6 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    get_element_by_attribute,
-    parse_duration,
-    try_get,
-    update_url_query,
-)
 from ..compat import compat_str
+from ..utils import ExtractorError, get_element_by_attribute, parse_duration, try_get, update_url_query
 
 
 class USATodayIE(InfoExtractor):

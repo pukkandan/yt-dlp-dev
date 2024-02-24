@@ -18,6 +18,7 @@ import random
 import ssl
 import threading
 
+from test.conftest import validate_and_send
 from yt_dlp import socks
 from yt_dlp.cookies import YoutubeDLCookieJar
 from yt_dlp.dependencies import websockets
@@ -31,8 +32,6 @@ from yt_dlp.networking.exceptions import (
     TransportError,
 )
 from yt_dlp.utils.networking import HTTPHeaderDict
-
-from test.conftest import validate_and_send
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -127,7 +126,7 @@ class TestWebsSocketRequestHandlerConformance:
             ws.close()
 
     # https://www.rfc-editor.org/rfc/rfc6455.html#section-5.6
-    @pytest.mark.parametrize('msg,opcode', [('str', 1), (b'bytes', 2)])
+    @pytest.mark.parametrize(('msg', 'opcode'), [('str', 1), (b'bytes', 2)])
     @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
     def test_send_types(self, handler, msg, opcode):
         with handler() as rh:
@@ -155,7 +154,7 @@ class TestWebsSocketRequestHandlerConformance:
             assert not issubclass(exc_info.type, CertificateVerifyError)
 
     @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
-    @pytest.mark.parametrize('path,expected', [
+    @pytest.mark.parametrize(('path', 'expected'), [
         # Unicode characters should be encoded with uppercase percent-encoding
         ('/中文', '/%E4%B8%AD%E6%96%87'),
         # don't normalize existing percent encodings
@@ -183,7 +182,7 @@ class TestWebsSocketRequestHandlerConformance:
     # We are restricted to known HTTP status codes in http.HTTPStatus
     # Redirects are not supported for websockets
     @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
-    @pytest.mark.parametrize('status', (200, 204, 301, 302, 303, 400, 500, 511))
+    @pytest.mark.parametrize(('status', (200, 204, 301, 302, 303, 400, 500, 511)))
     def test_raise_http_error(self, handler, status):
         with handler() as rh:
             with pytest.raises(HTTPError) as exc_info:
@@ -191,7 +190,7 @@ class TestWebsSocketRequestHandlerConformance:
             assert exc_info.value.status == status
 
     @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
-    @pytest.mark.parametrize('params,extensions', [
+    @pytest.mark.parametrize(('params', 'extensions'), [
         ({'timeout': 0.00001}, {}),
         ({}, {'timeout': 0.00001}),
     ])
@@ -264,7 +263,7 @@ class TestWebsSocketRequestHandlerConformance:
             assert headers['test3'] == 'test3'
             ws.close()
 
-    @pytest.mark.parametrize('client_cert', (
+    @pytest.mark.parametrize(('client_cert', (
         {'client_certificate': os.path.join(MTLS_CERT_DIR, 'clientwithkey.crt')},
         {
             'client_certificate': os.path.join(MTLS_CERT_DIR, 'client.crt'),
@@ -279,7 +278,7 @@ class TestWebsSocketRequestHandlerConformance:
             'client_certificate_key': os.path.join(MTLS_CERT_DIR, 'clientencrypted.key'),
             'client_certificate_password': 'foobar',
         }
-    ))
+    )))
     @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
     def test_mtls(self, handler, client_cert):
         with handler(
@@ -318,23 +317,23 @@ def create_fake_ws_connection(raised):
 
 @pytest.mark.parametrize('handler', ['Websockets'], indirect=True)
 class TestWebsocketsRequestHandler:
-    @pytest.mark.parametrize('raised,expected', [
+    @pytest.mark.parametrize(('raised', 'expected'), [
         # https://websockets.readthedocs.io/en/stable/reference/exceptions.html
         (lambda: websockets.exceptions.InvalidURI(msg='test', uri='test://'), RequestError),
         # Requires a response object. Should be covered by HTTP error tests.
         # (lambda: websockets.exceptions.InvalidStatus(), TransportError),
-        (lambda: websockets.exceptions.InvalidHandshake(), TransportError),
+        (websockets.exceptions.InvalidHandshake, TransportError),
         # These are subclasses of InvalidHandshake
         (lambda: websockets.exceptions.InvalidHeader(name='test'), TransportError),
-        (lambda: websockets.exceptions.NegotiationError(), TransportError),
+        (websockets.exceptions.NegotiationError, TransportError),
         # Catch-all
-        (lambda: websockets.exceptions.WebSocketException(), TransportError),
-        (lambda: TimeoutError(), TransportError),
+        (websockets.exceptions.WebSocketException, TransportError),
+        (TimeoutError, TransportError),
         # These may be raised by our create_connection implementation, which should also be caught
-        (lambda: OSError(), TransportError),
-        (lambda: ssl.SSLError(), SSLError),
-        (lambda: ssl.SSLCertVerificationError(), CertificateVerifyError),
-        (lambda: socks.ProxyError(), ProxyError),
+        (OSError, TransportError),
+        (ssl.SSLError, SSLError),
+        (ssl.SSLCertVerificationError, CertificateVerifyError),
+        (socks.ProxyError, ProxyError),
     ])
     def test_request_error_mapping(self, handler, monkeypatch, raised, expected):
         import websockets.sync.client
@@ -349,15 +348,15 @@ class TestWebsocketsRequestHandler:
                 rh.send(Request('ws://fake-url'))
             assert exc_info.type is expected
 
-    @pytest.mark.parametrize('raised,expected,match', [
+    @pytest.mark.parametrize(('raised', 'expected', 'match'), [
         # https://websockets.readthedocs.io/en/stable/reference/sync/client.html#websockets.sync.client.ClientConnection.send
         (lambda: websockets.exceptions.ConnectionClosed(None, None), TransportError, None),
-        (lambda: RuntimeError(), TransportError, None),
-        (lambda: TimeoutError(), TransportError, None),
-        (lambda: TypeError(), RequestError, None),
-        (lambda: socks.ProxyError(), ProxyError, None),
+        (RuntimeError, TransportError, None),
+        (TimeoutError, TransportError, None),
+        (TypeError, RequestError, None),
+        (socks.ProxyError, ProxyError, None),
         # Catch-all
-        (lambda: websockets.exceptions.WebSocketException(), TransportError, None),
+        (websockets.exceptions.WebSocketException, TransportError, None),
     ])
     def test_ws_send_error_mapping(self, handler, monkeypatch, raised, expected, match):
         from yt_dlp.networking._websockets import WebsocketsResponseAdapter
@@ -366,14 +365,14 @@ class TestWebsocketsRequestHandler:
             ws.send('test')
         assert exc_info.type is expected
 
-    @pytest.mark.parametrize('raised,expected,match', [
+    @pytest.mark.parametrize(('raised', 'expected', 'match'), [
         # https://websockets.readthedocs.io/en/stable/reference/sync/client.html#websockets.sync.client.ClientConnection.recv
         (lambda: websockets.exceptions.ConnectionClosed(None, None), TransportError, None),
-        (lambda: RuntimeError(), TransportError, None),
-        (lambda: TimeoutError(), TransportError, None),
-        (lambda: socks.ProxyError(), ProxyError, None),
+        (RuntimeError, TransportError, None),
+        (TimeoutError, TransportError, None),
+        (socks.ProxyError, ProxyError, None),
         # Catch-all
-        (lambda: websockets.exceptions.WebSocketException(), TransportError, None),
+        (websockets.exceptions.WebSocketException, TransportError, None),
     ])
     def test_ws_recv_error_mapping(self, handler, monkeypatch, raised, expected, match):
         from yt_dlp.networking._websockets import WebsocketsResponseAdapter

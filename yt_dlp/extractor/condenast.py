@@ -1,10 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_urllib_parse_urlparse,
-    compat_urlparse,
-)
+from ..compat import compat_urllib_parse_urlparse, compat_urlparse
 from ..utils import (
     determine_ext,
     extract_attributes,
@@ -153,11 +150,10 @@ class CondeNastIE(InfoExtractor):
             'Downloading embed info', fatal=False, query=query)
 
         # Old fallbacks
-        if not info_page:
-            if params.get('playerId'):
-                info_page = self._download_json(
-                    'http://player.cnevids.com/player/video.js', video_id,
-                    'Downloading video info', fatal=False, query=params)
+        if not info_page and params.get('playerId'):
+            info_page = self._download_json(
+                'http://player.cnevids.com/player/video.js', video_id,
+                'Downloading video info', fatal=False, query=params)
         if info_page:
             video_info = info_page.get('video')
         if not video_info:

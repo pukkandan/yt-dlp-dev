@@ -1,11 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    lowercase_escape,
-    url_or_none,
-)
+from ..utils import ExtractorError, lowercase_escape, url_or_none
 
 
 class ChaturbateIE(InfoExtractor):
@@ -74,10 +70,9 @@ class ChaturbateIE(InfoExtractor):
                 [r'<span[^>]+class=(["\'])desc_span\1[^>]*>(?P<error>[^<]+)</span>',
                  r'<div[^>]+id=(["\'])defchat\1[^>]*>\s*<p><strong>(?P<error>[^<]+)<'],
                 webpage, 'error', group='error', default=None)
-            if not error:
-                if any(p in webpage for p in (
-                        self._ROOM_OFFLINE, 'offline_tipping', 'tip_offline')):
-                    error = self._ROOM_OFFLINE
+            if not error and any(p in webpage for p in (
+                    self._ROOM_OFFLINE, 'offline_tipping', 'tip_offline')):
+                error = self._ROOM_OFFLINE
             if error:
                 raise ExtractorError(error, expected=True)
             raise ExtractorError('Unable to find stream URL')

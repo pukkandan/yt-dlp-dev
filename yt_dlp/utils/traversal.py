@@ -5,15 +5,7 @@ import itertools
 import re
 import xml.etree.ElementTree
 
-from ._utils import (
-    IDENTITY,
-    NO_DEFAULT,
-    LazyList,
-    deprecation_warning,
-    is_iterable_like,
-    try_call,
-    variadic,
-)
+from ._utils import IDENTITY, NO_DEFAULT, LazyList, deprecation_warning, is_iterable_like, try_call, variadic
 
 
 def traverse_obj(
@@ -200,10 +192,7 @@ def traverse_obj(
                     return element.text
                 assert False, f'apply_specials is missing case for {special!r}'
 
-            if xpath:
-                result = list(map(apply_specials, obj.iterfind(xpath)))
-            else:
-                result = apply_specials(obj)
+            result = list(map(apply_specials, obj.iterfind(xpath))) if xpath else apply_specials(obj)
 
         return branching, result if branching else (result,)
 

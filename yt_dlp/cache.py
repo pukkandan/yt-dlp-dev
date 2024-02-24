@@ -31,7 +31,7 @@ class Cache:
         return self._ydl.params.get('cachedir') is not False
 
     def store(self, section, key, data, dtype='json'):
-        assert dtype in ('json',)
+        assert dtype == 'json'
 
         if not self.enabled:
             return
@@ -54,7 +54,7 @@ class Cache:
         self._ydl.write_debug(f'Discarding old cache from version {version} (needs {min_ver})')
 
     def load(self, section, key, dtype='json', default=None, *, min_ver=None):
-        assert dtype in ('json',)
+        assert dtype == 'json'
 
         if not self.enabled:
             return default

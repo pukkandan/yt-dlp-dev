@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    parse_iso8601,
-    qualities,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, parse_iso8601, qualities
 
 
 class CoubIE(InfoExtractor):
@@ -115,10 +109,7 @@ class CoubIE(InfoExtractor):
         repost_count = int_or_none(coub.get('recoubs_count'))
 
         age_restricted = coub.get('age_restricted', coub.get('age_restricted_by_admin'))
-        if age_restricted is not None:
-            age_limit = 18 if age_restricted is True else 0
-        else:
-            age_limit = None
+        age_limit = {None: None, True: 18}.get(age_restricted, 0)
 
         return {
             'id': video_id,

@@ -2,13 +2,7 @@ import random
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    int_or_none,
-    timeconvert,
-    update_url_query,
-    xpath_text,
-)
+from ..utils import float_or_none, int_or_none, timeconvert, update_url_query, xpath_text
 
 
 class KUSIIE(InfoExtractor):

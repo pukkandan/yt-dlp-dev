@@ -2,12 +2,7 @@ import uuid
 
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    join_nonempty,
-    qualities,
-)
+from ..utils import ExtractorError, int_or_none, join_nonempty, qualities
 
 
 class LEGOIE(InfoExtractor):
@@ -111,7 +106,7 @@ class LEGOIE(InfoExtractor):
                         'abr': quality[0],
                         'height': quality[1],
                         'width': quality[2],
-                    }),
+                    })
                 formats.append(f)
 
         subtitles = {}

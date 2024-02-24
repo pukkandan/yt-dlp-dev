@@ -1,13 +1,7 @@
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    js_to_json,
-    parse_iso8601,
-    str_or_none,
-    traverse_obj,
-)
+from ..utils import int_or_none, js_to_json, parse_iso8601, str_or_none, traverse_obj
 
 
 class LikeeIE(InfoExtractor):

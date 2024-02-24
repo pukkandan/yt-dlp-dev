@@ -1,8 +1,5 @@
 from .common import InfoExtractor
-from ..compat import (
-    compat_b64decode,
-    compat_urllib_parse_unquote,
-)
+from ..compat import compat_b64decode, compat_urllib_parse_unquote
 from ..utils import classproperty, int_or_none
 
 

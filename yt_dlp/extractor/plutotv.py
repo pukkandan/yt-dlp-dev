@@ -2,17 +2,8 @@ import re
 import uuid
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    try_get,
-    url_or_none,
-)
+from ..compat import compat_str, compat_urlparse
+from ..utils import ExtractorError, float_or_none, int_or_none, try_get, url_or_none
 
 
 class PlutoTVIE(InfoExtractor):

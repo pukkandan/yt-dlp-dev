@@ -1,12 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    determine_protocol,
-    parse_duration,
-    int_or_none,
-)
+from ..utils import determine_ext, determine_protocol, int_or_none, parse_duration
 
 
 class Lecture2GoIE(InfoExtractor):

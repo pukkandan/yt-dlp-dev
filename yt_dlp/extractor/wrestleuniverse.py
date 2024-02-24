@@ -45,7 +45,7 @@ class WrestleUniverseBaseIE(InfoExtractor):
                 self.raise_login_required()
             self._TOKEN = token
 
-        if not self._REAL_TOKEN or self._TOKEN_EXPIRY <= int(time.time()):
+        if not self._REAL_TOKEN or int(time.time()) >= self._TOKEN_EXPIRY:
             if not self._REFRESH_TOKEN:
                 raise ExtractorError(
                     'Expired token. Refresh your cookies in browser and try again', expected=True)

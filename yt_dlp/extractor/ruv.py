@@ -1,10 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    parse_duration,
-    traverse_obj,
-    unified_timestamp,
-)
+from ..utils import determine_ext, parse_duration, traverse_obj, unified_timestamp
 
 
 class RuvIE(InfoExtractor):

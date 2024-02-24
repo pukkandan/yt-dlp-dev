@@ -7,11 +7,7 @@ import json
 import os
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    traverse_obj,
-    unescapeHTML,
-)
+from ..utils import ExtractorError, traverse_obj, unescapeHTML
 
 
 class GoPlayIE(InfoExtractor):
@@ -94,15 +90,15 @@ class GoPlayIE(InfoExtractor):
 # Released into Public domain by https://github.com/michaelarnauts
 
 class InvalidLoginException(ExtractorError):
-    """ The login credentials are invalid """
+    """The login credentials are invalid"""
 
 
 class AuthenticationException(ExtractorError):
-    """ Something went wrong while logging in """
+    """Something went wrong while logging in"""
 
 
 class AwsIdp:
-    """ AWS Identity Provider """
+    """AWS Identity Provider"""
 
     def __init__(self, ie, pool_id, client_id):
         """
@@ -152,7 +148,7 @@ class AwsIdp:
         self.large_a_value = self.__calculate_a()
 
     def authenticate(self, username, password):
-        """ Authenticate with a username and password. """
+        """Authenticate with a username and password."""
         # Step 1: First initiate an authentication request
         auth_data_dict = self.__get_authentication_request(username)
         auth_data = json.dumps(auth_data_dict).encode("utf-8")
@@ -206,7 +202,8 @@ class AwsIdp:
         return auth_request
 
     def __get_challenge_response_request(self, challenge_parameters, password):
-        """ Create a Challenge Response Request object.
+        """
+        Create a Challenge Response Request object.
 
         :param dict[str,str|imt] challenge_parameters:  The parameters for the challenge.
         :param str password:                            The password.
@@ -252,7 +249,8 @@ class AwsIdp:
         return challenge_request
 
     def __get_hkdf_key_for_password(self, username, password, server_b_value, salt):
-        """ Calculates the final hkdf based on computed S value, and computed U value and the key.
+        """
+        Calculates the final hkdf based on computed S value, and computed U value and the key.
 
         :param str username:        Username.
         :param str password:        Password.
@@ -280,7 +278,8 @@ class AwsIdp:
         return hkdf
 
     def __compute_hkdf(self, ikm, salt):
-        """ Standard hkdf algorithm
+        """
+        Standard hkdf algorithm
 
         :param {Buffer} ikm Input key material.
         :param {Buffer} salt Salt value.
@@ -293,7 +292,8 @@ class AwsIdp:
         return hmac_hash[:16]
 
     def __calculate_u(self, big_a, big_b):
-        """ Calculate the client's value U which is the hash of A and B
+        """
+        Calculate the client's value U which is the hash of A and B
 
         :param int big_a:   Large A value.
         :param int big_b:   Server B value.
@@ -306,7 +306,8 @@ class AwsIdp:
         return self.__hex_to_long(u_hex_hash)
 
     def __generate_random_small_a(self):
-        """ Helper function to generate a random big integer
+        """
+        Helper function to generate a random big integer
 
         :return a random value.
         :rtype: int
@@ -315,7 +316,8 @@ class AwsIdp:
         return random_long_int % self.big_n
 
     def __calculate_a(self):
-        """ Calculate the client's public value A = g^a%N with the generated random number a
+        """
+        Calculate the client's public value A = g^a%N with the generated random number a
 
         :return Computed large A.
         :rtype: int
@@ -347,7 +349,8 @@ class AwsIdp:
 
     @staticmethod
     def __pad_hex(long_int):
-        """ Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
+        """
+        Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
 
         :param int|str long_int:    Number or string to pad.
 
@@ -355,10 +358,7 @@ class AwsIdp:
         :rtype: str
         """
 
-        if not isinstance(long_int, str):
-            hash_str = AwsIdp.__long_to_hex(long_int)
-        else:
-            hash_str = long_int
+        hash_str = long_int if isinstance(long_int, str) else AwsIdp.__long_to_hex(long_int)
         if len(hash_str) % 2 == 1:
             hash_str = '0%s' % hash_str
         elif hash_str[0] in '89ABCDEFabcdef':
@@ -372,7 +372,8 @@ class AwsIdp:
 
     @staticmethod
     def __get_current_timestamp():
-        """ Creates a timestamp with the correct English format.
+        """
+        Creates a timestamp with the correct English format.
 
         :return: timestamp in format 'Sun Jan 27 19:00:04 UTC 2019'
         :rtype: str

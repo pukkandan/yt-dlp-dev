@@ -3,11 +3,7 @@ import re
 
 from .common import InfoExtractor
 from .youtube import YoutubeIE
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    str_or_none,
-)
+from ..utils import ExtractorError, int_or_none, str_or_none
 
 
 class VVVVIDIE(InfoExtractor):
@@ -157,8 +153,8 @@ class VVVVIDIE(InfoExtractor):
             video_id, query={'video_id': video_id})
 
         vid = int(video_id)
-        video_data = list(filter(
-            lambda episode: episode.get('video_id') == vid, response))[0]
+        video_data = next(filter(
+            lambda episode: episode.get('video_id') == vid, response))
         title = video_data['title']
         formats = []
 
@@ -326,7 +322,7 @@ class VVVVIDShowIE(VVVVIDIE):  # XXX: Do not subclass from concrete IE
                 info.update({
                     '_type': 'url_transparent',
                     'ie_key': VVVVIDIE.ie_key(),
-                    'url': '/'.join([base_url, season_id, video_id]),
+                    'url': f'{base_url}/{season_id}/{video_id}',
                     'title': episode.get('title'),
                     'description': episode.get('description'),
                     'season_id': season_id,

@@ -5,7 +5,7 @@ from ..utils import ExtractorError
 
 
 class TestURLIE(InfoExtractor):
-    """ Allows addressing of the test cases as test:yout.*be_1 """
+    """Allows addressing of the test cases as test:yout.*be_1"""
 
     IE_DESC = False  # Do not list
     _VALID_URL = r'test(?:url)?:(?P<extractor>.*?)(?:_(?P<num>\d+|all))?$'

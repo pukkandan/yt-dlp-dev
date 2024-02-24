@@ -1,21 +1,17 @@
 import calendar
-import json
 import functools
+import json
 from datetime import datetime, timezone
 from random import random
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_urllib_parse_urlparse,
-    compat_urlparse
-)
-
+from ..compat import compat_urllib_parse_urlparse, compat_urlparse
 from ..utils import (
-    bug_reports_message,
     ExtractorError,
+    OnDemandPagedList,
+    bug_reports_message,
     get_first,
     int_or_none,
-    OnDemandPagedList,
     parse_qs,
     srt_subtitles_timecode,
     traverse_obj,
@@ -287,7 +283,7 @@ class PanoptoIE(PanoptoBaseIE):
         image_frags = {}
         for timestamp in timestamps or []:
             duration = timestamp.get('Duration')
-            obj_id, obj_sn = timestamp.get('ObjectIdentifier'), timestamp.get('ObjectSequenceNumber'),
+            obj_id, obj_sn = timestamp.get('ObjectIdentifier'), timestamp.get('ObjectSequenceNumber')
             if timestamp.get('EventTargetType') == 'PowerPoint' and obj_id is not None and obj_sn is not None:
                 image_frags.setdefault('slides', []).append({
                     'url': base_url + f'/Pages/Viewer/Image.aspx?id={obj_id}&number={obj_sn}',

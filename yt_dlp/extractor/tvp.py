@@ -4,10 +4,10 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
+    ExtractorError,
     clean_html,
     determine_ext,
     dict_get,
-    ExtractorError,
     int_or_none,
     js_to_json,
     str_or_none,
@@ -169,10 +169,7 @@ class TVPIE(InfoExtractor):
                         'url': thmb_url,
                     })
         is_website = video_data.get('type') == 'website'
-        if is_website:
-            url = video_data['url']
-        else:
-            url = 'tvp:' + str_or_none(video_data.get('_id') or page_id)
+        url = video_data['url'] if is_website else 'tvp:' + str_or_none(video_data.get('_id') or page_id)
         return {
             '_type': 'url_transparent',
             'id': str_or_none(video_data.get('_id') or page_id),

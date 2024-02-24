@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    float_or_none,
-    join_nonempty,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import determine_ext, float_or_none, join_nonempty, traverse_obj, url_or_none
 
 
 class DailyWireBaseIE(InfoExtractor):

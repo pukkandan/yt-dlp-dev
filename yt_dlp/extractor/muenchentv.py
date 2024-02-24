@@ -1,11 +1,7 @@
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    js_to_json,
-)
+from ..utils import determine_ext, int_or_none, js_to_json
 
 
 class MuenchenTVIE(InfoExtractor):
@@ -48,10 +44,7 @@ class MuenchenTVIE(InfoExtractor):
             if label_str is None:
                 label_str = '_%d' % format_num
 
-            if ext is None:
-                format_id = label_str
-            else:
-                format_id = '%s-%s' % (ext, label_str)
+            format_id = label_str if ext is None else '%s-%s' % (ext, label_str)
 
             formats.append({
                 'url': s['file'],

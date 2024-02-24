@@ -4,11 +4,7 @@ import re
 
 from .common import InfoExtractor
 from ..compat import compat_urllib_parse_unquote
-from ..utils import (
-    ExtractorError,
-    update_url_query,
-    url_basename,
-)
+from ..utils import ExtractorError, update_url_query, url_basename
 
 
 class DropboxIE(InfoExtractor):

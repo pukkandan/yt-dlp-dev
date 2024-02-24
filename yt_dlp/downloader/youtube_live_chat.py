@@ -3,18 +3,12 @@ import time
 
 from .fragment import FragmentFD
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    RegexNotFoundError,
-    RetryManager,
-    dict_get,
-    int_or_none,
-    try_get,
-)
+from ..utils import RegexNotFoundError, RetryManager, dict_get, int_or_none, try_get
 from ..utils.networking import HTTPHeaderDict
 
 
 class YoutubeLiveChatFD(FragmentFD):
-    """ Downloads YouTube live chats fragment by fragment """
+    """Downloads YouTube live chats fragment by fragment"""
 
     def real_download(self, filename, info_dict):
         video_id = info_dict['video_id']

@@ -1,10 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    parse_age_limit,
-    smuggle_url,
-    try_get,
-)
+from ..utils import int_or_none, parse_age_limit, smuggle_url, try_get
 
 
 class TV5UnisBaseIE(InfoExtractor):
@@ -80,7 +75,7 @@ class TV5UnisIE(TV5UnisBaseIE):
             'id': 'e5ee23a586c44612a56aad61accf16ef',
             'ext': 'mp4',
             'title': 'Je ne peux pas lui résister',
-            'description': "Atys, le nouveau concierge de l'école, a réussi à ébranler la confiance de Mado en affirmant qu\'une médaille, ce n'est que du métal. Comme Mado essaie de lui prouver que ses valeurs sont solides, il veut la mettre à l'épreuve...",
+            'description': "Atys, le nouveau concierge de l'école, a réussi à ébranler la confiance de Mado en affirmant qu'une médaille, ce n'est que du métal. Comme Mado essaie de lui prouver que ses valeurs sont solides, il veut la mettre à l'épreuve...",
             'subtitles': {
                 'fr': 'count:1',
             },

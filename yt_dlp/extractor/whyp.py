@@ -1,10 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    str_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import float_or_none, str_or_none, traverse_obj, url_or_none
 
 
 class WhypIE(InfoExtractor):

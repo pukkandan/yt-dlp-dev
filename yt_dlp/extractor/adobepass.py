@@ -7,13 +7,7 @@ import xml.etree.ElementTree as etree
 from .common import InfoExtractor
 from ..compat import compat_urlparse
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    NO_DEFAULT,
-    ExtractorError,
-    unescapeHTML,
-    unified_timestamp,
-    urlencode_postdata,
-)
+from ..utils import NO_DEFAULT, ExtractorError, unescapeHTML, unified_timestamp, urlencode_postdata
 
 MSO_INFO = {
     'DTV': {

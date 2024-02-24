@@ -10,18 +10,18 @@ from ..aes import aes_cbc_decrypt_bytes, unpad_pkcs7
 from ..compat import compat_b64decode
 from ..networking.exceptions import HTTPError
 from ..utils import (
+    ExtractorError,
     ass_subtitles_timecode,
     bytes_to_intlist,
     bytes_to_long,
-    ExtractorError,
     float_or_none,
     int_or_none,
     intlist_to_bytes,
     long_to_bytes,
     parse_iso8601,
     pkcs1pad,
-    strip_or_none,
     str_or_none,
+    strip_or_none,
     try_get,
     unified_strdate,
     urlencode_postdata,
@@ -229,7 +229,7 @@ Format: Marked,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text'''
                 break
             except ExtractorError as e:
                 if not isinstance(e.cause, HTTPError):
-                    raise e
+                    raise
 
                 if e.cause.status == 401:
                     # This usually goes away with a different random pkcs1pad, so retry

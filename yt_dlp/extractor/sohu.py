@@ -2,19 +2,16 @@ import base64
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urllib_parse_urlencode,
-)
+from ..compat import compat_str, compat_urllib_parse_urlencode
 from ..utils import (
     ExtractorError,
-    int_or_none,
     float_or_none,
-    url_or_none,
-    unified_timestamp,
-    try_get,
-    urljoin,
+    int_or_none,
     traverse_obj,
+    try_get,
+    unified_timestamp,
+    url_or_none,
+    urljoin,
 )
 
 

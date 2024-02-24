@@ -1,11 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    float_or_none,
-    parse_resolution,
-    traverse_obj,
-    urlencode_postdata,
-    variadic,
-)
+from ..utils import float_or_none, parse_resolution, traverse_obj, urlencode_postdata, variadic
 
 
 class TubeTuGrazBaseIE(InfoExtractor):

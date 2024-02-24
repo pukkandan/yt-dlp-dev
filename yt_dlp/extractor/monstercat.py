@@ -8,10 +8,10 @@ from ..utils import (
     get_element_html_by_class,
     get_element_text_and_html_by_tag,
     int_or_none,
-    unified_strdate,
     strip_or_none,
     traverse_obj,
     try_call,
+    unified_strdate,
 )
 
 
@@ -41,7 +41,7 @@ class MonstercatIE(InfoExtractor):
             track_number = int_or_none(try_call(lambda: get_element_by_class('py-xsmall', td)))
             if not track_id or not release_id:
                 self.report_warning(f'Skipping track {track_number}, ID(s) not found')
-                self.write_debug(f'release_id={repr(release_id)} track_id={repr(track_id)}')
+                self.write_debug(f'release_id={release_id!r} track_id={track_id!r}')
                 continue
             yield {
                 **album_meta,

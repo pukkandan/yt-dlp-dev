@@ -1,15 +1,10 @@
-import re
 import json
+import re
 
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    parse_iso8601,
-    parse_qs,
-)
+from ..utils import ExtractorError, int_or_none, parse_iso8601, parse_qs
 
 
 class VevoBaseIE(InfoExtractor):
@@ -22,10 +17,11 @@ class VevoBaseIE(InfoExtractor):
 
 
 class VevoIE(VevoBaseIE):
-    '''
+    """
     Accepts urls from vevo.com or in the format 'vevo:{id}'
     (currently used by MTVIE and MySpaceIE)
-    '''
+    """
+
     _VALID_URL = r'''(?x)
         (?:https?://(?:www\.)?vevo\.com/watch/(?!playlist|genre)(?:[^/]+/(?:[^/]+/)?)?|
            https?://cache\.vevo\.com/m/html/embed\.html\?video=|
@@ -341,7 +337,7 @@ class VevoPlaylistIE(VevoBaseIE):
 
         playlists = self._extract_json(webpage, playlist_id)['default']['%ss' % playlist_kind]
 
-        playlist = (list(playlists.values())[0]
+        playlist = (next(iter(playlists.values()))
                     if playlist_kind == 'playlist' else playlists[playlist_id])
 
         entries = [

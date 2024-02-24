@@ -1,14 +1,6 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    get_first,
-    int_or_none,
-    traverse_obj,
-    try_get,
-    unified_strdate,
-    unified_timestamp,
-)
 from ..compat import compat_str
+from ..utils import ExtractorError, get_first, int_or_none, traverse_obj, try_get, unified_strdate, unified_timestamp
 
 
 class OpenRecBaseIE(InfoExtractor):

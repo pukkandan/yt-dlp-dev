@@ -1,12 +1,7 @@
 import re
 
 from .theplatform import ThePlatformIE
-from ..utils import (
-    int_or_none,
-    parse_age_limit,
-    try_get,
-    update_url_query,
-)
+from ..utils import int_or_none, parse_age_limit, try_get, update_url_query
 
 
 class AMCNetworksIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
@@ -131,7 +126,7 @@ class AMCNetworksIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
         })
         ns_keys = theplatform_metadata.get('$xmlns', {}).keys()
         if ns_keys:
-            ns = list(ns_keys)[0]
+            ns = next(iter(ns_keys))
             episode = theplatform_metadata.get(ns + '$episodeTitle') or None
             episode_number = int_or_none(
                 theplatform_metadata.get(ns + '$episode'))

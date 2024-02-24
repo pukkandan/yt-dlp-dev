@@ -1,18 +1,8 @@
 import base64
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_urllib_parse_urlencode,
-    compat_str,
-)
-from ..utils import (
-    format_field,
-    int_or_none,
-    parse_iso8601,
-    smuggle_url,
-    unsmuggle_url,
-    urlencode_postdata,
-)
+from ..compat import compat_str, compat_urllib_parse_urlencode
+from ..utils import format_field, int_or_none, parse_iso8601, smuggle_url, unsmuggle_url, urlencode_postdata
 
 
 class AWAANIE(InfoExtractor):

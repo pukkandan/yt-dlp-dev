@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    parse_iso8601,
-    parse_qs,
-    try_get,
-)
+from ..utils import ExtractorError, float_or_none, int_or_none, parse_iso8601, parse_qs, try_get
 
 
 class ArkenaIE(InfoExtractor):
@@ -127,10 +120,7 @@ class ArkenaIE(InfoExtractor):
                             formats.extend(self._extract_m3u8_formats(
                                 href, video_id, 'mp4', 'm3u8_native',
                                 m3u8_id='hls', fatal=False))
-                        elif mime_type == 'application/hds+xml':
-                            formats.extend(self._extract_f4m_formats(
-                                href, video_id, f4m_id='hds', fatal=False))
-                        elif mime_type == 'application/dash+xml':
+                        elif mime_type in ('application/hds+xml', 'application/dash+xml'):
                             formats.extend(self._extract_f4m_formats(
                                 href, video_id, f4m_id='hds', fatal=False))
                         elif mime_type == 'application/vnd.ms-sstr+xml':

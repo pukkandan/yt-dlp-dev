@@ -1,18 +1,8 @@
 import re
 
 from .common import InfoExtractor
-
-from ..compat import (
-    compat_urlparse,
-)
-
-from ..utils import (
-    urlencode_postdata,
-    urljoin,
-    int_or_none,
-    clean_html,
-    ExtractorError
-)
+from ..compat import compat_urlparse
+from ..utils import ExtractorError, clean_html, int_or_none, urlencode_postdata, urljoin
 
 
 class AluraIE(InfoExtractor):
@@ -58,9 +48,8 @@ class AluraIE(InfoExtractor):
                     m3u8_id='hls', fatal=False)
                 for f in video_format:
                     m = re.search(r'^[\w \W]*-(?P<res>\w*).mp4[\W \w]*', f['url'])
-                    if m:
-                        if not f.get('height'):
-                            f['height'] = int('720' if m.group('res') == 'hd' else '480')
+                    if m and not f.get('height'):
+                        f['height'] = int('720' if m.group('res') == 'hd' else '480')
                 formats.extend(video_format)
 
             return {

@@ -2,12 +2,7 @@ import datetime
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    clean_html,
-    datetime_from_str,
-    unified_timestamp,
-    urljoin,
-)
+from ..utils import clean_html, datetime_from_str, unified_timestamp, urljoin
 
 
 class JoqrAgIE(InfoExtractor):

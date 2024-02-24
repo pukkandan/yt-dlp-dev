@@ -2,14 +2,7 @@ import re
 
 from .srgssr import SRGSSRIE
 from ..compat import compat_str
-from ..utils import (
-    determine_ext,
-    int_or_none,
-    parse_duration,
-    parse_iso8601,
-    unescapeHTML,
-    urljoin,
-)
+from ..utils import determine_ext, int_or_none, parse_duration, parse_iso8601, unescapeHTML, urljoin
 
 
 class RTSIE(SRGSSRIE):  # XXX: Do not subclass from concrete IE

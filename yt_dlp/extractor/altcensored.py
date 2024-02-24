@@ -2,13 +2,7 @@ import re
 
 from .archiveorg import ArchiveOrgIE
 from .common import InfoExtractor
-from ..utils import (
-    InAdvancePagedList,
-    int_or_none,
-    orderedSet,
-    str_to_int,
-    urljoin,
-)
+from ..utils import InAdvancePagedList, int_or_none, orderedSet, str_to_int, urljoin
 
 
 class AltCensoredIE(InfoExtractor):

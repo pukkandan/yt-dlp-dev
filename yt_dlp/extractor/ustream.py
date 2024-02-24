@@ -2,15 +2,12 @@ import random
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_str,
-    compat_urlparse,
-)
+from ..compat import compat_str, compat_urlparse
 from ..utils import (
-    encode_data_uri,
     ExtractorError,
-    int_or_none,
+    encode_data_uri,
     float_or_none,
+    int_or_none,
     join_nonempty,
     mimetype2ext,
     str_or_none,
@@ -173,7 +170,7 @@ class UstreamIE(InfoExtractor):
                 r'ustream\.vars\.offAirContentVideoIds=([^;]+);', webpage,
                 'content video IDs'), video_id)
             return self.playlist_result(
-                map(lambda u: self.url_result('http://www.ustream.tv/recorded/' + u, 'Ustream'), content_video_ids),
+                (self.url_result('http://www.ustream.tv/recorded/' + u, 'Ustream') for u in content_video_ids),
                 video_id)
 
         params = self._download_json(

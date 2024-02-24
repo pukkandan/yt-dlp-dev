@@ -1,10 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    extract_attributes,
-    strip_or_none,
-)
+from ..utils import extract_attributes, strip_or_none
 
 
 class SkyBaseIE(InfoExtractor):

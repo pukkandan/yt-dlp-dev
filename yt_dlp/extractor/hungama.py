@@ -1,13 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    int_or_none,
-    remove_end,
-    traverse_obj,
-    try_get,
-    unified_timestamp,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..utils import int_or_none, remove_end, traverse_obj, try_get, unified_timestamp, url_or_none, urlencode_postdata
 
 
 class HungamaBaseIE(InfoExtractor):

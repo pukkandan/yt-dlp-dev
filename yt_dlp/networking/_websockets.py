@@ -5,21 +5,9 @@ import logging
 import ssl
 import sys
 
-from ._helper import (
-    create_connection,
-    create_socks_proxy_socket,
-    make_socks_proxy_opts,
-    select_proxy,
-)
+from ._helper import create_connection, create_socks_proxy_socket, make_socks_proxy_opts, select_proxy
 from .common import Features, Response, register_rh
-from .exceptions import (
-    CertificateVerifyError,
-    HTTPError,
-    ProxyError,
-    RequestError,
-    SSLError,
-    TransportError,
-)
+from .exceptions import CertificateVerifyError, HTTPError, ProxyError, RequestError, SSLError, TransportError
 from .websocket import WebSocketRequestHandler, WebSocketResponse
 from ..compat import functools
 from ..dependencies import websockets
@@ -83,6 +71,7 @@ class WebsocketsRH(WebSocketRequestHandler):
     https://websockets.readthedocs.io
     https://github.com/python-websockets/websockets
     """
+
     _SUPPORTED_URL_SCHEMES = ('wss', 'ws')
     _SUPPORTED_PROXY_SCHEMES = ('socks4', 'socks4a', 'socks5', 'socks5h')
     _SUPPORTED_FEATURES = (Features.ALL_PROXY, Features.NO_PROXY)

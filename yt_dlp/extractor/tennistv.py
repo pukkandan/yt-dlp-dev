@@ -1,12 +1,7 @@
 import urllib.parse
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    random_uuidv4,
-    unified_timestamp,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError, random_uuidv4, unified_timestamp, urlencode_postdata
 
 
 class TennisTVIE(InfoExtractor):
@@ -109,7 +104,7 @@ class TennisTVIE(InfoExtractor):
             self.raise_login_required()
         self.access_token, self.refresh_token = cookies['access_token'].value, cookies['refresh_token'].value
 
-    def _download_session_json(self, video_id, entryid,):
+    def _download_session_json(self, video_id, entryid):
         return self._download_json(
             f'https://atppayments.streamamg.com/api/v1/session/ksession/?lang=en&apijwttoken={self.access_token}&entryId={entryid}',
             video_id, 'Downloading ksession token', 'Failed to download ksession token', headers=self._HEADERS)

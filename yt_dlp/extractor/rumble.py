@@ -214,7 +214,7 @@ class RumbleEmbedIE(InfoExtractor):
         if not thumbnails and video.get('i'):
             thumbnails = [{'url': video['i']}]
 
-        if live_status in {'is_live', 'post_live'}:
+        if live_status in ('is_live', 'post_live'):
             duration = None
         else:
             duration = int_or_none(video.get('duration'))

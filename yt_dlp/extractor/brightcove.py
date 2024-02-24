@@ -5,17 +5,14 @@ import xml.etree.ElementTree
 
 from .adobepass import AdobePassIE
 from .common import InfoExtractor
-from ..compat import (
-    compat_etree_fromstring,
-    compat_parse_qs,
-    compat_urlparse,
-)
+from ..compat import compat_etree_fromstring, compat_parse_qs, compat_urlparse
 from ..networking.exceptions import HTTPError
 from ..utils import (
+    ExtractorError,
+    UnsupportedError,
     clean_html,
     dict_get,
     extract_attributes,
-    ExtractorError,
     find_xpath_attr,
     fix_xml_ampersands,
     float_or_none,
@@ -29,7 +26,6 @@ from ..utils import (
     try_get,
     unescapeHTML,
     unsmuggle_url,
-    UnsupportedError,
     update_url_query,
     url_or_none,
 )
@@ -320,12 +316,9 @@ class BrightcoveLegacyIE(InfoExtractor):
             return
 
         fv_el = find_xpath_attr(object_doc, './param', 'name', 'flashVars')
-        if fv_el is not None:
-            flashvars = dict(
-                (k, v[0])
-                for k, v in compat_parse_qs(fv_el.attrib['value']).items())
-        else:
-            flashvars = {}
+        flashvars = {
+            k: v[0] for k, v in compat_parse_qs(fv_el.attrib['value']).items()
+        } if fv_el is not None else {}
 
         data_url = object_doc.attrib.get('data', '')
         data_url_params = parse_qs(data_url)
@@ -393,15 +386,13 @@ class BrightcoveLegacyIE(InfoExtractor):
 
     @classmethod
     def _extract_brightcove_url(cls, webpage):
-        """Try to extract the brightcove url from the webpage, returns None
-        if it can't be found
-        """
+        """Try to extract the brightcove url from the webpage, returns None if it can't be found"""
         urls = cls._extract_brightcove_urls(webpage)
         return urls[0] if urls else None
 
     @classmethod
     def _extract_brightcove_urls(cls, webpage):
-        """Return a list of all Brightcove URLs from the webpage """
+        """Return a list of all Brightcove URLs from the webpage"""
 
         url_m = re.search(
             r'''(?x)

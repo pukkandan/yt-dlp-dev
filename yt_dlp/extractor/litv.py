@@ -1,14 +1,7 @@
 import json
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    smuggle_url,
-    traverse_obj,
-    try_call,
-    unsmuggle_url,
-)
+from ..utils import ExtractorError, int_or_none, smuggle_url, traverse_obj, try_call, unsmuggle_url
 
 
 class LiTVIE(InfoExtractor):

@@ -8,7 +8,7 @@ from yt_dlp.networking.common import _REQUEST_HANDLERS
 from yt_dlp.utils._utils import _YDLLogger as FakeLogger
 
 
-@pytest.fixture
+@pytest.fixture()
 def handler(request):
     RH_KEY = request.param
     if inspect.isclass(RH_KEY) and issubclass(RH_KEY, RequestHandler):

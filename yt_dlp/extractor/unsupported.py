@@ -19,7 +19,8 @@ LF = '\n       '
 
 
 class KnownDRMIE(UnsupportedInfoExtractor):
-    """Sites that are known to use DRM for all their videos
+    """
+    Sites that are known to use DRM for all their videos
 
     Add to this list only if:
     * You are reasonably certain that the site uses DRM for ALL their videos
@@ -160,7 +161,8 @@ class KnownDRMIE(UnsupportedInfoExtractor):
 
 
 class KnownPiracyIE(UnsupportedInfoExtractor):
-    """Sites that have been deemed to be piracy
+    """
+    Sites that have been deemed to be piracy
 
     In order for this to not end up being a catalog of piracy sites,
     only sites that were once supported should be added to this list

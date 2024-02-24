@@ -21,22 +21,13 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree
 
-from ..compat import functools  # isort: split
-from ..compat import (
-    compat_etree_fromstring,
-    compat_expanduser,
-    compat_os_name,
-    urllib_req_to_req,
-)
+from ..compat import compat_etree_fromstring, compat_expanduser, compat_os_name, urllib_req_to_req
+from ..compat import functools as functools  # noqa: PLC0414
 from ..cookies import LenientSimpleCookie
 from ..downloader.f4m import get_base_url, remove_encrypted_media
 from ..downloader.hls import HlsFD
 from ..networking import HEADRequest, Request
-from ..networking.exceptions import (
-    HTTPError,
-    IncompleteRead,
-    network_exceptions,
-)
+from ..networking.exceptions import HTTPError, IncompleteRead, network_exceptions
 from ..utils import (
     IDENTITY,
     JSON_LD_RE,
@@ -102,7 +93,8 @@ from ..utils import (
 
 
 class InfoExtractor:
-    """Information Extractor class.
+    """
+    Information Extractor class.
 
     Information extractors are the classes that, given a URL, extract
     information about the video (or videos) the URL refers to. This
@@ -560,9 +552,11 @@ class InfoExtractor:
         }[method if method is not NO_DEFAULT else 'any' if self.supports_login() else 'cookies']
 
     def __init__(self, downloader=None):
-        """Constructor. Receives an optional downloader (a YoutubeDL instance).
+        """
+        Receives an optional downloader (a YoutubeDL instance).
         If a downloader is not passed during initialization,
-        it must be set using "set_downloader()" before "extract()" is called"""
+        it must be set using "set_downloader()" before "extract()" is called
+        """
         self._ready = False
         self._x_forwarded_for_ip = None
         self._printed_messages = set()
@@ -769,11 +763,11 @@ class InfoExtractor:
         return self._downloader.cookiejar
 
     def _initialize_pre_login(self):
-        """ Initialization before login. Redefine in subclasses."""
+        """Initialization before login. Redefine in subclasses."""
         pass
 
     def _perform_login(self, username, password):
-        """ Login with username and password. Redefine in subclasses."""
+        """Login with username and password. Redefine in subclasses."""
         pass
 
     def _real_initialize(self):
@@ -849,9 +843,8 @@ class InfoExtractor:
         try:
             return self._downloader.urlopen(self._create_request(url_or_request, data, headers, query))
         except network_exceptions as err:
-            if isinstance(err, HTTPError):
-                if self.__can_accept_status_code(err, expected_status):
-                    return err.response
+            if isinstance(err, HTTPError) and self.__can_accept_status_code(err, expected_status):
+                return err.response
 
             if errnote is False:
                 return False
@@ -875,7 +868,7 @@ class InfoExtractor:
             a urllib.request.Request object
         video_id -- Video/playlist/item identifier (string)
 
-        Keyword arguments:
+        Keyword Arguments:
         note -- note printed before downloading (string)
         errnote -- note printed in case of an error (string)
         fatal -- flag denoting whether error should be considered fatal,
@@ -1099,7 +1092,7 @@ class InfoExtractor:
         """
         Return the data of the page as a string.
 
-        Keyword arguments:
+        Keyword Arguments:
         tries -- number of tries
         timeout -- sleep interval between tries
 
@@ -1119,10 +1112,10 @@ class InfoExtractor:
         while True:
             try:
                 return self.__download_webpage(url_or_request, video_id, note, errnote, None, fatal, *args, **kwargs)
-            except IncompleteRead as e:
+            except IncompleteRead:
                 try_count += 1
                 if try_count >= tries:
-                    raise e
+                    raise
                 self._sleep(timeout, video_id)
 
     def report_warning(self, msg, video_id=None, *args, only_once=False, **kwargs):
@@ -1296,9 +1289,7 @@ class InfoExtractor:
         return default
 
     def _html_search_regex(self, pattern, string, name, default=NO_DEFAULT, fatal=True, flags=0, group=None):
-        """
-        Like _search_regex, but strips HTML tags and unescapes entities.
-        """
+        """Like _search_regex, but strips HTML tags and unescapes entities."""
         res = self._search_regex(pattern, string, name, default, fatal, flags, group)
         if isinstance(res, tuple):
             return tuple(map(clean_html, res))
@@ -1571,7 +1562,7 @@ class InfoExtractor:
                 'end_time': part.get('endOffset'),
             } for part in variadic(e.get('hasPart') or []) if part.get('@type') == 'Clip']
             for idx, (last_c, current_c, next_c) in enumerate(zip(
-                    [{'end_time': 0}] + chapters, chapters, chapters[1:])):
+                    [{'end_time': 0}, *chapters], chapters, chapters[1:])):
                 current_c['end_time'] = current_c['end_time'] or next_c['start_time']
                 current_c['start_time'] = current_c['start_time'] or last_c['end_time']
                 if None in current_c.values():
@@ -1769,7 +1760,7 @@ class InfoExtractor:
     def _is_valid_url(self, url, video_id, item='video', headers={}):
         url = self._proto_relative_url(url, scheme='http:')
         # For now assume non HTTP(S) URLs always valid
-        if not (url.startswith('http://') or url.startswith('https://')):
+        if not (url.startswith(('http://', 'https://'))):
             return True
         try:
             self._request_webpage(url, video_id, 'Checking %s URL' % item, headers=headers)
@@ -1781,7 +1772,7 @@ class InfoExtractor:
             return False
 
     def http_scheme(self):
-        """ Either "http:" or "https:", depending on the user's preferences """
+        """Either "http:" or "https:", depending on the user's preferences"""
         return (
             'http:'
             if self.get_param('prefer_insecure', False)
@@ -1878,7 +1869,7 @@ class InfoExtractor:
                 if not media_url:
                     continue
                 manifest_url = (
-                    media_url if media_url.startswith('http://') or media_url.startswith('https://')
+                    media_url if media_url.startswith(('http://', 'https://'))
                     else ((manifest_base_url or '/'.join(manifest_url.split('/')[:-1])) + '/' + media_url))
                 # If media_url is itself a f4m manifest do the recursive extraction
                 # since bitrates in parent manifest (this one) and media_url manifest
@@ -2565,14 +2556,14 @@ class InfoExtractor:
             self, mpd_doc, mpd_id=None, mpd_base_url='', mpd_url=None):
         """
         Parse formats from MPD manifest.
+
         References:
          1. MPEG-DASH Standard, ISO/IEC 23009-1:2014(E),
             http://standards.iso.org/ittf/PubliclyAvailableStandards/c065274_ISO_IEC_23009-1_2014.zip
          2. https://en.wikipedia.org/wiki/Dynamic_Adaptive_Streaming_over_HTTP
         """
-        if not self.get_param('dynamic_mpd', True):
-            if mpd_doc.get('type') == 'dynamic':
-                return [], {}
+        if not self.get_param('dynamic_mpd', True) and mpd_doc.get('type') == 'dynamic':
+            return [], {}
 
         namespace = self._search_regex(r'(?i)^{([^}]+)?}MPD$', mpd_doc.tag, 'namespace', default=None)
 
@@ -2660,10 +2651,7 @@ class InfoExtractor:
 
                     codec_str = representation_attrib.get('codecs', '')
                     # Some kind of binary subtitle found in some youtube livestreams
-                    if mime_type == 'application/x-rawcc':
-                        codecs = {'scodec': codec_str}
-                    else:
-                        codecs = parse_codecs(codec_str)
+                    codecs = {'scodec': codec_str} if mime_type == 'application/x-rawcc' else parse_codecs(codec_str)
                     if content_type not in ('video', 'audio', 'text'):
                         if mime_type == 'image/jpeg':
                             content_type = mime_type
@@ -2697,10 +2685,7 @@ class InfoExtractor:
                     url_el = representation.find(_add_ns('BaseURL'))
                     filesize = int_or_none(url_el.attrib.get('{http://youtube.com/yt/2012/10/10}contentLength') if url_el is not None else None)
                     bandwidth = int_or_none(representation_attrib.get('bandwidth'))
-                    if representation_id is not None:
-                        format_id = representation_id
-                    else:
-                        format_id = content_type
+                    format_id = representation_id if representation_id is not None else content_type
                     if mpd_id:
                         format_id = mpd_id + '-' + format_id
                     if content_type in ('video', 'audio'):
@@ -2925,6 +2910,7 @@ class InfoExtractor:
     def _parse_ism_formats_and_subtitles(self, ism_doc, ism_url, ism_id=None):
         """
         Parse formats from ISM manifest.
+
         References:
          1. [MS-SSTR]: Smooth Streaming Protocol,
             https://msdn.microsoft.com/en-us/library/ff469518.aspx
@@ -3472,7 +3458,7 @@ class InfoExtractor:
         self.cookiejar.set_cookie(cookie)
 
     def _get_cookies(self, url):
-        """ Return a http.cookies.SimpleCookie with the cookies for the url """
+        """Return a http.cookies.SimpleCookie with the cookies for the url"""
         return LenientSimpleCookie(self._downloader.cookiejar.get_cookie_header(url))
 
     def _apply_first_set_cookie_header(self, url_handle, cookie):
@@ -3627,8 +3613,7 @@ class InfoExtractor:
 
     @staticmethod
     def _merge_subtitle_items(subtitle_list1, subtitle_list2):
-        """ Merge subtitle items for one language. Items with duplicated URLs/data
-        will be dropped. """
+        """Merge subtitle items for one language. Items with duplicated URLs/data will be dropped."""
         list1_data = {(item.get('url'), item.get('data')) for item in subtitle_list1}
         ret = list(subtitle_list1)
         ret.extend(item for item in subtitle_list2 if (item.get('url'), item.get('data')) not in list1_data)
@@ -3636,7 +3621,7 @@ class InfoExtractor:
 
     @classmethod
     def _merge_subtitles(cls, *dicts, target=None):
-        """ Merge subtitle dictionaries, language by language. """
+        """Merge subtitle dictionaries, language by language."""
         if target is None:
             target = {}
         for d in dicts:
@@ -3722,9 +3707,8 @@ class InfoExtractor:
 
     @staticmethod
     def _availability(is_private=None, needs_premium=None, needs_subscription=None, needs_auth=None, is_unlisted=None):
-        all_known = all(map(
-            lambda x: x is not None,
-            (is_private, needs_premium, needs_subscription, needs_auth, is_unlisted)))
+        all_known = all((x is not None for x in (
+            is_private, needs_premium, needs_subscription, needs_auth, is_unlisted)))
         return (
             'private' if is_private
             else 'premium_only' if needs_premium
@@ -3735,12 +3719,12 @@ class InfoExtractor:
             else None)
 
     def _configuration_arg(self, key, default=NO_DEFAULT, *, ie_key=None, casesense=False):
-        '''
+        """
         @returns            A list of values for the extractor argument given by "key"
                             or "default" if no such key is present
         @param default      The default value to return when the key is not present (default: [])
         @param casesense    When false, the values are converted to lower case
-        '''
+        """
         ie_key = ie_key if isinstance(ie_key, str) else (ie_key or self).ie_key()
         val = traverse_obj(self._downloader.params, ('extractor_args', ie_key.lower(), key))
         if val is None:
@@ -3862,8 +3846,11 @@ class SearchInfoExtractor(InfoExtractor):
             return self._get_n_results(query, n)
 
     def _get_n_results(self, query, n):
-        """Get a specified number of results for a query.
-        Either this function or _search_results must be overridden by subclasses """
+        """
+        Get a specified number of results for a query.
+
+        Either this function or _search_results must be overridden by subclasses
+        """
         return self.playlist_result(
             itertools.islice(self._search_results(query), 0, None if n == float('inf') else n),
             query, query)

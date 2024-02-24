@@ -49,9 +49,7 @@ class FlvReader(io.BytesIO):
         return res
 
     def read_box_info(self):
-        """
-        Read a box and return the info as a tuple: (box_size, box_type, box_data)
-        """
+        """Read a box and return the info as a tuple: (box_size, box_type, box_data)"""
         real_size = size = self.read_unsigned_int()
         box_type = self.read_bytes(4)
         header_end = 8
@@ -100,10 +98,7 @@ class FlvReader(io.BytesIO):
             first = self.read_unsigned_int()
             first_ts = self.read_unsigned_long_long()
             duration = self.read_unsigned_int()
-            if duration == 0:
-                discontinuity_indicator = self.read_unsigned_char()
-            else:
-                discontinuity_indicator = None
+            discontinuity_indicator = self.read_unsigned_char() if duration == 0 else None
             fragments.append({
                 'first': first,
                 'ts': first_ts,
@@ -177,7 +172,7 @@ def read_bootstrap_info(bootstrap_bytes):
 
 
 def build_fragments_list(boot_info):
-    """ Return a list of (segment, fragment) for each fragment in the video """
+    """Return a list of (segment, fragment) for each fragment in the video"""
     res = []
     segment_run_table = boot_info['segments'][0]
     fragment_run_entry_table = boot_info['fragments'][0]['fragments']
@@ -248,9 +243,7 @@ def get_base_url(manifest):
 
 
 class F4mFD(FragmentFD):
-    """
-    A downloader for f4m manifests or AdobeHDS.
-    """
+    """A downloader for f4m manifests or AdobeHDS."""
 
     def _get_unencrypted_media(self, doc):
         media = doc.findall(_add_ns('media'))
@@ -326,8 +319,8 @@ class F4mFD(FragmentFD):
             formats = sorted(formats, key=lambda f: f[0])
             rate, media = formats[-1]
         else:
-            rate, media = list(filter(
-                lambda f: int(f[0]) == requested_bitrate, formats))[0]
+            rate, media = next(filter(
+                lambda f: int(f[0]) == requested_bitrate, formats))
 
         # Prefer baseURL for relative URLs as per 11.2 of F4M 3.0 spec.
         man_base_url = get_base_url(doc) or man_url
@@ -338,10 +331,7 @@ class F4mFD(FragmentFD):
             bootstrap_node, man_base_url)
         live = boot_info['live']
         metadata_node = media.find(_add_ns('metadata'))
-        if metadata_node is not None:
-            metadata = base64.b64decode(metadata_node.text)
-        else:
-            metadata = None
+        metadata = base64.b64decode(metadata_node.text) if metadata_node is not None else None
 
         fragments_list = build_fragments_list(boot_info)
         test = self.params.get('test', False)
@@ -408,7 +398,7 @@ class F4mFD(FragmentFD):
                         self._append_fragment(ctx, box_data)
                         break
             except HTTPError as err:
-                if live and (err.status == 404 or err.status == 410):
+                if live and (err.status in (404, 410)):
                     # We didn't keep up with the live window. Continue
                     # with the next available fragment.
                     msg = 'Fragment %d unavailable' % frag_i

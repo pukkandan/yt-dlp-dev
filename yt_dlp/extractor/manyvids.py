@@ -1,14 +1,7 @@
 import re
 
 from .common import InfoExtractor
-from ..utils import (
-    determine_ext,
-    extract_attributes,
-    int_or_none,
-    str_to_int,
-    url_or_none,
-    urlencode_postdata,
-)
+from ..utils import determine_ext, extract_attributes, int_or_none, str_to_int, url_or_none, urlencode_postdata
 
 
 class ManyVidsIE(InfoExtractor):

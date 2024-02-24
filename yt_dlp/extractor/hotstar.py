@@ -8,15 +8,7 @@ import uuid
 from .common import InfoExtractor
 from ..compat import compat_str
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    int_or_none,
-    join_nonempty,
-    str_or_none,
-    traverse_obj,
-    url_or_none,
-)
+from ..utils import ExtractorError, determine_ext, int_or_none, join_nonempty, str_or_none, traverse_obj, url_or_none
 
 
 class HotStarBaseIE(InfoExtractor):
@@ -257,7 +249,7 @@ class HotStarIE(HotStarBaseIE):
                    for key, prefix in self._IGNORE_MAP.items()
                    for ignore in self._configuration_arg(key)):
                 continue
-            tag_dict = dict((t.split(':', 1) + [None])[:2] for t in tags.split(';'))
+            tag_dict = dict(([*t.split(':', 1), None])[:2] for t in tags.split(';'))
 
             format_url = url_or_none(playback_set.get('playbackUrl'))
             if not format_url:
@@ -336,7 +328,8 @@ class HotStarIE(HotStarBaseIE):
 
 
 class HotStarPrefixIE(InfoExtractor):
-    """ The "hotstar:" prefix is no longer in use, but this is kept for backward compatibility """
+    """The "hotstar:" prefix is no longer in use, but this is kept for backward compatibility"""
+
     IE_DESC = False
     _VALID_URL = r'hotstar:(?:(?P<type>\w+):)?(?P<id>\d+)$'
     _TESTS = [{

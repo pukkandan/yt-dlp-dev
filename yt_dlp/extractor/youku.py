@@ -4,14 +4,7 @@ import string
 import time
 
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    clean_html,
-    get_element_by_class,
-    js_to_json,
-    str_or_none,
-    strip_jsonp,
-)
+from ..utils import ExtractorError, clean_html, get_element_by_class, js_to_json, str_or_none, strip_jsonp
 
 
 class YoukuIE(InfoExtractor):

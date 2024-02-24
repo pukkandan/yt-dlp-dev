@@ -1,9 +1,6 @@
 from .common import InfoExtractor
 from ..compat import compat_str
-from ..utils import (
-    smuggle_url,
-    try_get,
-)
+from ..utils import smuggle_url, try_get
 
 
 class PlayStuffIE(InfoExtractor):
@@ -46,7 +43,7 @@ class PlayStuffIE(InfoExtractor):
             compat_str) or 'default'
 
         entries = []
-        for item_id, video in state['items'].items():
+        for video in state['items'].values():
             if not isinstance(video, dict):
                 continue
             asset_id = try_get(

@@ -1,12 +1,5 @@
 from .common import InfoExtractor
-from ..utils import (
-    ExtractorError,
-    determine_ext,
-    js_to_json,
-    traverse_obj,
-    update_url_query,
-    url_or_none,
-)
+from ..utils import ExtractorError, determine_ext, js_to_json, traverse_obj, update_url_query, url_or_none
 
 
 class RudoVideoIE(InfoExtractor):

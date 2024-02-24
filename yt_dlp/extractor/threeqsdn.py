@@ -1,13 +1,6 @@
 from .common import InfoExtractor
 from ..networking.exceptions import HTTPError
-from ..utils import (
-    determine_ext,
-    ExtractorError,
-    float_or_none,
-    int_or_none,
-    join_nonempty,
-    parse_iso8601,
-)
+from ..utils import ExtractorError, determine_ext, float_or_none, int_or_none, join_nonempty, parse_iso8601
 
 
 class ThreeQSDNIE(InfoExtractor):

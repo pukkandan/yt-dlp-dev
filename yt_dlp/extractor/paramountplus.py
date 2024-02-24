@@ -1,12 +1,8 @@
 import itertools
 
-from .common import InfoExtractor
 from .cbs import CBSBaseIE
-from ..utils import (
-    ExtractorError,
-    int_or_none,
-    url_or_none,
-)
+from .common import InfoExtractor
+from ..utils import ExtractorError, int_or_none, url_or_none
 
 
 class ParamountPlusIE(CBSBaseIE):

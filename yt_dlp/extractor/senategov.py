@@ -1,15 +1,8 @@
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_parse_qs,
-    compat_urlparse,
-)
-from ..utils import (
-    ExtractorError,
-    parse_qs,
-    unsmuggle_url,
-)
+from ..compat import compat_parse_qs, compat_urlparse
+from ..utils import ExtractorError, parse_qs, unsmuggle_url
 
 _COMMITTEES = {
     'ag': ('76440', 'http://ag-f.akamaihd.net'),
@@ -99,10 +92,7 @@ class SenateISVPIE(InfoExtractor):
 
         webpage = self._download_webpage(url, video_id)
 
-        if smuggled_data.get('force_title'):
-            title = smuggled_data['force_title']
-        else:
-            title = self._html_extract_title(webpage)
+        title = smuggled_data.get('force_title') or self._html_extract_title(webpage)
         poster = qs.get('poster')
         thumbnail = poster[0] if poster else None
 

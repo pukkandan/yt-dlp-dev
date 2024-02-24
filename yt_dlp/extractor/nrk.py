@@ -489,7 +489,7 @@ class NRKTVSerieBaseIE(NRKBaseIE):
                 'nrk:%s' % nrk_id, ie=NRKIE.ie_key(), video_id=nrk_id))
         return entries
 
-    _ASSETS_KEYS = ('episodes', 'instalments',)
+    _ASSETS_KEYS = ('episodes', 'instalments')
 
     def _extract_assets_key(self, embedded):
         for asset_key in self._ASSETS_KEYS:
