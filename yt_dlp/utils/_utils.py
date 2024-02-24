@@ -44,7 +44,7 @@ import xml.etree.ElementTree
 
 from . import traversal
 
-from ..compat import functools  # isort: split
+from ..compat import functools as functools  # noqa: PLC0414
 from ..compat import (
     compat_etree_fromstring,
     compat_expanduser,
@@ -5162,7 +5162,7 @@ class FormatSorter:
                  'function': lambda it: next(filter(None, it), None)},
         'ext': {'type': 'combined', 'field': ('vext', 'aext')},
         'res': {'type': 'multiple', 'field': ('height', 'width'),
-                'function': lambda it: (lambda l: min(l) if l else 0)(tuple(filter(None, it)))},
+                'function': lambda it: (lambda l: min(l) if l else 0)(tuple(filter(None, it)))},  # noqa: PLC3002
 
         # Actual field names
         'format_id': {'type': 'alias', 'field': 'id'},

@@ -44,4 +44,4 @@ def run_process(*args, **kwargs):
     if kwargs['text']:
         kwargs.setdefault('encoding', 'utf-8')
         kwargs.setdefault('errors', 'replace')
-    return subprocess.run(args, **kwargs)
+    return subprocess.run(args, **kwargs)  # noqa: PLW1510

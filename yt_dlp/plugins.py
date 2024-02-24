@@ -12,7 +12,7 @@ import zipimport
 from pathlib import Path
 from zipfile import ZipFile
 
-from .compat import functools  # isort: split
+from .compat import functools as functools  # noqa: PLC0414
 from .utils import (
     get_executable_path,
     get_system_config_dirs,

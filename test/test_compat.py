@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import struct
 
 from yt_dlp import compat
-from yt_dlp.compat import urllib  # isort: split
+from yt_dlp.compat import urllib as urllib  # noqa: PLC0414
 from yt_dlp.compat import (
     compat_etree_fromstring,
     compat_expanduser,
@@ -24,15 +24,15 @@ from yt_dlp.compat.urllib.request import getproxies
 class TestCompat(unittest.TestCase):
     def test_compat_passthrough(self):
         with self.assertWarns(DeprecationWarning):
-            compat.compat_basestring
+            compat.compat_basestring  # noqa: B018
 
         with self.assertWarns(DeprecationWarning):
-            compat.WINDOWS_VT_MODE
+            compat.WINDOWS_VT_MODE  # noqa: B018
 
         self.assertEqual(urllib.request.getproxies, getproxies)
 
         with self.assertWarns(DeprecationWarning):
-            compat.compat_pycrypto_AES  # Must not raise error
+            compat.compat_pycrypto_AES  # noqa: B018
 
     def test_compat_expanduser(self):
         old_home = os.environ.get('HOME')

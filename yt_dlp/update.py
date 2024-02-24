@@ -12,7 +12,7 @@ import sys
 from dataclasses import dataclass
 from zipimport import zipimporter
 
-from .compat import functools  # isort: split
+from .compat import functools as functools  # noqa: PLC0414
 from .compat import compat_realpath, compat_shlex_quote
 from .networking import Request
 from .networking.exceptions import HTTPError, network_exceptions
@@ -196,7 +196,7 @@ class UpdateInfo:
     requested_version: str | None = None
     commit: str | None = None
 
-    binary_name: str | None = _get_binary_name()
+    binary_name: str | None = _get_binary_name()  # noqa: RUF009
     checksum: str | None = None
 
     _has_update = True

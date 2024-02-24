@@ -1,7 +1,7 @@
 # flake8: noqa: F401
 
-from .youtube import (  # Youtube is moved to the top to improve performance
-    YoutubeIE,
+# Youtube is moved to the top to improve performance
+from .youtube import (  # isort: skip
     YoutubeClipIE,
     YoutubeFavouritesIE,
     YoutubeNotificationsIE,
@@ -393,12 +393,6 @@ from .comedycentral import (
     ComedyCentralIE,
     ComedyCentralTVIE,
 )
-from .commonmistakes import CommonMistakesIE, UnicodeBOMIE
-from .commonprotocols import (
-    MmsIE,
-    RtmpIE,
-    ViewSourceIE,
-)
 from .condenast import CondeNastIE
 from .contv import CONtvIE
 from .corus import CorusIE
@@ -690,7 +684,6 @@ from .gaskrank import GaskrankIE
 from .gazeta import GazetaIE
 from .gdcvault import GDCVaultIE
 from .gedidigital import GediDigitalIE
-from .generic import GenericIE
 from .genius import (
     GeniusIE,
     GeniusLyricsIE,
@@ -775,10 +768,6 @@ from .hrti import (
 from .hse import (
     HSEShowIE,
     HSEProductIE,
-)
-from .genericembeds import (
-    HTML5MediaEmbedIE,
-    QuotedHTMLIE,
 )
 from .huajiao import HuajiaoIE
 from .huya import HuyaLiveIE
@@ -2175,7 +2164,6 @@ from .drooble import DroobleIE
 from .umg import UMGDeIE
 from .unistra import UnistraIE
 from .unity import UnityIE
-from .unsupported import KnownDRMIE, KnownPiracyIE
 from .uol import UOLIE
 from .uplynk import (
     UplynkIE,
@@ -2515,3 +2503,11 @@ from .zingmp3 import (
 )
 from .zoom import ZoomIE
 from .zype import ZypeIE
+
+# isort: split
+from .commonmistakes import CommonMistakesIE, UnicodeBOMIE
+from .commonprotocols import MmsIE, RtmpIE, ViewSourceIE
+from .genericembeds import HTML5MediaEmbedIE, QuotedHTMLIE
+from .unsupported import KnownDRMIE, KnownPiracyIE
+
+from .generic import GenericIE  # isort: skip

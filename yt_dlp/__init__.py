@@ -262,7 +262,7 @@ def validate_options(opts):
     # Retry sleep function
     def parse_sleep_func(expr):
         NUMBER_RE = r'\d+(?:\.\d+)?'
-        op, start, limit, step, *_ = tuple(re.fullmatch(
+        op, start, limit, step, *_ = tuple(re.fullmatch(  # noqa: RUF005
             rf'(?:(linear|exp)=)?({NUMBER_RE})(?::({NUMBER_RE})?)?(?::({NUMBER_RE}))?',
             expr.strip()).groups()) + (None, None)
 

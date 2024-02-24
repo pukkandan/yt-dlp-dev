@@ -585,7 +585,7 @@ class BiliBiliIE(BilibiliBaseIE):
         is_interactive = traverse_obj(video_data, ('rights', 'is_stein_gate'))
         if is_interactive:
             return self.playlist_result(
-                self._get_interactive_entries(video_id, cid, metainfo), **metainfo, **{
+                self._get_interactive_entries(video_id, cid, metainfo), **metainfo, **{  # noqa: PIE804
                     'duration': traverse_obj(initial_state, ('videoData', 'duration', {int_or_none})),
                     '__post_extractor': self.extract_comments(aid),
                 })

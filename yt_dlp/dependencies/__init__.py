@@ -87,7 +87,7 @@ available_dependencies = {k: v for k, v in all_dependencies.items() if v}
 Cryptodome_AES = Cryptodome.AES
 
 
-__all__ = [
+__all__ = [  # noqa:  PLE0604
     'all_dependencies',
     'available_dependencies',
     *all_dependencies.keys(),

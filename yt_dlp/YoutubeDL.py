@@ -24,7 +24,8 @@ import traceback
 import unicodedata
 
 from .cache import Cache
-from .compat import functools, urllib  # isort: split
+from .compat import functools as functools  # noqa: PLC0414
+from .compat import urllib as urllib  # noqa: PLC0414
 from .compat import compat_os_name, compat_shlex_quote, urllib_req_to_req
 from .cookies import LenientSimpleCookie, load_cookies
 from .downloader import FFmpegFD, get_suitable_downloader, shorten_protocol_name

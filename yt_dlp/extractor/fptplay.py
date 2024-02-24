@@ -88,7 +88,7 @@ class FptplayIE(InfoExtractor):
                 if n <= 3:
                     i[n] = e[c]
                 n += 1
-                c += 1
+                c += 1  # noqa: SIM113
                 if 3 == n:
                     a[0] = (252 & i[0]) >> 2
                     a[1] = ((3 & i[0]) << 4) + ((240 & i[1]) >> 4)

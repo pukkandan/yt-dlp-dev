@@ -7,6 +7,6 @@ passthrough_module(__name__, 'functools')
 del passthrough_module
 
 try:
-    cache  # >= 3.9
+    cache  # noqa: B018  # >= 3.9
 except NameError:
     cache = lru_cache(maxsize=None)

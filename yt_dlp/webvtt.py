@@ -140,7 +140,7 @@ class HeaderBlock(Block):
     """
     A WebVTT block that may only appear in the header part of the file,
     i.e. before any cue blocks.
-    """
+    """  # noqa: D204
     pass
 
 

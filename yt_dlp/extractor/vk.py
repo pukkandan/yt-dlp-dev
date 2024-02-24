@@ -638,7 +638,7 @@ class VKWallPostIE(VKBaseIE):
             r = self._BASE64_CHARS.index(c)
             cond = n % 4
             e = 64 * e + r if cond else r
-            n += 1
+            n += 1  # noqa: SIM113
             if cond:
                 dec += chr(255 & e >> (-2 * n & 6))
         return dec

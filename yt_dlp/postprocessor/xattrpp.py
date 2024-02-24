@@ -22,7 +22,7 @@ class XAttrMetadataPP(PostProcessor):
     TODO:
         * capture youtube keywords and put them in 'user.dublincore.subject' (comma-separated)
         * figure out which xattrs can be used for 'duration', 'thumbnail', 'resolution'
-    """
+    """  # noqa: D405
 
     XATTR_MAPPING = {
         'user.xdg.referrer.url': 'webpage_url',

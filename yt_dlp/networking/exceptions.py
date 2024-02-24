@@ -23,7 +23,7 @@ class RequestError(YoutubeDLError):
 
 
 class UnsupportedRequest(RequestError):
-    """raised when a handler cannot handle a request"""
+    """raised when a handler cannot handle a request"""  # noqa: D204
     pass
 
 
@@ -92,7 +92,7 @@ class SSLError(TransportError):
 
 
 class CertificateVerifyError(SSLError):
-    """Raised when certificate validated has failed"""
+    """Raised when certificate validated has failed"""  # noqa: D204
     pass
 
 
