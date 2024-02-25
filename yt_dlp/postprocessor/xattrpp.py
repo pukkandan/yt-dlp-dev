@@ -1,4 +1,5 @@
 import os
+import re
 
 from .common import PostProcessor
 from ..compat import compat_os_name
@@ -42,7 +43,10 @@ class XAttrMetadataPP(PostProcessor):
                 value = info.get(infoname)
                 if value:
                     if infoname == 'upload_date':
-                        value = hyphenate_date(value)
+                        try:
+                            value = '-'.join(re.match(r'^(\d\d\d\d)(\d\d)(\d\d)$', value).groups())
+                        except AttributeError:
+                             pass
                     write_xattr(info['filepath'], xattrname, value.encode())
 
         except XAttrUnavailableError as e:

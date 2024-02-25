@@ -1301,16 +1301,6 @@ def datetime_round(dt, precision='day'):
     return datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc)
 
 
-def hyphenate_date(date_str):
-    """
-    Convert a date in 'YYYYMMDD' format to 'YYYY-MM-DD' format"""
-    match = re.match(r'^(\d\d\d\d)(\d\d)(\d\d)$', date_str)
-    if match is not None:
-        return '-'.join(match.groups())
-    else:
-        return date_str
-
-
 class DateRange:
     """Represents a time interval between two dates"""
 

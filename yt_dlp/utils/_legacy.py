@@ -4,6 +4,7 @@ import atexit
 import email.utils
 import html.parser
 import platform
+import re
 import struct
 import sys
 import urllib.error
@@ -355,3 +356,13 @@ def timeconvert(timestr):
     if timetuple is not None:
         timestamp = email.utils.mktime_tz(timetuple)
     return timestamp
+
+
+def hyphenate_date(date_str):
+    """
+    Convert a date in 'YYYYMMDD' format to 'YYYY-MM-DD' format"""
+    match = re.match(r'^(\d\d\d\d)(\d\d)(\d\d)$', date_str)
+    if match is not None:
+        return '-'.join(match.groups())
+    else:
+        return date_str
