@@ -5,7 +5,7 @@ from .common import InfoExtractor
 from ..utils import (
     float_or_none,
     int_or_none,
-    timeconvert,
+    unified_timestamp,
     update_url_query,
     xpath_text,
 )
@@ -60,7 +60,7 @@ class KUSIIE(InfoExtractor):
         duration = float_or_none(xpath_text(doc, 'DURATION'), scale=1000)
         description = xpath_text(doc, 'ABSTRACT')
         thumbnail = xpath_text(doc, './THUMBNAILIMAGE/FILENAME')
-        creation_time = timeconvert(xpath_text(doc, 'rfc822creationdate'))
+        creation_time = unified_timestamp(xpath_text(doc, 'rfc822creationdate'))
 
         quality_options = doc.find('{http://search.yahoo.com/mrss/}group').findall('{http://search.yahoo.com/mrss/}content')
         formats = []

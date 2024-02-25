@@ -1,6 +1,7 @@
 """No longer used and new code should not use. Exists only for API compat."""
 import asyncio
 import atexit
+import email.utils
 import html.parser
 import platform
 import struct
@@ -10,7 +11,7 @@ import urllib.parse
 import urllib.request
 import zlib
 
-from ._utils import Popen, decode_base_n, preferredencoding
+from ._utils import Popen, decode_base_n, preferredencoding, pretty_repr
 from .traversal import traverse_obj
 from ..dependencies import certifi, websockets
 from ..networking._helper import make_ssl_context
@@ -345,3 +346,12 @@ def parse_list(webpage):
     parser.feed(webpage)
     parser.close()
     return parser.items
+
+
+def timeconvert(timestr):
+    """Convert RFC 2822 defined time string into system timestamp"""
+    timestamp = None
+    timetuple = email.utils.parsedate_tz(timestr)
+    if timetuple is not None:
+        timestamp = email.utils.mktime_tz(timetuple)
+    return timestamp

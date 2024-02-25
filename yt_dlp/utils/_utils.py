@@ -572,15 +572,6 @@ def sanitize_open(filename, open_mode):
                 raise
 
 
-def timeconvert(timestr):
-    """Convert RFC 2822 defined time string into system timestamp"""
-    timestamp = None
-    timetuple = email.utils.parsedate_tz(timestr)
-    if timetuple is not None:
-        timestamp = email.utils.mktime_tz(timetuple)
-    return timestamp
-
-
 def sanitize_filename(s, restricted=False, is_id=NO_DEFAULT):
     """Sanitizes a string so it could be used as part of a filename.
     @param restricted   Use a stricter subset of allowed characters

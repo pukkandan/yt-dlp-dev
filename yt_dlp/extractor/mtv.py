@@ -13,7 +13,7 @@ from ..utils import (
     int_or_none,
     join_nonempty,
     strip_or_none,
-    timeconvert,
+    unified_timestamp,
     try_get,
     unescapeHTML,
     update_url_query,
@@ -151,7 +151,7 @@ class MTVServicesInfoExtractor(InfoExtractor):
 
         description = strip_or_none(xpath_text(itemdoc, 'description'))
 
-        timestamp = timeconvert(xpath_text(itemdoc, 'pubDate'))
+        timestamp = unified_timestamp(xpath_text(itemdoc, 'pubDate'))
 
         title_el = None
         if title_el is None:

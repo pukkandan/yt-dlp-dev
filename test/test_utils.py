@@ -140,10 +140,6 @@ from yt_dlp.utils.networking import (
 
 
 class TestUtil(unittest.TestCase):
-    def test_timeconvert(self):
-        self.assertTrue(timeconvert('') is None)
-        self.assertTrue(timeconvert('bougrg') is None)
-
     def test_sanitize_filename(self):
         self.assertEqual(sanitize_filename(''), '')
         self.assertEqual(sanitize_filename('abc'), 'abc')

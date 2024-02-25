@@ -29,7 +29,7 @@ from ..utils import (
     remove_start,
     sanitize_open,
     shell_quote,
-    timeconvert,
+    unified_timestamp,
     timetuple_from_msec,
     try_call,
 )
@@ -273,7 +273,7 @@ class FileDownloader:
         timestr = last_modified_hdr
         if timestr is None:
             return
-        filetime = timeconvert(timestr)
+        filetime = unified_timestamp(timestr)
         if filetime is None:
             return filetime
         # Ignore obviously invalid dates
