@@ -5,6 +5,8 @@ from ..compat import (
 )
 from ..utils import (
     determine_ext,
+    float_or_none,
+    int_or_none,
 )
 
 
@@ -34,7 +36,7 @@ class GolemIE(InfoExtractor):
         info = {
             'id': video_id,
             'title': config.findtext('./title', 'golem'),
-            'duration': self._float(config.findtext('./playtime'), 'duration'),
+            'duration': float_or_none(config.findtext('./playtime')),
         }
 
         formats = []
@@ -46,9 +48,9 @@ class GolemIE(InfoExtractor):
             formats.append({
                 'format_id': compat_str(e.tag),
                 'url': compat_urlparse.urljoin(self._PREFIX, url),
-                'height': self._int(e.get('height'), 'height'),
-                'width': self._int(e.get('width'), 'width'),
-                'filesize': self._int(e.findtext('filesize'), 'filesize'),
+                'height': int_or_none(e.get('height')),
+                'width': int_or_none(e.get('width')),
+                'filesize': int_or_none(e.findtext('filesize')),
                 'ext': determine_ext(e.findtext('./filename')),
             })
         info['formats'] = formats
@@ -60,8 +62,8 @@ class GolemIE(InfoExtractor):
                 continue
             thumbnails.append({
                 'url': compat_urlparse.urljoin(self._PREFIX, url),
-                'width': self._int(e.get('width'), 'thumbnail width'),
-                'height': self._int(e.get('height'), 'thumbnail height'),
+                'width': int_or_none(e.get('width')),
+                'height': int_or_none(e.get('height')),
             })
         info['thumbnails'] = thumbnails
 

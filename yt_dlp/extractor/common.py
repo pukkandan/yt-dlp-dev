@@ -1113,21 +1113,15 @@ class InfoExtractor:
         """
         Return the data of the page as a string.
 
-        Keyword arguments:
-        tries -- number of tries
-        timeout -- sleep interval between tries
-
-        See _download_webpage_handle docstring for other arguments specification.
+        See _download_webpage_handle docstring for arguments specification.
         """
 
-        R''' # NB: These are unused; should they be deprecated?
         if tries != 1:
             self._downloader.deprecation_warning(f'tries argument is deprecated in {pretty_repr(self._download_webpage)}')
         if timeout is NO_DEFAULT:
             timeout = 5
         else:
             self._downloader.deprecation_warning(f'timeout argument is deprecated in {pretty_repr(self._download_webpage)}')
-        '''
 
         try_count = 0
         while True:
@@ -3493,6 +3487,7 @@ class InfoExtractor:
         return name
 
     def _int(self, v, name, fatal=False, **kwargs):
+        self._downloader.deprecation_warning((self._int, None))
         res = int_or_none(v, **kwargs)
         if res is None:
             msg = f'Failed to extract {name}: Could not parse value {v!r}'
@@ -3503,6 +3498,7 @@ class InfoExtractor:
         return res
 
     def _float(self, v, name, fatal=False, **kwargs):
+        self._downloader.deprecation_warning((self._float, None))
         res = float_or_none(v, **kwargs)
         if res is None:
             msg = f'Failed to extract {name}: Could not parse value {v!r}'
