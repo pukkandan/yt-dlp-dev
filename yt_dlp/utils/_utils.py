@@ -1458,21 +1458,6 @@ def deprecation_warning(msg: str | tuple, *, printer=None, stacklevel=0, **kwarg
 deprecation_warning._cache = set()
 
 
-def bytes_to_intlist(bs):
-    if not bs:
-        return []
-    if isinstance(bs[0], int):  # Python 3
-        return list(bs)
-    else:
-        return [ord(c) for c in bs]
-
-
-def intlist_to_bytes(xs):
-    if not xs:
-        return b''
-    return struct.pack('%dB' % len(xs), *xs)
-
-
 class LockingUnsupportedError(OSError):
     msg = 'File locking is not supported'
 

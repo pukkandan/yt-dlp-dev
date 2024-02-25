@@ -17,10 +17,8 @@ from .common import InfoExtractor
 from ..aes import aes_ecb_decrypt
 from ..utils import (
     ExtractorError,
-    bytes_to_intlist,
     decode_base_n,
     int_or_none,
-    intlist_to_bytes,
     OnDemandPagedList,
     time_seconds,
     traverse_obj,
@@ -72,15 +70,15 @@ class AbemaLicenseHandler(urllib.request.BaseHandler):
             })
 
         res = decode_base_n(license_response['k'], table=self.STRTABLE)
-        encvideokey = bytes_to_intlist(struct.pack('>QQ', res >> 64, res & 0xffffffffffffffff))
+        encvideokey = list(struct.pack('>QQ', res >> 64, res & 0xffffffffffffffff))
 
         h = hmac.new(
             binascii.unhexlify(self.HKEY),
             (license_response['cid'] + self.ie._DEVICE_ID).encode('utf-8'),
             digestmod=hashlib.sha256)
-        enckey = bytes_to_intlist(h.digest())
+        enckey = list(h.digest())
 
-        return intlist_to_bytes(aes_ecb_decrypt(encvideokey, enckey))
+        return bytes(aes_ecb_decrypt(encvideokey, enckey))
 
     def abematv_license_open(self, url):
         url = url.get_full_url() if isinstance(url, urllib.request.Request) else url

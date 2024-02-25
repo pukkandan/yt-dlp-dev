@@ -33,6 +33,8 @@ from ..networking.exceptions import HTTPError, network_exceptions  # noqa: F401
 has_certifi = bool(certifi)
 has_websockets = bool(websockets)
 
+bytes_to_intlist = list
+intlist_to_bytes = bytes
 
 class WebSocketsWrapper:
     """Wraps websockets module to use in non-async scopes"""
