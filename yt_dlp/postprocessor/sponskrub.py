@@ -81,7 +81,6 @@ class SponSkrubPP(PostProcessor):
         cmd += shlex.split(self.args)  # For backward compatibility
         cmd += self._configuration_args(self._exe_name, use_compat=False)
         cmd += ['--', information['id'], filename, temp_filename]
-        cmd = [encodeArgument(i) for i in cmd]
 
         self.write_debug('sponskrub command line: %s' % shell_quote(cmd))
         stdout, _, returncode = Popen.run(cmd, text=True, stdout=None if self.get_param('verbose') else subprocess.PIPE)

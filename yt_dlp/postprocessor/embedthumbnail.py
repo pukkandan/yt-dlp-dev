@@ -150,11 +150,11 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
                         self.to_screen('mutagen was not found. Falling back to AtomicParsley')
                     cmd = [encodeFilename(atomicparsley, True),
                            encodeFilename(filename, True),
-                           encodeArgument('--artwork'),
+                           '--artwork',
                            encodeFilename(thumbnail_filename, True),
-                           encodeArgument('-o'),
+                           '-o',
                            encodeFilename(temp_filename, True)]
-                    cmd += [encodeArgument(o) for o in self._configuration_args('AtomicParsley')]
+                    cmd += self._configuration_args('AtomicParsley')
 
                     self._report_run('atomicparsley', filename)
                     self.write_debug('AtomicParsley command line: %s' % shell_quote(cmd))

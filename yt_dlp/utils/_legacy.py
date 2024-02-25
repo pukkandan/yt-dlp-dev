@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 import zlib
 
-from ._utils import Popen, decode_base_n, preferredencoding, pretty_repr
+from ._utils import Popen, decode_base_n, preferredencoding, pretty_repr, IDENTITY
 from .traversal import traverse_obj
 from ..dependencies import certifi, websockets
 from ..networking._helper import make_ssl_context
@@ -40,6 +40,7 @@ has_websockets = bool(websockets)
 error_to_str = pretty_repr
 bytes_to_intlist = list
 intlist_to_bytes = bytes
+encodeArgument = decodeArgument = IDENTITY
 
 class WebSocketsWrapper:
     """Wraps websockets module to use in non-async scopes"""

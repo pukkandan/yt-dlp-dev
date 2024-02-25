@@ -244,11 +244,11 @@ class FFmpegPostProcessor(PostProcessor):
             if self.probe_available:
                 cmd = [
                     encodeFilename(self.probe_executable, True),
-                    encodeArgument('-show_streams')]
+                    '-show_streams']
             else:
                 cmd = [
                     encodeFilename(self.executable, True),
-                    encodeArgument('-i')]
+                    '-i']
             cmd.append(encodeFilename(self._ffmpeg_filename_argument(path), True))
             self.write_debug(f'{self.basename} command line: {shell_quote(cmd)}')
             stdout, stderr, returncode = Popen.run(
@@ -283,11 +283,11 @@ class FFmpegPostProcessor(PostProcessor):
 
         cmd = [
             encodeFilename(self.probe_executable, True),
-            encodeArgument('-hide_banner'),
-            encodeArgument('-show_format'),
-            encodeArgument('-show_streams'),
-            encodeArgument('-print_format'),
-            encodeArgument('json'),
+            '-hide_banner',
+            '-show_format',
+            '-show_streams',
+            '-print_format',
+            'json',
         ]
 
         cmd += opts
@@ -337,10 +337,10 @@ class FFmpegPostProcessor(PostProcessor):
         oldest_mtime = min(
             os.stat(encodeFilename(path)).st_mtime for path, _ in input_path_opts if path)
 
-        cmd = [encodeFilename(self.executable, True), encodeArgument('-y')]
+        cmd = [encodeFilename(self.executable, True), '-y']
         # avconv does not have repeat option
         if self.basename == 'ffmpeg':
-            cmd += [encodeArgument('-loglevel'), encodeArgument('repeat+info')]
+            cmd += ['-loglevel', 'repeat+info']
 
         def make_args(file, args, name, number):
             keys = ['_%s%d' % (name, number), '_%s' % name]
@@ -351,9 +351,7 @@ class FFmpegPostProcessor(PostProcessor):
             args += self._configuration_args(self.basename, keys)
             if name == 'i':
                 args.append('-i')
-            return (
-                [encodeArgument(arg) for arg in args]
-                + [encodeFilename(self._ffmpeg_filename_argument(file), True)])
+            return args + [encodeFilename(self._ffmpeg_filename_argument(file), True)]
 
         for arg_type, path_opts in (('i', input_path_opts), ('o', output_path_opts)):
             cmd += itertools.chain.from_iterable(

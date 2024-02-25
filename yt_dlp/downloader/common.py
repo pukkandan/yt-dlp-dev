@@ -478,9 +478,7 @@ class FileDownloader:
         if not self.params.get('verbose', False):
             return
 
-        str_args = [decodeArgument(a) for a in args]
-
         if exe is None:
-            exe = os.path.basename(str_args[0])
+            exe = os.path.basename(args[0])
 
-        self.write_debug(f'{exe} command line: {shell_quote(str_args)}')
+        self.write_debug(f'{exe} command line: {shell_quote(args)}')
