@@ -12,7 +12,7 @@ from ..aes import aes_cbc_decrypt_bytes, unpad_pkcs7
 from ..compat import compat_os_name
 from ..networking import Request
 from ..networking.exceptions import HTTPError, IncompleteRead
-from ..utils import DownloadError, RetryManager, encodeFilename, traverse_obj
+from ..utils import DownloadError, RetryManager, encodeFilename, traverse_obj, pretty_repr
 from ..utils.networking import HTTPHeaderDict
 from ..utils.progress import ProgressCalculator
 
@@ -61,8 +61,7 @@ class FragmentFD(FileDownloader):
     """
 
     def report_retry_fragment(self, err, frag_index, count, retries):
-        self.deprecation_warning('yt_dlp.downloader.FragmentFD.report_retry_fragment is deprecated. '
-                                 'Use yt_dlp.downloader.FileDownloader.report_retry instead')
+        self.deprecation_warning((self.report_retry_fragment, self.report_retry))
         return self.report_retry(err, count, retries, frag_index)
 
     def report_skip_fragment(self, frag_index, err=None):

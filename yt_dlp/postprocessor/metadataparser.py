@@ -1,7 +1,7 @@
 import re
 
 from .common import PostProcessor
-from ..utils import Namespace, filter_dict, function_with_repr
+from ..utils import Namespace, filter_dict, function_with_repr, pretty_repr
 
 
 class MetadataParserPP(PostProcessor):
@@ -114,12 +114,11 @@ class MetadataFromFieldPP(MetadataParserPP):
 
     def __init__(self, downloader, formats):
         super().__init__(downloader, [self.to_action(f) for f in formats])
+        self.deprecation_warning((type(self), MetadataParserPP))
 
 
 # Deprecated
 class MetadataFromTitlePP(MetadataParserPP):
     def __init__(self, downloader, titleformat):
-        super().__init__(downloader, [(self.Actions.INTERPRET, 'title', titleformat)])
-        self.deprecation_warning(
-            'yt_dlp.postprocessor.MetadataFromTitlePP is deprecated '
-            'and may be removed in a future version. Use yt_dlp.postprocessor.MetadataFromFieldPP instead')
+        super().__init__(downloader, [f'title:{titleformat}'])
+        self.deprecation_warning((type(self), MetadataParserPP))

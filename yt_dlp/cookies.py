@@ -35,7 +35,7 @@ from .minicurses import MultilinePrinter, QuietMultilinePrinter
 from .utils import (
     DownloadError,
     Popen,
-    error_to_str,
+    pretty_repr,
     expand_path,
     is_path_like,
     sanitize_url,
@@ -901,7 +901,7 @@ def _get_kwallet_password(browser_keyring_name, keyring, logger):
                 logger.debug('password found')
                 return stdout.rstrip(b'\n')
     except Exception as e:
-        logger.warning(f'exception running kwallet-query: {error_to_str(e)}')
+        logger.warning(f'exception running kwallet-query: {pretty_repr(e)}')
         return b''
 
 
@@ -957,7 +957,7 @@ def _get_mac_keyring_password(browser_keyring_name, logger):
             return None
         return stdout.rstrip(b'\n')
     except Exception as e:
-        logger.warning(f'exception running find-generic-password: {error_to_str(e)}')
+        logger.warning(f'exception running find-generic-password: {pretty_repr(e)}')
         return None
 
 

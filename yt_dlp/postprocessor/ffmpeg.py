@@ -23,6 +23,7 @@ from ..utils import (
     encodeFilename,
     filter_dict,
     float_or_none,
+    pretty_repr,
     is_outdated_version,
     orderedSet,
     prepend_extension,
@@ -1079,7 +1080,7 @@ class FFmpegThumbnailsConvertorPP(FFmpegPostProcessor):
 
     @classmethod
     def is_webp(cls, path):
-        deprecation_warning(f'{cls.__module__}.{cls.__name__}.is_webp is deprecated')
+        deprecation_warning((cls, None))
         return imghdr.what(path) == 'webp'
 
     def fixup_webp(self, info, idx=-1):

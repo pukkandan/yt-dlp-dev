@@ -3448,8 +3448,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         # YouTube comments have a max depth of 2
         max_depth = int_or_none(get_single_config_arg('max_comment_depth'))
         if max_depth:
-            self._downloader.deprecated_feature('[youtube] max_comment_depth extractor argument is deprecated. '
-                                                'Set max replies in the max-comments extractor argument instead')
+            self._downloader.deprecated_feature(('[youtube] max_comment_depth extractor argument',
+                                                 'max replies in max-comments extractor argument'))
         if max_depth == 1 and parent:
             return
 
@@ -3751,8 +3751,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         all_formats = 'duplicate' in format_types
         if self._configuration_arg('include_duplicate_formats'):
             all_formats = True
-            self._downloader.deprecated_feature('[youtube] include_duplicate_formats extractor argument is deprecated. '
-                                                'Use formats=duplicate extractor argument instead')
+            self._downloader.deprecated_feature(('[youtube] include_duplicate_formats extractor argument'
+                                                 'formats=duplicate extractor argument'))
 
         def build_fragments(f):
             return LazyList({
@@ -3907,8 +3907,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         skip_bad_formats = 'incomplete' not in format_types
         if self._configuration_arg('include_incomplete_formats'):
             skip_bad_formats = False
-            self._downloader.deprecated_feature('[youtube] include_incomplete_formats extractor argument is deprecated. '
-                                                'Use formats=incomplete extractor argument instead')
+            self._downloader.deprecated_feature(('[youtube] include_incomplete_formats extractor argument',
+                                                 'formats=incomplete extractor argument'))
 
         skip_manifests = set(self._configuration_arg('skip'))
         if (not self.get_param('youtube_include_hls_manifest', True)
@@ -3919,8 +3919,8 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
         if not self.get_param('youtube_include_dash_manifest', True):
             skip_manifests.add('dash')
         if self._configuration_arg('include_live_dash'):
-            self._downloader.deprecated_feature('[youtube] include_live_dash extractor argument is deprecated. '
-                                                'Use formats=incomplete extractor argument instead')
+            self._downloader.deprecated_feature(('[youtube] include_live_dash extractor argument',
+                                                 'Use formats=incomplete extractor argument'))
         elif skip_bad_formats and live_status == 'is_live' and needs_live_processing != 'is_live':
             skip_manifests.add('dash')
 

@@ -21,6 +21,7 @@ from .utils import (
     Popen,
     deprecation_warning,
     format_field,
+    pretty_repr,
     remove_end,
     shell_quote,
     system_identifier,
@@ -579,9 +580,9 @@ class Updater:
         }
 
         if attribute not in deprecated_props_map and attribute not in update_info_props_map:
-            raise AttributeError(f'{type(self).__name__!r} object has no attribute {attribute!r}')
+            raise AttributeError(f'{pretty_repr(type(self))} object has no attribute {attribute!r}')
 
-        msg = f'{type(self).__name__}.{attribute} is deprecated and will be removed in a future version'
+        msg = f'{pretty_repr(type(self))}.{attribute} is deprecated and will be removed in a future version'
         if attribute in deprecated_props_map:
             source_name = deprecated_props_map[attribute]
             if not source_name.startswith('_'):
