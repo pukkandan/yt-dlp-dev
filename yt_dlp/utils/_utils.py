@@ -1377,7 +1377,7 @@ class DateRange:
         return self.start <= date <= self.end
 
     def __repr__(self):
-        return f'{__name__}.{type(self).__name__}({self.start.isoformat()!r}, {self.end.isoformat()!r})'
+        return f'{pretty_repr(type(self))}({self.start.isoformat()!r}, {self.end.isoformat()!r})'
 
     def __eq__(self, other):
         return (isinstance(other, DateRange)
@@ -1435,7 +1435,13 @@ def write_string(s, out=None, encoding=None):
 
 
 # TODO: Use global logger
-def deprecation_warning(msg, *, printer=None, stacklevel=0, **kwargs):
+def deprecation_warning(msg: str | tuple, *, printer=None, stacklevel=0, **kwargs):
+    if not isinstance(msg, str):
+        old, new = msg
+        msg = f'{pretty_repr(old)} is deprecated and will become unsupported in a future version'
+        if new:
+            msg += f'. Use {pretty_repr(new)} instead'
+
     from .. import _IN_CLI
     if _IN_CLI:
         if msg in deprecation_warning._cache:
@@ -2849,7 +2855,8 @@ def args_to_str(args):
 
 
 def error_to_str(err):
-    return f'{type(err).__name__}: {err}'
+    deprecation_warning((error_to_str, pretty_repr))
+    return pretty_repr(err)
 
 
 def mimetype2ext(mt, default=NO_DEFAULT):
@@ -3238,7 +3245,7 @@ def match_str(filter_str, dct, incomplete=False):
 def match_filter_func(filters, breaking_filters=None):
     if not filters and not breaking_filters:
         return None
-    repr_ = f'{match_filter_func.__module__}.{match_filter_func.__qualname__}({filters}, {breaking_filters})'
+    repr_ = f'{pretty_repr(match_filter_func)}({filters}, {breaking_filters})'
 
     breaking_filters = match_filter_func(breaking_filters) or (lambda _, __: None)
     filters = set(variadic(filters or []))
@@ -3301,7 +3308,7 @@ class download_range_func:
                 and self.chapters == other.chapters and self.ranges == other.ranges)
 
     def __repr__(self):
-        return f'{__name__}.{type(self).__name__}({self.chapters}, {self.ranges})'
+        return f'{pretty_repr(type(self))}({self.chapters}, {self.ranges})'
 
 
 def parse_dfxp_time_expr(time_expr):
@@ -4986,7 +4993,17 @@ class function_with_repr:
     def __repr__(self):
         if self.__repr:
             return self.__repr
-        return f'{self.func.__module__}.{self.func.__qualname__}'
+        return pretty_repr(self.func)
+
+
+def pretty_repr(obj):
+    if isinstance(obj, str):
+        return obj
+    elif isinstance(obj, BaseException):
+        return f'{type(obj).__name__}: {obj}'
+    elif isinstance(obj, function_with_repr):
+        return repr(obj)
+    return f'{obj.__module__}.{obj.__qualname__}'
 
 
 class Namespace(types.SimpleNamespace):

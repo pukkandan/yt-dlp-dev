@@ -13,6 +13,7 @@ from ..utils import (
     prepend_extension,
     shell_quote,
     str_or_none,
+    pretty_repr,
 )
 
 
@@ -29,9 +30,8 @@ class SponSkrubPP(PostProcessor):
         self.path = self.get_exe(path)
 
         if not _from_cli:
-            self.deprecation_warning(
-                'yt_dlp.postprocessor.SponSkrubPP support is deprecated and may be removed in a future version. '
-                'Use yt_dlp.postprocessor.SponsorBlock and yt_dlp.postprocessor.ModifyChaptersPP instead')
+            from .modify_chapters import ModifyChaptersPP
+            self.deprecation_warning((type(self), ModifyChaptersPP))
 
         if not ignoreerror and self.path is None:
             if path:

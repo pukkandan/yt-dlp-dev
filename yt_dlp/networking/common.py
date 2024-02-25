@@ -26,7 +26,7 @@ from ..utils import (
     bug_reports_message,
     classproperty,
     deprecation_warning,
-    error_to_str,
+    pretty_repr,
     update_url_query,
 )
 from ..utils.networking import HTTPHeaderDict, normalize_url
@@ -106,7 +106,7 @@ class RequestDirector:
                 handler.validate(request)
             except UnsupportedRequest as e:
                 self._print_verbose(
-                    f'"{handler.RH_NAME}" cannot handle this request (reason: {error_to_str(e)})')
+                    f'"{handler.RH_NAME}" cannot handle this request (reason: {pretty_repr(e)})')
                 unsupported_errors.append(e)
                 continue
 
@@ -117,7 +117,7 @@ class RequestDirector:
                 raise
             except Exception as e:
                 self.logger.error(
-                    f'[{handler.RH_NAME}] Unexpected error: {error_to_str(e)}{bug_reports_message()}',
+                    f'[{handler.RH_NAME}] Unexpected error: {pretty_repr(e)}{bug_reports_message()}',
                     is_error=False)
                 unexpected_errors.append(e)
                 continue
@@ -538,23 +538,23 @@ class Response(io.IOBase):
     # The following methods are for compatability reasons and are deprecated
     @property
     def code(self):
-        deprecation_warning('Response.code is deprecated, use Response.status', stacklevel=2)
+        deprecation_warning((type(self).code, f'{pretty_repr(type(self))}.status'), stacklevel=2)
         return self.status
 
     def getcode(self):
-        deprecation_warning('Response.getcode() is deprecated, use Response.status', stacklevel=2)
+        deprecation_warning((type(self).getcode, f'{pretty_repr(type(self))}.status'), stacklevel=2)
         return self.status
 
     def geturl(self):
-        deprecation_warning('Response.geturl() is deprecated, use Response.url', stacklevel=2)
+        deprecation_warning((self.geturl, f'{pretty_repr(type(self))}.url'), stacklevel=2)
         return self.url
 
     def info(self):
-        deprecation_warning('Response.info() is deprecated, use Response.headers', stacklevel=2)
+        deprecation_warning((self.info, f'{pretty_repr(type(self))}.headers'), stacklevel=2)
         return self.headers
 
     def getheader(self, name, default=None):
-        deprecation_warning('Response.getheader() is deprecated, use Response.get_header', stacklevel=2)
+        deprecation_warning((self.getheader, self.get_header), stacklevel=2)
         return self.get_header(name, default)
 
 

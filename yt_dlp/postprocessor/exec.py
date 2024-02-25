@@ -1,6 +1,6 @@
 from .common import PostProcessor
 from ..compat import compat_shlex_quote
-from ..utils import Popen, PostProcessingError, variadic
+from ..utils import Popen, PostProcessingError, variadic, pretty_repr
 
 
 class ExecPP(PostProcessor):
@@ -35,7 +35,5 @@ class ExecPP(PostProcessor):
 # Deprecated
 class ExecAfterDownloadPP(ExecPP):
     def __init__(self, *args, **kwargs):
+        self.deprecation_warning((type(self), ExecPP))
         super().__init__(*args, **kwargs)
-        self.deprecation_warning(
-            'yt_dlp.postprocessor.ExecAfterDownloadPP is deprecated '
-            'and may be removed in a future version. Use yt_dlp.postprocessor.ExecPP instead')

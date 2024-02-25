@@ -51,6 +51,7 @@ from ..utils import (
     RetryManager,
     UnsupportedError,
     age_restricted,
+    pretty_repr,
     base_url,
     bug_reports_message,
     classproperty,
@@ -819,9 +820,8 @@ class InfoExtractor:
 
     def _create_request(self, url_or_request, data=None, headers=None, query=None):
         if isinstance(url_or_request, urllib.request.Request):
-            self._downloader.deprecation_warning(
-                'Passing a urllib.request.Request to _create_request() is deprecated. '
-                'Use yt_dlp.networking.common.Request instead.')
+            self._downloader.deprecation_warning((
+                f'Passing a {pretty_repr(type(url_or_request))} object to {pretty_repr(self._create_request)}', Request))
             url_or_request = urllib_req_to_req(url_or_request)
         elif not isinstance(url_or_request, Request):
             url_or_request = Request(url_or_request)
@@ -1122,11 +1122,11 @@ class InfoExtractor:
 
         R''' # NB: These are unused; should they be deprecated?
         if tries != 1:
-            self._downloader.deprecation_warning('tries argument is deprecated in InfoExtractor._download_webpage')
+            self._downloader.deprecation_warning(f'tries argument is deprecated in {pretty_repr(self._download_webpage)}')
         if timeout is NO_DEFAULT:
             timeout = 5
         else:
-            self._downloader.deprecation_warning('timeout argument is deprecated in InfoExtractor._download_webpage')
+            self._downloader.deprecation_warning(f'timeout argument is deprecated in {pretty_repr(self._download_webpage)}')
         '''
 
         try_count = 0
@@ -1746,18 +1746,16 @@ class InfoExtractor:
             def __init__(ie, *args, **kwargs):
                 super().__init__(ie._downloader, *args, **kwargs)
 
-        deprecation_warning(
-            'yt_dlp.InfoExtractor.FormatSort is deprecated and may be removed in the future. '
-            'Use yt_dlp.utils.FormatSorter instead')
+        deprecation_warning((InfoExtractor.FormatSort, FormatSorter))
         return FormatSort
 
     def _sort_formats(self, formats, field_preference=[]):
         if not field_preference:
             self._downloader.deprecation_warning(
-                'yt_dlp.InfoExtractor._sort_formats is deprecated and is no longer required')
+                f'{pretty_repr(self._sort_formats)} is deprecated and is no longer required')
             return
         self._downloader.deprecation_warning(
-            'yt_dlp.InfoExtractor._sort_formats is deprecated and no longer works as expected. '
+            f'{pretty_repr(self._sort_formats)} is deprecated and no longer works as expected. '
             'Return _format_sort_fields in the info_dict instead')
         if formats:
             formats[0]['__sort_fields'] = field_preference
@@ -3491,7 +3489,7 @@ class InfoExtractor:
         return formats
 
     def _live_title(self, name):
-        self._downloader.deprecation_warning('yt_dlp.InfoExtractor._live_title is deprecated and does not work as expected')
+        self._downloader.deprecation_warning((self._live_title, None))
         return name
 
     def _int(self, v, name, fatal=False, **kwargs):

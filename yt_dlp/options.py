@@ -28,6 +28,7 @@ from .utils import (
     deprecation_warning,
     expand_path,
     format_field,
+    pretty_repr,
     get_executable_path,
     get_system_config_dirs,
     get_user_config_dirs,
@@ -1913,6 +1914,5 @@ def create_parser():
 
 
 def _hide_login_info(opts):
-    deprecation_warning(f'"{__name__}._hide_login_info" is deprecated and may be removed '
-                        'in a future version. Use "yt_dlp.utils.Config.hide_login_info" instead')
+    deprecation_warning((_hide_login_info, pretty_repr(Config.hide_login_info)))
     return Config.hide_login_info(opts)

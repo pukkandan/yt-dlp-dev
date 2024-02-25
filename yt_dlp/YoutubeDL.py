@@ -118,6 +118,7 @@ from .utils import (
     format_decimal_suffix,
     format_field,
     formatSeconds,
+    pretty_repr,
     get_compatible_ext,
     get_domain,
     int_or_none,
@@ -1094,7 +1095,7 @@ class YoutubeDL:
             self.report_warning(msg)
 
     def parse_outtmpl(self):
-        self.deprecation_warning('"YoutubeDL.parse_outtmpl" is deprecated and may be removed in a future version')
+        self.deprecation_warning((self.parse_outtmpl, None))
         self._parse_outtmpl()
         return self.params['outtmpl']
 
@@ -2550,7 +2551,7 @@ class YoutubeDL:
         return res
 
     def _calc_cookies(self, url):
-        self.deprecation_warning('"YoutubeDL._calc_cookies" is deprecated and may be removed in a future version')
+        self.deprecation_warning((self._calc_cookies, None))
         return self.cookiejar.get_cookie_header(url)
 
     def _sort_thumbnails(self, thumbnails):
@@ -4069,7 +4070,7 @@ class YoutubeDL:
         """
         Get a urllib OpenerDirector from the Urllib handler (deprecated).
         """
-        self.deprecation_warning('YoutubeDL._opener is deprecated, use YoutubeDL.urlopen()')
+        self.deprecation_warning((type(self)._opener, self.urlopen))
         handler = self._request_director.handlers['Urllib']
         return handler._get_instance(cookiejar=self.cookiejar, proxies=self.proxies)
 
@@ -4078,9 +4079,8 @@ class YoutubeDL:
         if isinstance(req, str):
             req = Request(req)
         elif isinstance(req, urllib.request.Request):
-            self.deprecation_warning(
-                'Passing a urllib.request.Request object to YoutubeDL.urlopen() is deprecated. '
-                'Use yt_dlp.networking.common.Request instead.')
+            self.deprecation_warning((
+                f'Passing a {pretty_repr(type(req))} object to {pretty_repr(self.urlopen)}', Request))
             req = urllib_req_to_req(req)
         assert isinstance(req, Request)
 
