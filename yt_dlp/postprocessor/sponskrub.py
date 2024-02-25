@@ -8,12 +8,10 @@ from ..utils import (
     PostProcessingError,
     check_executable,
     cli_option,
-    encodeArgument,
     encodeFilename,
     prepend_extension,
     shell_quote,
     str_or_none,
-    pretty_repr,
 )
 
 

@@ -4,13 +4,7 @@ import subprocess
 import time
 
 from .common import FileDownloader
-from ..utils import (
-    Popen,
-    check_executable,
-    encodeArgument,
-    encodeFilename,
-    get_exe_version,
-)
+from ..utils import Popen, check_executable, encodeFilename, get_exe_version
 
 
 def rtmpdump_version():

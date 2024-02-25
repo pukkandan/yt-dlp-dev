@@ -1,12 +1,7 @@
 from .common import InfoExtractor
 from ..aes import aes_cbc_decrypt, unpad_pkcs7
-from ..compat import (
-    compat_b64decode,
-)
-from ..utils import (
-    ExtractorError,
-    unified_strdate,
-)
+from ..compat import compat_b64decode
+from ..utils import ExtractorError, unified_strdate
 
 
 class ShemarooMeIE(InfoExtractor):

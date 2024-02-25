@@ -11,7 +11,6 @@ from ..utils import (
     Popen,
     PostProcessingError,
     check_executable,
-    encodeArgument,
     encodeFilename,
     error_to_compat_str,
     prepend_extension,

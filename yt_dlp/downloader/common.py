@@ -19,19 +19,17 @@ from ..utils import (
     Namespace,
     RetryManager,
     classproperty,
-    decodeArgument,
     deprecation_warning,
     encodeFilename,
     format_bytes,
-    pretty_repr,
     join_nonempty,
     parse_bytes,
     remove_start,
     sanitize_open,
     shell_quote,
-    unified_timestamp,
     timetuple_from_msec,
     try_call,
+    unified_timestamp,
 )
 
 

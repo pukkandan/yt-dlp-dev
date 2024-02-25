@@ -7,7 +7,6 @@ from ..utils import (
     PostProcessingError,
     XAttrMetadataError,
     XAttrUnavailableError,
-    hyphenate_date,
     write_xattr,
 )
 
@@ -46,7 +45,7 @@ class XAttrMetadataPP(PostProcessor):
                         try:
                             value = '-'.join(re.match(r'^(\d\d\d\d)(\d\d)(\d\d)$', value).groups())
                         except AttributeError:
-                             pass
+                            pass
                     write_xattr(info['filepath'], xattrname, value.encode())
 
         except XAttrUnavailableError as e:

@@ -22,7 +22,6 @@ from ..utils import (
     cli_option,
     cli_valueless_option,
     determine_ext,
-    encodeArgument,
     encodeFilename,
     find_available_port,
     remove_end,

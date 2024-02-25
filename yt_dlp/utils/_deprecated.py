@@ -20,6 +20,7 @@ def encodeFilename(s, for_subprocess=False):
 def decodeFilename(b, for_subprocess=False):
     return b
 
+
 def decodeOption(optval):
     if optval is None:
         return optval
