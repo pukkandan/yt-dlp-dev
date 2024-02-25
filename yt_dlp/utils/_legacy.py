@@ -1,6 +1,7 @@
 """No longer used and new code should not use. Exists only for API compat."""
 import asyncio
 import atexit
+import html.parser
 import platform
 import struct
 import sys
@@ -16,6 +17,7 @@ from ..networking._helper import make_ssl_context
 from ..networking._urllib import HTTPHandler
 
 # isort: split
+from re import Pattern as compiled_regex_type  # noqa: F401
 from .networking import escape_rfc3986  # noqa: F401
 from .networking import normalize_url as escape_url  # noqa: F401
 from .networking import random_user_agent, std_headers  # noqa: F401
@@ -33,6 +35,7 @@ from ..networking.exceptions import HTTPError, network_exceptions  # noqa: F401
 has_certifi = bool(certifi)
 has_websockets = bool(websockets)
 
+error_to_str = pretty_repr
 bytes_to_intlist = list
 intlist_to_bytes = bytes
 
@@ -315,3 +318,30 @@ def make_HTTPS_handler(params, **kwargs):
 
 def process_communicate_or_kill(p, *args, **kwargs):
     return Popen.communicate_or_kill(p, *args, **kwargs)
+
+
+class HTMLListAttrsParser(html.parser.HTMLParser):
+    """HTML parser to gather the attributes for the elements of a list"""
+
+    def __init__(self):
+        html.parser.HTMLParser.__init__(self)
+        self.items = []
+        self._level = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'li' and self._level == 0:
+            self.items.append(dict(attrs))
+        self._level += 1
+
+    def handle_endtag(self, tag):
+        self._level -= 1
+
+
+def parse_list(webpage):
+    """Given a string for an series of HTML <li> elements,
+    return a dictionary of their attributes"""
+    # Deprecate
+    parser = HTMLListAttrsParser()
+    parser.feed(webpage)
+    parser.close()
+    return parser.items

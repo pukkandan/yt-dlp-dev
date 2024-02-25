@@ -56,9 +56,6 @@ from ..dependencies import xattr
 
 __name__ = __name__.rsplit('.', 1)[0]  # Pretend to be the parent module
 
-# This is not clearly defined otherwise
-compiled_regex_type = type(re.compile(''))
-
 
 class NO_DEFAULT:
     pass
@@ -459,23 +456,6 @@ class HTMLAttributeParser(html.parser.HTMLParser):
         raise compat_HTMLParseError('done')
 
 
-class HTMLListAttrsParser(html.parser.HTMLParser):
-    """HTML parser to gather the attributes for the elements of a list"""
-
-    def __init__(self):
-        html.parser.HTMLParser.__init__(self)
-        self.items = []
-        self._level = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'li' and self._level == 0:
-            self.items.append(dict(attrs))
-        self._level += 1
-
-    def handle_endtag(self, tag):
-        self._level -= 1
-
-
 def extract_attributes(html_element):
     """Given a string for an HTML element such as
     <el
@@ -495,15 +475,6 @@ def extract_attributes(html_element):
         parser.feed(html_element)
         parser.close()
     return parser.attrs
-
-
-def parse_list(webpage):
-    """Given a string for an series of HTML <li> elements,
-    return a dictionary of their attributes"""
-    parser = HTMLListAttrsParser()
-    parser.feed(webpage)
-    parser.close()
-    return parser.items
 
 
 def clean_html(html):
@@ -2837,11 +2808,6 @@ def ytdl_is_updateable():
 def args_to_str(args):
     # Get a short string representation for a subprocess command
     return ' '.join(compat_shlex_quote(a) for a in args)
-
-
-def error_to_str(err):
-    deprecation_warning((error_to_str, pretty_repr))
-    return pretty_repr(err)
 
 
 def mimetype2ext(mt, default=NO_DEFAULT):
