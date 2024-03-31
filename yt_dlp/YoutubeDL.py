@@ -2813,6 +2813,9 @@ class YoutubeDL:
             format['url'] = sanitize_url(format['url'])
             if format.get('ext') is None:
                 format['ext'] = determine_ext(format['url']).lower()
+            if format.get('acodec') is None:
+                if format['ext'] in ('aac', 'opus', 'mp3', 'flac', 'vorbis'):
+                    format['acodec'] = format['ext']
             if format.get('protocol') is None:
                 format['protocol'] = determine_protocol(format)
             if format.get('resolution') is None:
