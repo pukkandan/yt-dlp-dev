@@ -1157,10 +1157,10 @@ class FFmpegConcatPP(FFmpegPostProcessor):
             os.replace(in_files[0], out_file)
             return []
 
-        if len(set(map(self._get_codecs, in_files))) > 1:
-            raise PostProcessingError(
-                'The files have different streams/codecs and cannot be concatenated. '
-                'Either select different formats or --recode-video them to a common format')
+        #if len(set(map(self._get_codecs, in_files))) > 1:
+        #    raise PostProcessingError(
+        #        'The files have different streams/codecs and cannot be concatenated. '
+        #        'Either select different formats or --recode-video them to a common format')
 
         self.to_screen(f'Concatenating {len(in_files)} files; Destination: {out_file}')
         super().concat_files(in_files, out_file)
